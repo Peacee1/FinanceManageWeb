@@ -897,8 +897,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </div>
         </div>
       )}
-    </div>
-
       {/* Edit Budget Modal */}
       {isEditBudgetOpen && (
         <div className="modal-overlay" style={{ zIndex: 2000 }}>
