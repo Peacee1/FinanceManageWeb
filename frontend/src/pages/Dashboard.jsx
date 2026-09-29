@@ -787,7 +787,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
       {isCheckinOpen && profileData && (
         <div className="modal-overlay">
-          <div className="modal-content checkin-modal" style={{ padding: 0, overflow: 'hidden', maxWidth: '600px', background: 'var(--color-bg)' }}>
+          <div className="modal-content checkin-modal" style={{ padding: 0, overflow: 'hidden', maxWidth: '750px', width: '90vw', background: 'var(--color-bg)' }}>
             
             {/* Banner Section */}
             <div style={{ position: 'relative', background: '#7C3AED' }}>
