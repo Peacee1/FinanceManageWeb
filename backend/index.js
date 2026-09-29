@@ -19,7 +19,7 @@ const app = express();
 // Middleware
 app.use(cors()); // Cho phép Frontend gọi API
 app.use(express.json()); // Phân tích body dạng JSON
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
