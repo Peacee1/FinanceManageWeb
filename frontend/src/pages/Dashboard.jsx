@@ -152,6 +152,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let firstDay = new Date(currentYear, currentMonth, 1).getDay();
     firstDay = firstDay === 0 ? 7 : firstDay;
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
 
     const grid = [];
     const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
@@ -160,8 +162,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       const dayTx = currentMonthTx.filter(t => t.date.startsWith(dateStr));
+      const cellDate = new Date(currentYear, currentMonth, i);
+      const isFuture = cellDate > todayDate;
+      const isToday = cellDate.getTime() === todayDate.getTime();
+      
       grid.push({ 
-        date: i, fullDate: dateStr, muted: false, 
+        date: i, fullDate: dateStr, muted: isFuture, isToday,
         incomes: dayTx.filter(t => t.type === 'INCOME'), 
         expenses: dayTx.filter(t => t.type === 'EXPENSE') 
       });
@@ -391,7 +397,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
                 <div className="cal-grid">
                   {grid.map((day, i) => (
-                    <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.date === new Date().getDate() && !day.muted ? 'today' : ''}`} onClick={() => !day.muted && setSelectedDayInfo(day)}>
+                    <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.isToday ? 'today' : ''}`} 
+                         onClick={() => !day.muted && setSelectedDayInfo(day)}
+                         style={{ cursor: day.muted ? 'not-allowed' : 'pointer' }}>
                       <div className="cal-date">{day.date}</div>
                       {day.incomes.slice(0,1).map((t, j) => (
                         <div key={j} className="tx-badge income"><div className="tx-dot income"></div> +{formatCompact(t.amount)}</div>
