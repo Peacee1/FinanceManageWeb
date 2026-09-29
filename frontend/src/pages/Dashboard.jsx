@@ -851,7 +851,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
               {/* Card 3: Promo */}
               <div className="widget" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '30px' }}>
-                <img src="/cat_mascot.png" alt="Mascot" style={{ width: 100, marginBottom: '15px' }} />
+                <img src="/cat_budget_mascot.png" alt="Mascot" style={{ width: 100, marginBottom: '15px' }} />
                 <h3 style={{ fontSize: '1rem', color: '#4C1D95', marginBottom: '8px' }}>Bạn còn <span style={{fontSize: '1.2rem', fontWeight: '800'}}>{formatCurrency(Math.max(monthlyBudget - totalExpense, 0))}</span></h3>
                 <p style={{ fontSize: '0.85rem', color: '#6D28D9' }}>trong ngân sách tháng này. Cố lên nhé! 💪</p>
               </div>
