@@ -754,16 +754,19 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   {profileData.phone || 'Chưa cập nhật'} 
                   {profileData.phone ? 
                     (profileData.phone_verified ? 
-                      <span style={{color: 'var(--color-income)', fontSize: '0.85rem', fontWeight: '600'}}>✓ Đã xác thực</sp      {isCropModalOpen && avatarImage && (
-        <div className="modal-overlay" style={{ zIndex: 2000 }}>
-          <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
-            <div className="modal-header">
-              <h3>Cắt Ảnh</h3>
-              <button className="close-btn" onClick={() => setIsCropModalOpen(false)}>×</button>
+                      <span style={{color: 'var(--color-income)', fontSize: '0.85rem', fontWeight: '600'}}>✓ Đã xác thực</span> : 
+                      <button className="verify-btn">Xác thực</button>) : 
+                    <button className="verify-btn">Thêm SDT</button>}
+                </span>
+              </div>
             </div>
-            <div style={{ position: 'relative', flex: 1, background: '#333', borderRadius: '8px', overflow: 'hidden' }}>
-              <Cropper image={avatarImage} crop={crop} zoom={zoom} aspect={1} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(c, cp) => setCroppedAreaPixels(cp)} />
-            </div>
+
+            <button className="btn-promo" onClick={() => setIsProfileOpen(false)}>Hoàn tất</button>
+          </div>
+        </div>
+      )}
+
+      {isCropModalOpen && avatarImage && (
             <button className="btn-promo" style={{marginTop: '15px'}} onClick={handleCropComplete} disabled={loading}>
               {loading ? 'Đang xử lý...' : 'Lưu Avatar'}
             </button>
