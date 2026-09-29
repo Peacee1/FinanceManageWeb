@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Cropper from 'react-easy-crop';
 import { 
@@ -51,6 +51,64 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   });
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
   const [budgetInputValue, setBudgetInputValue] = useState('');
+
+  // Draggable Quick Actions State
+  const quickActionsRef = useRef(null);
+  const [qaPos, setQaPos] = useState(() => {
+    const saved = localStorage.getItem('qaPos');
+    return saved ? JSON.parse(saved) : { right: 24, bottom: 24 };
+  });
+  const [isDraggingQA, setIsDraggingQA] = useState(false);
+  const qaOffset = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = (e) => {
+    if (e.target.closest('button')) return; // Ignore buttons
+    setIsDraggingQA(true);
+    const rect = quickActionsRef.current.getBoundingClientRect();
+    qaOffset.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+    e.target.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDraggingQA) return;
+    let newX = e.clientX - qaOffset.current.x;
+    let newY = e.clientY - qaOffset.current.y;
+    setQaPos({ left: newX, top: newY, right: 'auto', bottom: 'auto' });
+  };
+
+  const handlePointerUp = (e) => {
+    if (!isDraggingQA) return;
+    setIsDraggingQA(false);
+    e.target.releasePointerCapture(e.pointerId);
+
+    const rect = quickActionsRef.current.getBoundingClientRect();
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
+
+    const distLeft = rect.left;
+    const distRight = ww - rect.right;
+    const distTop = rect.top;
+    const distBottom = wh - rect.bottom;
+
+    const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+    let finalPos = {};
+    if (minDist === distLeft) {
+      finalPos = { left: 24, top: Math.max(24, Math.min(rect.top, wh - rect.height - 24)), right: 'auto', bottom: 'auto' };
+    } else if (minDist === distRight) {
+      finalPos = { right: 24, top: Math.max(24, Math.min(rect.top, wh - rect.height - 24)), left: 'auto', bottom: 'auto' };
+    } else if (minDist === distTop) {
+      finalPos = { top: 24, left: Math.max(24, Math.min(rect.left, ww - rect.width - 24)), right: 'auto', bottom: 'auto' };
+    } else {
+      finalPos = { bottom: 24, left: Math.max(24, Math.min(rect.left, ww - rect.width - 24)), right: 'auto', bottom: 'auto' };
+    }
+
+    setQaPos(finalPos);
+    localStorage.setItem('qaPos', JSON.stringify(finalPos));
+  };
 
   const fetchTransactions = async () => {
     try {
@@ -629,8 +687,32 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
 
               {/* Quick Actions */}
-              <div className="widget" style={{position: 'fixed', bottom: '24px', right: '24px', width: '340px', zIndex: 1000, boxShadow: '0 12px 36px rgba(0,0,0,0.12)', border: '1px solid rgba(124,58,237,0.1)', background: 'white'}}>
-                <h3 className="widget-title" style={{marginBottom: '1rem'}}>Thao tác nhanh</h3>
+              <div 
+                ref={quickActionsRef}
+                className="widget quick-actions-widget" 
+                style={{
+                  position: 'fixed', 
+                  ...qaPos, 
+                  width: '340px', 
+                  zIndex: 1000, 
+                  boxShadow: isDraggingQA ? '0 20px 40px rgba(0,0,0,0.2)' : '0 12px 36px rgba(0,0,0,0.12)', 
+                  border: '1px solid rgba(124,58,237,0.1)', 
+                  background: 'white',
+                  cursor: isDraggingQA ? 'grabbing' : 'grab',
+                  transition: isDraggingQA ? 'none' : 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                  touchAction: 'none' // Prevent scrolling while dragging on mobile
+                }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3 className="widget-title" style={{ margin: 0, pointerEvents: 'none' }}>Thao tác nhanh</h3>
+                  <div style={{ color: 'var(--color-text-secondary)', opacity: 0.5, pointerEvents: 'none' }}>
+                    <MoreHorizontal size={20} />
+                  </div>
+                </div>
                 <div className="quick-actions" style={{gridTemplateColumns: '1fr 1fr', gap: '10px'}}>
                   <button className="btn-quick" style={{background: '#ECFDF5', color: '#059669', padding: '12px 8px'}} onClick={() => {setType('INCOME'); setIsModalOpen(true);}}>
                     <Plus size={16}/> Thêm khoản thu
