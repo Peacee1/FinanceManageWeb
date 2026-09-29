@@ -1109,7 +1109,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <div className="widget">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Ngân sách theo danh mục</h3>
-                  <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}><Plus size={14}/> Thêm danh mục</button>
+                  <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px', width: 'auto' }}><Plus size={14}/> Thêm danh mục</button>
                 </div>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 20px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
@@ -1123,7 +1123,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {(uniqueCategories.length > 0 ? uniqueCategories : ['Ăn uống', 'Shopping', 'Di chuyển', 'Giải trí', 'Khác']).map((cat, idx) => {
-                    const spent = currentMonthTx.filter(t => t.type==='EXPENSE' && t.category===cat).reduce((s, t)=>s+t.amount, 0);
+                    const spent = currentMonthTx.filter(t => t.type==='EXPENSE' && t.category===cat).reduce((s, t)=>s+parseInt(t.amount), 0);
                     const b = dynamicBudgets[cat] || (monthlyBudget / 5);
                     const remain = b - spent;
                     const pct = Math.min((spent/b)*100, 100);
