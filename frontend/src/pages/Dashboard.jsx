@@ -721,14 +721,25 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     return (
                     <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.isToday ? 'today' : ''} ${isSelectedDate ? 'active' : ''}`} 
                          onClick={() => !day.muted && setSelectedDayInfo(day)}
-                         style={{ cursor: day.muted ? 'not-allowed' : 'pointer', border: isSelectedDate ? '2px solid var(--color-primary)' : '' }}>
+                         style={{ position: 'relative', cursor: day.muted ? 'not-allowed' : 'pointer', border: isSelectedDate ? '2px solid var(--color-primary)' : '' }}>
                       <div className="cal-date" style={{background: isSelectedDate ? 'var(--color-primary)' : '', color: isSelectedDate ? 'white' : ''}}>{day.date}</div>
-                      {day.incomes.slice(0,1).map((t, j) => (
-                        <div key={j} className="tx-badge income"><div className="tx-dot income"></div> +{formatCompact(t.amount)}</div>
-                      ))}
-                      {day.expenses.slice(0,1).map((t, j) => (
-                        <div key={j} className="tx-badge expense"><div className="tx-dot expense"></div> -{formatCompact(t.amount)}</div>
-                      ))}
+                      {(() => {
+                        const allTxs = [...day.incomes, ...day.expenses];
+                        return (
+                          <>
+                            {allTxs.slice(0, 4).map((t, j) => (
+                              <div key={j} className={`tx-badge ${t.type.toLowerCase()}`}>
+                                <div className={`tx-dot ${t.type.toLowerCase()}`}></div> {t.type === 'INCOME' ? '+' : '-'}{formatCompact(t.amount)}
+                              </div>
+                            ))}
+                            {allTxs.length > 4 && (
+                              <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.7rem', fontWeight: '700', color: 'var(--color-primary)', background: '#F3E8FF', padding: '2px 5px', borderRadius: '8px' }}>
+                                +{allTxs.length - 4}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   );
                 })}
