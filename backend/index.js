@@ -1,0 +1,20 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+
+const authRoutes = require('./routes/authRoutes');
+
+const app = express();
+
+// Middleware
+app.use(cors()); // Cho phép Frontend gọi API
+app.use(express.json()); // Phân tích body dạng JSON
+
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Khởi chạy server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server Backend đang chạy tại http://localhost:${PORT}`);
+});
