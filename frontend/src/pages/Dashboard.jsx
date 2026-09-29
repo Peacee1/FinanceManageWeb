@@ -20,6 +20,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
   
   // Transaction Form State
   const [type, setType] = useState('EXPENSE');
@@ -343,12 +344,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         </div>
         
         <ul className="nav-menu">
-          <li className="nav-item active"><LayoutDashboard size={20}/> Tổng quan</li>
+          <li className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><LayoutDashboard size={20}/> Tổng quan</li>
           <li className="nav-item" onClick={() => setIsCheckinOpen(true)} style={{ background: 'linear-gradient(90deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', color: '#7C3AED', fontWeight: 'bold', borderLeft: '4px solid #7C3AED' }}>
             <Gift size={20} color="#F472B6" /> Điểm danh nhận quà
           </li>
-          <li className="nav-item"><CalendarRange size={20}/> Lịch giao dịch</li>
-          <li className="nav-item"><CircleDollarSign size={20}/> Thu chi</li>
+          <li className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}><CircleDollarSign size={20}/> Thu chi</li>
           <li className="nav-item"><WalletCards size={20}/> Ngân sách</li>
           <li className="nav-item"><PieChartIcon size={20}/> Báo cáo</li>
           <li className="nav-item"><Target size={20}/> Mục tiêu</li>
@@ -412,7 +412,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </div>
         </div>
 
-        <div className="dashboard-scroll">
+        {activeTab === 'overview' && (
+          <div className="dashboard-scroll">
           {/* Top Stat Cards */}
           <div className="cards-row">
             <div className="stat-card">
@@ -709,6 +710,53 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
           </div>
         </div>
+        )}
+
+        {activeTab === 'transactions' && (
+          <div className="dashboard-scroll" style={{ padding: '20px' }}>
+            <div className="widget" style={{ padding: '30px', borderRadius: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '800' }}>Lịch sử thu chi</h2>
+                <button className="btn-primary" onClick={() => setIsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}>
+                  <Plus size={18} /> Thêm giao dịch
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {transactions.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '50px', color: 'var(--color-text-secondary)' }}>
+                    Chưa có giao dịch nào
+                  </div>
+                ) : (
+                  [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, idx) => (
+                    <div key={t.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderRadius: '16px', background: '#FAFAFA', border: '1px solid #F3F4F6', transition: 'all 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ width: 48, height: 48, borderRadius: '12px', background: `${getCategoryColor(t.category)}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {getCategoryIcon(t.category, getCategoryColor(t.category))}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '700', fontSize: '1rem', color: '#111827', marginBottom: '4px' }}>{t.category}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>{new Date(t.date).toLocaleDateString('vi-VN')}</span>
+                            {t.description && (
+                              <>
+                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#D1D5DB' }}></span>
+                                <span>{t.description}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: '800', fontSize: '1.1rem', color: t.type === 'INCOME' ? 'var(--color-income)' : 'var(--color-expense)' }}>
+                        {t.type === 'INCOME' ? '+' : '-'}{parseInt(t.amount).toLocaleString('vi-VN')} đ
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals from old code... */}
