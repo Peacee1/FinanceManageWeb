@@ -133,7 +133,41 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       const token = localStorage.getItem('token');
       const res = await axios.get('/api/users/me', { headers: { Authorization: `Bearer ${token}` } });
       setProfileData(res.data);
+      if (res.data.is_goal_initialized) {
+        setIsGoalInitialized(true);
+        setGoalForm({
+          salary: res.data.salary || '15000000',
+          age: res.data.age || '25',
+          gender: res.data.gender || 'Nam'
+        });
+      }
     } catch (error) { console.error(error); }
+  };
+
+  const handleUpgrade = async (targetPlan) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/users/upgrade-plan', { targetPlan }, { headers: { Authorization: `Bearer ${token}` } });
+      alert(res.data.message);
+      
+      const updatedUser = { ...user, plan: targetPlan };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      fetchProfile();
+      window.location.reload();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Lỗi nâng cấp');
+    }
+  };
+
+  const saveGoalInit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/init-goal', goalForm, { headers: { Authorization: `Bearer ${token}` } });
+      setIsGoalInitialized(true);
+    } catch (error) {
+      alert('Lỗi lưu thông tin mục tiêu');
+    }
   };
 
   useEffect(() => {
@@ -1392,7 +1426,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
 
                 <button 
-                  onClick={() => setIsGoalInitialized(true)} 
+                  onClick={saveGoalInit} 
                   style={{ width: '100%', padding: '15px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}
                 >
                   Bắt đầu lập mục tiêu
@@ -1616,6 +1650,28 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <button className="verify-btn">Thêm SDT</button>}
                 </span>
               </div>
+            </div>
+
+            {/* Upgrade Section */}
+            <h4 style={{marginTop: '20px', marginBottom: '10px'}}>🚀 Nâng Cấp Tài Khoản</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+              {(profileData.plan === 'normal') && (
+                <div className="upgrade-card" style={{padding: '15px', border: '1px solid var(--color-border)', borderRadius: '12px', textAlign: 'center'}}>
+                  <h4 style={{margin: '0 0 5px'}}>Gói Plus</h4>
+                  <p style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: '0 0 10px'}}>1000 Coins</p>
+                  <button className="upgrade-btn" onClick={() => handleUpgrade('plus')} style={{width: '100%', padding: '8px', borderRadius: '8px', background: 'var(--color-background)', border: '1px solid var(--color-border)', cursor: 'pointer'}}>Nâng cấp</button>
+                </div>
+              )}
+              
+              {(profileData.plan === 'normal' || profileData.plan === 'plus') && (
+                <div className="upgrade-card" style={{padding: '15px', border: '1px solid var(--color-primary)', borderRadius: '12px', textAlign: 'center'}}>
+                  <h4 style={{margin: '0 0 5px'}}>Gói Ultra 💎</h4>
+                  <p style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: '0 0 10px'}}>
+                    {profileData.plan === 'normal' ? '3500' : '3000'} Coins
+                  </p>
+                  <button className="upgrade-btn" onClick={() => handleUpgrade('ultra')} style={{width: '100%', padding: '8px', borderRadius: '8px', background: 'var(--color-primary)', color: 'white', border: 'none', cursor: 'pointer'}}>Nâng cấp</button>
+                </div>
+              )}
             </div>
 
             <button className="btn-promo" onClick={() => setIsProfileOpen(false)}>Hoàn tất</button>

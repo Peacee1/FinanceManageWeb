@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     res.json(result.rows[0]);
   } catch (err) {
@@ -139,4 +139,16 @@ const updateAvatar = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar };
+// Lưu form khởi tạo mục tiêu
+const initGoal = async (req, res) => {
+  const { salary, age, gender } = req.body;
+  try {
+    await db.query('UPDATE users SET salary = $1, age = $2, gender = $3, is_goal_initialized = true WHERE id = $4', [salary, age, gender, req.user.userId]);
+    res.json({ message: 'Lưu thông tin thành công' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar, initGoal };
