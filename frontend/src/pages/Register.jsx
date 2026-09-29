@@ -6,6 +6,7 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [plan, setPlan] = useState('normal'); // State cho kiểu tài khoản
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,20 +19,15 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // Gọi API Node.js
       await axios.post('http://localhost:5000/api/auth/register', {
         name,
         email,
-        password
+        password,
+        plan // Gửi thêm plan
       });
 
       setSuccess('Đăng ký thành công! Đang chuyển hướng...');
-      
-      // Đợi 1.5s rồi chuyển về trang đăng nhập
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
-
+      setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       setError(err.response?.data?.message || 'Có lỗi xảy ra khi đăng ký.');
     } finally {
@@ -47,34 +43,32 @@ const Register = () => {
       <form onSubmit={handleRegister}>
         <div className="input-group">
           <label>Họ và Tên</label>
-          <input 
-            type="text" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            placeholder="Nhập tên của bạn" 
-            required 
-          />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nhập tên của bạn" required />
         </div>
         <div className="input-group">
           <label>Email</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            placeholder="Nhập email của bạn" 
-            required 
-          />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Nhập email của bạn" required />
         </div>
         <div className="input-group">
           <label>Mật khẩu</label>
-          <input 
-            type="password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            placeholder="Tạo mật khẩu bảo mật" 
-            required 
-          />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Tạo mật khẩu bảo mật" required />
         </div>
+        
+        {/* Chọn gói tài khoản */}
+        <div className="input-group">
+          <label>Gói Tài Khoản</label>
+          <select 
+            value={plan} 
+            onChange={(e) => setPlan(e.target.value)} 
+            className="plan-select"
+            required
+          >
+            <option value="normal">Normal - Miễn phí cơ bản</option>
+            <option value="pro">Pro - Mở khóa báo cáo nâng cao</option>
+            <option value="ultra">Ultra - Không giới hạn tính năng</option>
+          </select>
+        </div>
+
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? 'Đang xử lý...' : 'Đăng ký'}
         </button>

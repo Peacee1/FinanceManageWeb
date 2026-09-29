@@ -1,11 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
 function App() {
-  // Kiểm tra xem user đã đăng nhập chưa
-  const isAuthenticated = !!localStorage.getItem('token');
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.reload();
+  };
+
+  const getPlanBadge = (plan) => {
+    switch (plan) {
+      case 'ultra':
+        return <span className="badge badge-ultra">Ultra 💎</span>;
+      case 'pro':
+        return <span className="badge badge-pro">Pro ⭐</span>;
+      default:
+        return <span className="badge badge-normal">Normal</span>;
+    }
+  };
 
   return (
     <Router>
@@ -13,13 +37,15 @@ function App() {
         <Route 
           path="/" 
           element={
-            isAuthenticated ? 
+            user ? 
             <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>
-              <h1>Dashboard Quản Lý Tài Chính</h1>
-              <button className="btn-primary" style={{ width: 'auto', marginTop: '20px' }} onClick={() => {
-                localStorage.removeItem('token');
-                window.location.reload();
-              }}>Đăng xuất</button>
+              <h1>Xin chào, {user.name}!</h1>
+              <div style={{ margin: '15px 0', fontSize: '1.2rem' }}>
+                Gói tài khoản hiện tại: {getPlanBadge(user.plan)}
+              </div>
+              <button className="btn-primary" style={{ width: 'auto', marginTop: '20px' }} onClick={handleLogout}>
+                Đăng xuất
+              </button>
             </div> 
             : <Navigate to="/login" />
           } 

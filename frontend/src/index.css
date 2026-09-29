@@ -136,3 +136,44 @@ body {
   font-size: 0.9rem;
   text-align: center;
 }
+
+.plan-select {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+.plan-select option {
+  background: #1e293b;
+  color: white;
+}
+
+.badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: 10px;
+  display: inline-block;
+}
+.badge-normal {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.badge-pro {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+.badge-ultra {
+  background: rgba(139, 92, 246, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
