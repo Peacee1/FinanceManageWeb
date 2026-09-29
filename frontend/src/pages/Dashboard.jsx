@@ -29,7 +29,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   // Goals Dashboard State
   const [bankSaving, setBankSaving] = useState({ amount: 5000000, rate: 6, months: 6 });
   const [investmentIncome, setInvestmentIncome] = useState(2000000);
-  const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31' });
+  const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
   
   // Transaction Form State
   const [type, setType] = useState('EXPENSE');
@@ -1453,18 +1453,31 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 {/* Mục tiêu */}
                 <div className="widget">
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Mục tiêu lớn</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '15px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                     <div className="input-group">
                       <label>Tên mục tiêu</label>
                       <input type="text" value={userGoal.name} onChange={(e) => setUserGoal({...userGoal, name: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
                     <div className="input-group">
+                      <label>Thời hạn</label>
+                      <input type="date" value={userGoal.deadline} onChange={(e) => setUserGoal({...userGoal, deadline: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                    <div className="input-group">
+                      <label>Số tiền hiện có (VNĐ)</label>
+                      <input type="text" value={userGoal.currentSaved ? userGoal.currentSaved.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setUserGoal({...userGoal, currentSaved: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                    <div className="input-group">
                       <label>Số tiền cần (VNĐ)</label>
                       <input type="text" value={userGoal.targetAmount ? userGoal.targetAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setUserGoal({...userGoal, targetAmount: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
-                    <div className="input-group">
-                      <label>Thời hạn</label>
-                      <input type="date" value={userGoal.deadline} onChange={(e) => setUserGoal({...userGoal, deadline: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                  </div>
+                  <div style={{ marginTop: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '8px' }}>
+                      <span style={{fontWeight: '600', color: 'var(--color-primary)'}}>Tiến độ hoàn thành</span>
+                      <span style={{fontWeight: '700'}}>{Math.min(Math.round((userGoal.currentSaved / userGoal.targetAmount) * 100) || 0, 100)}%</span>
+                    </div>
+                    <div style={{ height: 12, background: 'var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
+                      <div style={{ width: `${Math.min((userGoal.currentSaved / userGoal.targetAmount) * 100 || 0, 100)}%`, height: '100%', background: 'linear-gradient(90deg, #F472B6, #7C3AED)', borderRadius: '6px' }}></div>
                     </div>
                   </div>
                 </div>
