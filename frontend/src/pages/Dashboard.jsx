@@ -52,6 +52,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [selectedDayInfo, setSelectedDayInfo] = useState(null);
   const [hoveredTx, setHoveredTx] = useState(null);
   const [editTxId, setEditTxId] = useState(null);
+  const [openTxMenu, setOpenTxMenu] = useState(null);
 
   // Month navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -811,7 +812,19 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div className="tx-amount" style={{color: t.type === 'INCOME' ? 'var(--color-income)' : 'var(--color-expense)'}}>
                           {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
                         </div>
-                        <MoreVertical size={16} color="var(--color-text-secondary)" style={{cursor: 'pointer'}}/>
+                        <div style={{position: 'relative'}}>
+                          <MoreVertical size={16} color="var(--color-text-secondary)" style={{cursor: 'pointer'}} onClick={() => setOpenTxMenu(openTxMenu === t.id ? null : t.id)}/>
+                          {openTxMenu === t.id && (
+                            <div style={{position: 'absolute', right: 0, top: '100%', background: 'white', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', padding: '5px', zIndex: 100, display: 'flex', flexDirection: 'column', minWidth: '120px'}}>
+                              <button onClick={() => { handleEditTx(t); setOpenTxMenu(null); }} className="hover-bg-gray" style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '0.9rem', width: '100%', textAlign: 'left', borderRadius: '4px', color: 'var(--color-text)'}}>
+                                <Edit2 size={14} /> Sửa
+                              </button>
+                              <button onClick={() => { handleDeleteTx(t.id); setOpenTxMenu(null); }} className="hover-bg-red" style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '0.9rem', color: '#EF4444', width: '100%', textAlign: 'left', borderRadius: '4px'}}>
+                                <Trash2 size={14} /> Xóa
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
