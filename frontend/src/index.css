@@ -717,3 +717,65 @@ body {
 .verify-btn:hover {
   background-color: #EDE9FE;
 }
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+  }
+  .sidebar.open {
+    left: 0;
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+  }
+  .sidebar-overlay.open {
+    display: block;
+  }
+  .mobile-menu-btn {
+    display: block !important;
+  }
+  .main-content .header {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .header-left {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .header-left h1 {
+    font-size: 1.3rem;
+  }
+  .header-left p {
+    font-size: 0.85rem;
+  }
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .search-bar {
+    width: 100%;
+  }
+}
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  margin-right: 15px;
+}
+

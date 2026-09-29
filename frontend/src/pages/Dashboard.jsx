@@ -7,7 +7,7 @@ import {
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift,
-  Edit2, Trash2
+  Edit2, Trash2, Menu, X
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -32,6 +32,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Goals State
   const [isGoalInitialized, setIsGoalInitialized] = useState(false);
@@ -608,8 +609,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   return (
     <div className="layout">
+      {/* Sidebar Overlay for mobile */}
+      <div className={`sidebar-overlay ${isSidebarOpen ? 'open' : ''}`} onClick={() => setIsSidebarOpen(false)}></div>
+
       {/* Sidebar */}
-      <div className="sidebar">
+      <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-text" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
             <img src="/wallet_logo.png" alt="Logo" style={{height: '32px'}} />
@@ -619,17 +623,17 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         </div>
         
         <ul className="nav-menu">
-          <li className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}><LayoutDashboard size={20}/> Tổng quan</li>
-          <li className="nav-item" onClick={() => setIsCheckinOpen(true)} style={{ background: 'linear-gradient(90deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', color: '#7C3AED', fontWeight: 'bold', borderLeft: '4px solid #7C3AED' }}>
+          <li className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }}><LayoutDashboard size={20}/> Tổng quan</li>
+          <li className="nav-item" onClick={() => { setIsCheckinOpen(true); setIsSidebarOpen(false); }} style={{ background: 'linear-gradient(90deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', color: '#7C3AED', fontWeight: 'bold', borderLeft: '4px solid #7C3AED' }}>
             <Gift size={20} color="#F472B6" /> Điểm danh nhận quà
           </li>
-          <li className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}><CircleDollarSign size={20}/> Thu chi</li>
-          <li className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveTab('budget')}><WalletCards size={20}/> Ngân sách</li>
-          <li className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}><PieChartIcon size={20}/> Báo cáo</li>
-          <li className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')}><Target size={20}/> Mục tiêu</li>
-          <li className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}><Tags size={20}/> Danh mục</li>
-          <li className="nav-item" onClick={() => setIsProfileOpen(true)}><User size={20}/> Tài khoản</li>
-          <li className="nav-item"><Settings size={20}/> Cài đặt</li>
+          <li className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => { setActiveTab('transactions'); setIsSidebarOpen(false); }}><CircleDollarSign size={20}/> Thu chi</li>
+          <li className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`} onClick={() => { setActiveTab('budget'); setIsSidebarOpen(false); }}><WalletCards size={20}/> Ngân sách</li>
+          <li className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => { setActiveTab('reports'); setIsSidebarOpen(false); }}><PieChartIcon size={20}/> Báo cáo</li>
+          <li className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => { setActiveTab('goals'); setIsSidebarOpen(false); }}><Target size={20}/> Mục tiêu</li>
+          <li className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }}><Tags size={20}/> Danh mục</li>
+          <li className="nav-item" onClick={() => { setIsProfileOpen(true); setIsSidebarOpen(false); }}><User size={20}/> Tài khoản</li>
+          <li className="nav-item" onClick={() => setIsSidebarOpen(false)}><Settings size={20}/> Cài đặt</li>
         </ul>
 
         <div className="promo-card">
@@ -643,9 +647,14 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       {/* Main Content */}
       <div className="main-content">
         <div className="header">
-          <div className="header-left">
-            <h1>Xin chào, {user.name.split(' ')[0]}! 👋</h1>
-            <p>Cùng quản lý tài chính để đạt được mục tiêu của bạn</p>
+          <div className="header-left" style={{ display: 'flex', alignItems: 'center' }}>
+            <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
+              <Menu size={24} color="var(--color-text)" />
+            </button>
+            <div>
+              <h1>Xin chào, {user.name.split(' ')[0]}! 👋</h1>
+              <p>Cùng quản lý tài chính để đạt được mục tiêu của bạn</p>
+            </div>
           </div>
           
           <div className="header-right">
