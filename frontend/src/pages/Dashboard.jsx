@@ -28,6 +28,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
 
+  // Day Details State
+  const [selectedDayInfo, setSelectedDayInfo] = useState(null);
+
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -242,7 +245,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       const dayTransactions = transactions.filter(t => t.date.startsWith(dateStr));
-      grid.push({ date: i, muted: false, incomes: dayTransactions.filter(t => t.type === 'INCOME'), expenses: dayTransactions.filter(t => t.type === 'EXPENSE') });
+      grid.push({ 
+        date: i, 
+        fullDate: dateStr, 
+        muted: false, 
+        incomes: dayTransactions.filter(t => t.type === 'INCOME'), 
+        expenses: dayTransactions.filter(t => t.type === 'EXPENSE') 
+      });
     }
 
     let nextDay = 1;
@@ -356,7 +365,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </div>
           <div className="calendar-grid">
             {grid.map((day, index) => (
-              <div key={index} className={`calendar-cell ${day.muted ? 'muted' : ''}`}>
+              <div 
+                key={index} 
+                className={`calendar-cell ${day.muted ? 'muted' : ''}`}
+                onClick={() => !day.muted && setSelectedDayInfo(day)}
+              >
                 <div className="date">{day.date}</div>
                 {day.incomes.slice(0,2).map((t, i) => (
                    <span key={i} className="transaction-badge income">+{formatCompact(t.amount)}</span>
@@ -554,6 +567,45 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 Hủy
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Day Details Modal */}
+      {selectedDayInfo && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Giao dịch ngày {selectedDayInfo.date}</h3>
+              <button className="close-btn" onClick={() => setSelectedDayInfo(null)}>×</button>
+            </div>
+            <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
+              {selectedDayInfo.incomes.length === 0 && selectedDayInfo.expenses.length === 0 ? (
+                <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', margin: '2rem 0' }}>Không có giao dịch nào trong ngày này.</p>
+              ) : (
+                <>
+                  {selectedDayInfo.incomes.map((t, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                      <div>
+                        <strong style={{ display: 'block', marginBottom: '4px' }}>{t.category}</strong>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>{t.description || 'Thu nhập'}</div>
+                      </div>
+                      <div style={{ color: 'var(--color-income)', fontWeight: 'bold' }}>+{formatCurrency(t.amount)}</div>
+                    </div>
+                  ))}
+                  {selectedDayInfo.expenses.map((t, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                      <div>
+                        <strong style={{ display: 'block', marginBottom: '4px' }}>{t.category}</strong>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>{t.description || 'Chi tiêu'}</div>
+                      </div>
+                      <div style={{ color: 'var(--color-expense)', fontWeight: 'bold' }}>-{formatCurrency(t.amount)}</div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+            <button className="btn-secondary" onClick={() => setSelectedDayInfo(null)} style={{ marginTop: '1rem' }}>Đóng</button>
           </div>
         </div>
       )}

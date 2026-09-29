@@ -321,6 +321,14 @@ body {
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-cell:not(.muted):hover {
+  background: var(--color-bg);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 .calendar-cell.muted .date {
