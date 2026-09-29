@@ -27,14 +27,20 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isGoalInitialized, setIsGoalInitialized] = useState(false);
   const [goalForm, setGoalForm] = useState({ salary: '15000000', age: '25', gender: 'Nam' });
   
-  // Goals Dashboard State
-  const [bankSaving, setBankSaving] = useState({ amount: 5000000, rate: 6, months: 6 });
-  const [investmentIncome, setInvestmentIncome] = useState(2000000);
-  const [customNormalSaving, setCustomNormalSaving] = useState(null);
-  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(null);
-  const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
+  const [bankSaving, setBankSaving] = useState(() => JSON.parse(localStorage.getItem('bankSaving')) || { amount: 5000000, rate: 6, months: 6 });
+  const [investmentIncome, setInvestmentIncome] = useState(() => JSON.parse(localStorage.getItem('investmentIncome')) || 2000000);
+  const [customNormalSaving, setCustomNormalSaving] = useState(() => JSON.parse(localStorage.getItem('customNormalSaving')) || null);
+  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(() => JSON.parse(localStorage.getItem('customBankSavingTotal')) || null);
+  const [userGoal, setUserGoal] = useState(() => JSON.parse(localStorage.getItem('userGoal')) || { name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
   
-  // Transaction Form State
+  const handleSaveGoals = () => {
+    localStorage.setItem('bankSaving', JSON.stringify(bankSaving));
+    localStorage.setItem('investmentIncome', JSON.stringify(investmentIncome));
+    localStorage.setItem('customNormalSaving', JSON.stringify(customNormalSaving));
+    localStorage.setItem('customBankSavingTotal', JSON.stringify(customBankSavingTotal));
+    localStorage.setItem('userGoal', JSON.stringify(userGoal));
+    alert('Lưu cài đặt mục tiêu thành công!');
+  };
   const [type, setType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Ăn uống');
@@ -1666,6 +1672,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       <div style={{ width: `${Math.min((userGoal.currentSaved / userGoal.targetAmount) * 100 || 0, 100)}%`, height: '100%', background: 'linear-gradient(90deg, #F472B6, #7C3AED)', borderRadius: '6px' }}></div>
                     </div>
                   </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                  <button onClick={handleSaveGoals} className="btn-primary" style={{ padding: '12px 30px', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(124,58,237,0.3)' }}>
+                    Lưu các thay đổi
+                  </button>
                 </div>
               </div>
             )}
