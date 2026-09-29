@@ -22,6 +22,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [profileData, setProfileData] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   
+  // Goals State
+  const [isGoalInitialized, setIsGoalInitialized] = useState(false);
+  const [goalForm, setGoalForm] = useState({ salary: '', age: '', gender: 'Nam' });
+  
   // Transaction Form State
   const [type, setType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
@@ -451,7 +455,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <li className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}><CircleDollarSign size={20}/> Thu chi</li>
           <li className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveTab('budget')}><WalletCards size={20}/> Ngân sách</li>
           <li className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}><PieChartIcon size={20}/> Báo cáo</li>
-          <li className="nav-item"><Target size={20}/> Mục tiêu</li>
+          <li className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')}><Target size={20}/> Mục tiêu</li>
           <li className="nav-item"><Tags size={20}/> Danh mục</li>
           <li className="nav-item" onClick={() => setIsProfileOpen(true)}><User size={20}/> Tài khoản</li>
           <li className="nav-item"><Settings size={20}/> Cài đặt</li>
@@ -1350,6 +1354,52 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
               </div>
             </div>
+          </div>
+          </div>
+        )}
+
+        {activeTab === 'goals' && (
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px', display: 'flex', justifyContent: 'center' }}>
+            {!isGoalInitialized ? (
+              <div style={{ maxWidth: '500px', width: '100%', marginTop: '50px', background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+                <img src="/goal_mascot.png" alt="Goal Mascot" style={{ width: 150, marginBottom: '20px' }} />
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '10px', color: 'var(--color-text)' }}>Bắt đầu tiết kiệm cho những mục tiêu to lớn nhé!</h2>
+                <p style={{ color: 'var(--color-text-secondary)', marginBottom: '30px' }}>Để gợi ý lộ trình tốt nhất, Peacee1 cần biết một vài thông tin cơ bản về bạn.</p>
+                
+                <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
+                  <div className="input-group">
+                    <label style={{fontWeight: '600'}}>Mức lương hiện tại (VNĐ/tháng)</label>
+                    <input type="number" placeholder="Ví dụ: 15000000" value={goalForm.salary} onChange={e => setGoalForm({...goalForm, salary: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div className="input-group">
+                      <label style={{fontWeight: '600'}}>Tuổi</label>
+                      <input type="number" placeholder="25" value={goalForm.age} onChange={e => setGoalForm({...goalForm, age: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                    <div className="input-group">
+                      <label style={{fontWeight: '600'}}>Giới tính</label>
+                      <select value={goalForm.gender} onChange={e => setGoalForm({...goalForm, gender: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', backgroundColor: 'white', boxSizing: 'border-box'}}>
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setIsGoalInitialized(true)} 
+                  style={{ width: '100%', padding: '15px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}
+                >
+                  Bắt đầu lập mục tiêu
+                </button>
+              </div>
+            ) : (
+              <div style={{width: '100%'}}>
+                 <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Mục tiêu của bạn</h2>
+                 <p style={{ color: 'var(--color-text-secondary)' }}>Theo dõi và quản lý các mục tiêu tài chính.</p>
+              </div>
+            )}
           </div>
         )}
       </div>
