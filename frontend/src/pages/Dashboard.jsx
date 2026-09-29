@@ -44,6 +44,14 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   // Checkin Modal State
   const [isCheckinOpen, setIsCheckinOpen] = useState(false);
 
+  // Monthly Budget State
+  const [monthlyBudget, setMonthlyBudget] = useState(() => {
+    const saved = localStorage.getItem('monthlyBudget');
+    return saved ? parseInt(saved) : 10000000;
+  });
+  const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
+  const [budgetInputValue, setBudgetInputValue] = useState('');
+
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -564,24 +572,28 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               {/* Budget Widget */}
               <div className="widget">
                 <div className="widget-header">
-                  <h3 className="widget-title">Ngân sách tháng</h3>
-                  <span className="widget-link">Xem tất cả</span>
+                  <h3 className="widget-title">Giới hạn chi tiêu tháng</h3>
+                  <button onClick={() => { setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '4px 10px', fontSize: '0.78rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ✏️ Sửa
+                  </button>
                 </div>
                 <div style={{display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px'}}>
                   <div className="stat-icon" style={{background: '#FFFBEB'}}>
                     <WalletCards color="#D97706" size={20}/>
                   </div>
                   <div>
-                    <div style={{fontSize: '0.85rem', color: 'var(--color-text-secondary)'}}>Tổng ngân sách</div>
-                    <div style={{fontSize: '1.2rem', fontWeight: '800'}}>10.000.000 đ</div>
+                    <div style={{fontSize: '0.85rem', color: 'var(--color-text-secondary)'}}>Đã chi / Giới hạn</div>
+                    <div style={{fontSize: '1.2rem', fontWeight: '800'}}>{totalExpense.toLocaleString('vi-VN')} đ <span style={{color: 'var(--color-text-secondary)', fontWeight: '400', fontSize: '0.9rem'}}>/ {monthlyBudget.toLocaleString('vi-VN')} đ</span></div>
                   </div>
                 </div>
                 <div className="progress-container" style={{height: 10}}>
-                  <div className="progress-bar" style={{background: 'var(--color-expense)', width: `${Math.min((totalExpense / 10000000) * 100, 100)}%`}}></div>
+                  <div className="progress-bar" style={{background: totalExpense > monthlyBudget ? 'var(--color-expense)' : '#7C3AED', width: `${Math.min((totalExpense / monthlyBudget) * 100, 100)}%`}}></div>
                 </div>
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginTop: '5px', color: 'var(--color-text-secondary)'}}>
                   <span>Đã chi {formatCompact(totalExpense)}</span>
-                  <span>Còn lại {formatCompact(Math.max(10000000 - totalExpense, 0))}</span>
+                  <span style={{color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit'}}>
+                    {totalExpense > monthlyBudget ? `Vượt ${formatCompact(totalExpense - monthlyBudget)}` : `Còn lại ${formatCompact(monthlyBudget - totalExpense)}`}
+                  </span>
                 </div>
                 
                 <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '15px'}}>
@@ -881,6 +893,58 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+
+      {/* Edit Budget Modal */}
+      {isEditBudgetOpen && (
+        <div className="modal-overlay" style={{ zIndex: 2000 }}>
+          <div className="modal-content" style={{ maxWidth: '400px', padding: '30px' }}>
+            <div className="modal-header" style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>✏️ Sửa giới hạn chi tiêu tháng</h3>
+              <button className="close-btn" onClick={() => setIsEditBudgetOpen(false)}>×</button>
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
+                Giới hạn chi tiêu (triệu đồng)
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input
+                  type="number"
+                  value={budgetInputValue}
+                  onChange={(e) => setBudgetInputValue(e.target.value)}
+                  placeholder="Ví dụ: 10"
+                  min="0"
+                  step="0.5"
+                  style={{ flex: 1, padding: '12px 16px', border: '2px solid var(--color-border)', borderRadius: '10px', fontSize: '1rem', outline: 'none', transition: 'border-color 0.2s' }}
+                  onFocus={(e) => e.target.style.borderColor = '#7C3AED'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
+                />
+                <span style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>triệu đ</span>
+              </div>
+              {budgetInputValue && (
+                <div style={{ marginTop: '8px', fontSize: '0.82rem', color: '#7C3AED', fontWeight: '500' }}>
+                  = {(parseFloat(budgetInputValue) * 1000000).toLocaleString('vi-VN')} đ / tháng
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setIsEditBudgetOpen(false)} style={{ flex: 1, padding: '12px', border: '1px solid var(--color-border)', borderRadius: '10px', background: 'white', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
+                Hủy
+              </button>
+              <button onClick={() => {
+                const newBudget = Math.round(parseFloat(budgetInputValue) * 1000000);
+                if (!isNaN(newBudget) && newBudget > 0) {
+                  setMonthlyBudget(newBudget);
+                  localStorage.setItem('monthlyBudget', newBudget.toString());
+                  setIsEditBudgetOpen(false);
+                }
+              }} style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '10px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', cursor: 'pointer', fontWeight: '700', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+                Lưu
+              </button>
             </div>
           </div>
         </div>
