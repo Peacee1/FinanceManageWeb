@@ -50,9 +50,14 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg|webp)\$ {
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable";
+        access_log off;
+    }
+
     location / {
-        expires -1;
-        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+        add_header Cache-Control "no-cache, must-revalidate";
         try_files \$uri \$uri/ /index.html;
     }
 
