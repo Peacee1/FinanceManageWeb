@@ -24,7 +24,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   
   // Goals State
   const [isGoalInitialized, setIsGoalInitialized] = useState(false);
-  const [goalForm, setGoalForm] = useState({ salary: '', age: '', gender: 'Nam' });
+  const [goalForm, setGoalForm] = useState({ salary: '15000000', age: '25', gender: 'Nam' });
+  
+  // Goals Dashboard State
+  const [bankSaving, setBankSaving] = useState({ amount: 5000000, rate: 6, months: 6 });
+  const [investmentIncome, setInvestmentIncome] = useState(2000000);
+  const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31' });
   
   // Transaction Form State
   const [type, setType] = useState('EXPENSE');
@@ -1394,9 +1399,75 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </button>
               </div>
             ) : (
-              <div style={{width: '100%'}}>
-                 <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Mục tiêu của bạn</h2>
-                 <p style={{ color: 'var(--color-text-secondary)' }}>Theo dõi và quản lý các mục tiêu tài chính.</p>
+              <div style={{width: '100%', maxWidth: '1000px'}}>
+                <div style={{ marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Mục tiêu của bạn</h2>
+                  <p style={{ color: 'var(--color-text-secondary)' }}>Theo dõi và quản lý các mục tiêu tài chính.</p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                  {/* Tiết kiệm bình thường */}
+                  <div className="widget" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Tiết kiệm bình thường</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Lương tháng - Chi tiêu</p>
+                    <div className="input-group">
+                      <label>Số tiền (VNĐ)</label>
+                      <input type="number" value={Math.max((parseInt(goalForm.salary) || 0) - totalExpense, 0)} onChange={() => {}} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                  </div>
+
+                  {/* Đầu tư */}
+                  <div className="widget" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Đầu tư (Linh hoạt)</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Thu nhập đầu tư tháng này</p>
+                    <div className="input-group">
+                      <label>Số tiền (VNĐ)</label>
+                      <input type="number" value={investmentIncome} onChange={(e) => setInvestmentIncome(parseInt(e.target.value) || 0)} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gửi tiết kiệm */}
+                <div className="widget" style={{ marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '5px' }}>Gửi tiết kiệm</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '15px' }}>Tính lãi suất theo số tháng gửi.</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                    <div className="input-group">
+                      <label>Số tiền gửi (VNĐ)</label>
+                      <input type="number" value={bankSaving.amount} onChange={(e) => setBankSaving({...bankSaving, amount: parseInt(e.target.value) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                    <div className="input-group">
+                      <label>Lãi suất (%/năm)</label>
+                      <input type="number" value={bankSaving.rate} onChange={(e) => setBankSaving({...bankSaving, rate: parseFloat(e.target.value) || 0})} step="0.1" style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                    <div className="input-group">
+                      <label>Số tháng gửi</label>
+                      <input type="number" value={bankSaving.months} onChange={(e) => setBankSaving({...bankSaving, months: parseInt(e.target.value) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '15px', padding: '15px', background: 'var(--color-background)', borderRadius: '12px', fontWeight: '600' }}>
+                    Tổng tiền nhận được sau {bankSaving.months} tháng: <span style={{color: 'var(--color-primary)'}}>{formatCurrency(bankSaving.amount * (1 + (bankSaving.rate / 100) * (bankSaving.months / 12)))}</span>
+                  </div>
+                </div>
+
+                {/* Mục tiêu */}
+                <div className="widget">
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Mục tiêu lớn</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '15px' }}>
+                    <div className="input-group">
+                      <label>Tên mục tiêu</label>
+                      <input type="text" value={userGoal.name} onChange={(e) => setUserGoal({...userGoal, name: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                    <div className="input-group">
+                      <label>Số tiền cần (VNĐ)</label>
+                      <input type="number" value={userGoal.targetAmount} onChange={(e) => setUserGoal({...userGoal, targetAmount: parseInt(e.target.value) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                    <div className="input-group">
+                      <label>Thời hạn</label>
+                      <input type="date" value={userGoal.deadline} onChange={(e) => setUserGoal({...userGoal, deadline: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
