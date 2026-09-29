@@ -9,7 +9,13 @@ function App() {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     if (token && userData) {
-      return JSON.parse(userData);
+      try {
+        return JSON.parse(userData);
+      } catch(e) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        return null;
+      }
     }
     return null;
   });

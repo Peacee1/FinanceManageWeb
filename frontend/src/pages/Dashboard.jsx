@@ -14,6 +14,16 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area, Legend
 } from 'recharts';
 
+const safeJsonParse = (str, fallback) => {
+  if (!str || str === 'undefined' || str === 'null') return fallback;
+  try {
+    const parsed = JSON.parse(str);
+    return parsed !== null ? parsed : fallback;
+  } catch (e) {
+    return fallback;
+  }
+};
+
 const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,11 +37,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isGoalInitialized, setIsGoalInitialized] = useState(false);
   const [goalForm, setGoalForm] = useState({ salary: '15000000', age: '25', gender: 'Nam' });
   
-  const [bankSaving, setBankSaving] = useState(() => JSON.parse(localStorage.getItem('bankSaving')) || { amount: 5000000, rate: 6, months: 6 });
-  const [investmentIncome, setInvestmentIncome] = useState(() => JSON.parse(localStorage.getItem('investmentIncome')) || 2000000);
-  const [customNormalSaving, setCustomNormalSaving] = useState(() => JSON.parse(localStorage.getItem('customNormalSaving')) || null);
-  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(() => JSON.parse(localStorage.getItem('customBankSavingTotal')) || null);
-  const [userGoal, setUserGoal] = useState(() => JSON.parse(localStorage.getItem('userGoal')) || { name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
+  const [bankSaving, setBankSaving] = useState(() => safeJsonParse(localStorage.getItem('bankSaving'), { amount: 5000000, rate: 6, months: 6 }));
+  const [investmentIncome, setInvestmentIncome] = useState(() => safeJsonParse(localStorage.getItem('investmentIncome'), 2000000));
+  const [customNormalSaving, setCustomNormalSaving] = useState(() => safeJsonParse(localStorage.getItem('customNormalSaving'), null));
+  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(() => safeJsonParse(localStorage.getItem('customBankSavingTotal'), null));
+  const [userGoal, setUserGoal] = useState(() => safeJsonParse(localStorage.getItem('userGoal'), { name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 }));
   
   const handleSaveGoals = () => {
     localStorage.setItem('bankSaving', JSON.stringify(bankSaving));
@@ -72,7 +82,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   // Monthly Budget State
   const [monthlyBudgets, setMonthlyBudgets] = useState(() => {
-    return JSON.parse(localStorage.getItem('monthlyBudgets')) || {};
+    return safeJsonParse(localStorage.getItem('monthlyBudgets'), {});
   });
 
   const getBudgetForMonth = (m, y) => {
@@ -98,8 +108,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [qaPos, setQaPos] = useState(() => {
     const saved = localStorage.getItem('qaPos');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.left !== undefined && parsed.top !== undefined) return parsed;
+      const parsed = safeJsonParse(saved, null);
+      if (parsed && parsed.left !== undefined && parsed.top !== undefined) return parsed;
     }
     return { left: window.innerWidth - 364, top: window.innerHeight - 350 };
   });
