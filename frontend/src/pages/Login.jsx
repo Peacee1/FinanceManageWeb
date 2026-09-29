@@ -15,8 +15,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Gọi API Node.js
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      // Gọi API Node.js qua relative path để Nginx tự động proxy
+      const response = await axios.post('/api/auth/login', {
         email,
         password
       });
