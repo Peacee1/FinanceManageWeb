@@ -790,7 +790,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div className="modal-content checkin-modal" style={{ padding: 0, overflow: 'hidden', maxWidth: '600px', background: 'var(--color-bg)' }}>
             
             {/* Banner Section */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', background: '#7C3AED' }}>
               <button onClick={() => setIsCheckinOpen(false)} style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%', width: 30, height: 30, fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
               <img src="/checkin_banner.png" alt="Banner Điểm Danh" style={{ width: '100%', display: 'block', borderRadius: '0' }} />
             </div>
