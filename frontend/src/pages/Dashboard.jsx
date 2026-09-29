@@ -864,17 +864,4 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   );
 };
 
-export default Dashboard;={setZoom} onCropComplete={(c, cp) => setCroppedAreaPixels(cp)} />
-            </div>
-            <button className="btn-promo" style={{marginTop: '15px'}} onClick={handleCropComplete} disabled={loading}>
-              {loading ? 'Đang xử lý...' : 'Lưu Avatar'}
-            </button>
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-};
-
 export default Dashboard;
