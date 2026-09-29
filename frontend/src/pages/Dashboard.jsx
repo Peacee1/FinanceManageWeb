@@ -1355,7 +1355,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             </div>
           </div>
-          </div>
         )}
 
         {activeTab === 'goals' && (
