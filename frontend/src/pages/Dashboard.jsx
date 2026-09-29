@@ -194,13 +194,19 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     ? (profileData.avatar_url.startsWith('http') ? profileData.avatar_url : `/api${profileData.avatar_url}`) 
     : null;
 
+  const renderSidebarBadge = (plan) => {
+    if (plan === 'ultra') return <div className="pro-badge" style={{background: '#EDE9FE', color: '#7C3AED', borderColor: '#DDD6FE'}}>💎 Ultra</div>;
+    if (plan === 'plus') return <div className="pro-badge">⭐ Plus</div>;
+    return <div className="pro-badge" style={{background: '#F3F4F6', color: '#4B5563', borderColor: '#E5E7EB'}}>Normal</div>;
+  };
+
   return (
     <div className="layout">
       {/* Sidebar */}
       <div className="sidebar">
         <div className="sidebar-header">
           <div className="logo-text">💜 Peacee1</div>
-          <div className="pro-badge">👑 Pro</div>
+          {renderSidebarBadge(user.plan)}
         </div>
         
         <ul className="nav-menu">
