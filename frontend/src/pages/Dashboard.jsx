@@ -71,10 +71,25 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   // Monthly Budget State
-  const [monthlyBudget, setMonthlyBudget] = useState(() => {
-    const saved = localStorage.getItem('monthlyBudget');
-    return saved ? parseInt(saved) : 10000000;
+  const [monthlyBudgets, setMonthlyBudgets] = useState(() => {
+    return JSON.parse(localStorage.getItem('monthlyBudgets')) || {};
   });
+
+  const getBudgetForMonth = (m, y) => {
+    const key = `${y}-${m}`;
+    if (monthlyBudgets[key] !== undefined) return monthlyBudgets[key];
+    let searchY = y;
+    let searchM = m - 1;
+    for(let i=0; i<24; i++) {
+        if(searchM === 0) { searchM = 12; searchY--; }
+        const sKey = `${searchY}-${searchM}`;
+        if (monthlyBudgets[sKey] !== undefined) return monthlyBudgets[sKey];
+        searchM--;
+    }
+    return null;
+  };
+
+  const monthlyBudget = getBudgetForMonth(currentMonth + 1, currentYear) || (localStorage.getItem('monthlyBudget') ? parseInt(localStorage.getItem('monthlyBudget')) : 10000000);
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
   const [budgetInputValue, setBudgetInputValue] = useState('');
 
@@ -486,17 +501,25 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     const y = d.getFullYear();
     const txInMonth = transactions.filter(t => new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y);
     const spent = txInMonth.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
-    const b = monthlyBudget; 
-    const stat = i === 0 ? 'Đang diễn ra' : (spent > b ? 'Vượt ngân sách' : 'Hoàn thành');
-    const c = i === 0 ? '#7C3AED' : (spent > b ? '#E11D48' : '#16A34A');
-    const bg = i === 0 ? '#F5F3FF' : (spent > b ? '#FFE4E6' : '#DCFCE7');
-    budgetHistory.push({ m: m + 1, y, b, s: spent, stat, c, bg });
+    const b = getBudgetForMonth(m + 1, y);
+    
+    let stat = 'Không có DL';
+    let c = '#9CA3AF';
+    let bg = '#F3F4F6';
+    if (b !== null) {
+      stat = i === 0 ? 'Đang diễn ra' : (spent > b ? 'Vượt ngân sách' : 'Hoàn thành');
+      c = i === 0 ? '#7C3AED' : (spent > b ? '#E11D48' : '#16A34A');
+      bg = i === 0 ? '#F5F3FF' : (spent > b ? '#FFE4E6' : '#DCFCE7');
+    }
+    
+    budgetHistory.push({ m: m + 1, y, b, s: spent, stat, c, bg, isCurrent: i === 0 });
   }
 
   const yearBudgetData = Array.from({length: 12}, (_, i) => {
     const txInMonth = transactions.filter(t => new Date(t.date).getMonth() === i && new Date(t.date).getFullYear() === currentYear);
     const spent = txInMonth.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
-    return { name: `Th${i + 1}`, budget: monthlyBudget / 1000000, spent: spent / 1000000 };
+    const mb = getBudgetForMonth(i + 1, currentYear) || monthlyBudget;
+    return { name: `Th${i + 1}`, budget: mb / 1000000, spent: spent / 1000000 };
   });
 
   const dailyExpenseData = [];
@@ -1243,14 +1266,16 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {budgetHistory.map((row, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
-                      <div style={{fontWeight: '600'}}>Tháng {row.m}, {currentYear}</div>
-                      <div style={{textAlign: 'right'}}>{formatCurrency(row.b)}</div>
+                      <div style={{fontWeight: '600'}}>Tháng {row.m}, {row.y}</div>
+                      <div style={{textAlign: 'right'}}>{row.b !== null ? formatCurrency(row.b) : 'Chưa có DL'}</div>
                       <div style={{textAlign: 'right'}}>{formatCurrency(row.s)}</div>
-                      <div style={{textAlign: 'right', color: row.b - row.s >= 0 ? 'var(--color-income)' : 'var(--color-expense)'}}>{formatCurrency(Math.abs(row.b - row.s))}</div>
+                      <div style={{textAlign: 'right', color: row.b !== null ? (row.b - row.s >= 0 ? 'var(--color-income)' : 'var(--color-expense)') : 'inherit'}}>{row.b !== null ? formatCurrency(Math.abs(row.b - row.s)) : '-'}</div>
                       <div style={{display: 'flex', justifyContent: 'center'}}>
-                        <span style={{background: row.bg, color: row.c, padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700'}}>{row.stat}</span>
+                        <span style={{background: row.bg, color: row.c, padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', whiteSpace: 'nowrap'}}>{row.stat}</span>
                       </div>
-                      <div style={{cursor: 'pointer', color: 'var(--color-text-secondary)', textAlign: 'right'}}><MoreVertical size={16}/></div>
+                      <div style={{textAlign: 'right', color: 'var(--color-text-secondary)'}}>
+                        {row.isCurrent ? <MoreVertical style={{cursor: 'pointer'}} size={16} onClick={() => { setBudgetInputValue(((row.b || monthlyBudget) / 1000000).toString()); setIsEditBudgetOpen(true); }}/> : null}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2109,8 +2134,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <button onClick={() => {
                 const newBudget = Math.round(parseFloat(budgetInputValue) * 1000000);
                 if (!isNaN(newBudget) && newBudget > 0) {
-                  setMonthlyBudget(newBudget);
-                  localStorage.setItem('monthlyBudget', newBudget.toString());
+                  setMonthlyBudgets(prev => {
+                    const updated = { ...prev, [`${currentYear}-${currentMonth + 1}`]: newBudget };
+                    localStorage.setItem('monthlyBudgets', JSON.stringify(updated));
+                    return updated;
+                  });
                   setIsEditBudgetOpen(false);
                 }
               }} style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '10px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', cursor: 'pointer', fontWeight: '700', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
