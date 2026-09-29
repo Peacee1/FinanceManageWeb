@@ -6,7 +6,7 @@ import {
   PieChart as PieChartIcon, Target, Tags, User, Settings, 
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
-  ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal 
+  ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift 
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
