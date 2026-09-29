@@ -2,12 +2,29 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+const validatePassword = (pwd) => {
+  const minLength = 8;
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasLower = /[a-z]/.test(pwd);
+  const hasNumber = /[0-9]/.test(pwd);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+
+  if (pwd.length < minLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+    return false;
+  }
+  return true;
+};
+
 const register = async (req, res) => {
-  // Lấy thêm trường plan từ body, mặc định là 'normal'
-  const { email, password, name, plan = 'normal' } = req.body;
+  const { email, password, name } = req.body;
   
   if (!email || !password || !name) {
     return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin.' });
+  }
+
+  // Validate server-side cho an toàn tuyệt đối
+  if (!validatePassword(password)) {
+    return res.status(400).json({ message: 'Mật khẩu không đạt yêu cầu bảo mật.' });
   }
 
   try {
@@ -19,7 +36,10 @@ const register = async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Lưu vào database kèm theo plan
+    // Luôn luôn tạo tài khoản là 'normal'
+    const plan = 'normal';
+
+    // Lưu vào database
     const result = await db.query(
       'INSERT INTO users (name, email, password_hash, plan) VALUES ($1, $2, $3, $4) RETURNING id, name, email, plan',
       [name, email, passwordHash, plan]
