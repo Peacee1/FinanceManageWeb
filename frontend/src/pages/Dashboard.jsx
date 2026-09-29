@@ -117,6 +117,31 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     }
   };
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/update-avatar', formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      alert('Cập nhật Avatar thành công!');
+      fetchProfile(); // reload profile to get new avatar URL
+    } catch (error) {
+      alert(error.response?.data?.message || 'Lỗi cập nhật ảnh đại diện');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddTransaction = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -223,12 +248,21 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <span style={{ fontSize: '1.25rem', cursor: 'pointer' }}>🔔</span>
             <div className="avatar-container">
-              <div 
-                style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', placeItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              >
-                {user.name.charAt(0).toUpperCase()}
-              </div>
+              {profileData?.avatar_url ? (
+                <img 
+                  src={profileData.avatar_url.startsWith('http') ? profileData.avatar_url : `/api${profileData.avatar_url}`} 
+                  alt="Avatar" 
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                />
+              ) : (
+                <div 
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', placeItems: 'center', justifyContent: 'center', fontWeight: 'bold', cursor: 'pointer' }}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
               
               {isDropdownOpen && (
                 <div className="avatar-dropdown">
@@ -342,8 +376,22 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
             
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'inline-flex', placeItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold' }}>
-                {profileData.name.charAt(0).toUpperCase()}
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                {profileData.avatar_url ? (
+                  <img 
+                    src={profileData.avatar_url.startsWith('http') ? profileData.avatar_url : `/api${profileData.avatar_url}`} 
+                    alt="Avatar" 
+                    style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }}
+                  />
+                ) : (
+                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'inline-flex', placeItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold' }}>
+                    {profileData.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <label style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--color-bg)', padding: '5px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', fontSize: '0.8rem' }}>
+                  📷
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} disabled={loading} />
+                </label>
               </div>
               <h2 style={{ margin: '10px 0 5px', fontSize: '1.5rem' }}>{profileData.name}</h2>
               <div>{getPlanBadge(profileData.plan)}</div>

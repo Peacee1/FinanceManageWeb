@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     res.json(result.rows[0]);
   } catch (err) {
@@ -120,4 +120,19 @@ const checkIn = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn };
+// Cập nhật avatar
+const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Vui lòng chọn một file ảnh' });
+    }
+    const avatarUrl = `/uploads/${req.file.filename}`;
+    await db.query('UPDATE users SET avatar_url = $1 WHERE id = $2', [avatarUrl, req.user.userId]);
+    res.json({ message: 'Cập nhật ảnh đại diện thành công', avatar_url: avatarUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar };

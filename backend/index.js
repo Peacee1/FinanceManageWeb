@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
@@ -11,6 +12,7 @@ const app = express();
 // Middleware
 app.use(cors()); // Cho phép Frontend gọi API
 app.use(express.json()); // Phân tích body dạng JSON
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
