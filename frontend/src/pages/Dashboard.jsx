@@ -1373,7 +1373,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
                   <div className="input-group">
                     <label style={{fontWeight: '600'}}>Mức lương hiện tại (VNĐ/tháng)</label>
-                    <input type="number" placeholder="Ví dụ: 15000000" value={goalForm.salary} onChange={e => setGoalForm({...goalForm, salary: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                    <input type="text" placeholder="Ví dụ: 15.000.000" value={goalForm.salary.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} onChange={e => setGoalForm({...goalForm, salary: e.target.value.replace(/\./g, '')})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                     <div className="input-group">
@@ -1412,7 +1412,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Lương tháng - Chi tiêu</p>
                     <div className="input-group">
                       <label>Số tiền (VNĐ)</label>
-                      <input type="number" value={Math.max((parseInt(goalForm.salary) || 0) - totalExpense, 0)} onChange={() => {}} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                      <input type="text" value={Math.max((parseInt(goalForm.salary) || 0) - totalExpense, 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} onChange={() => {}} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
                   </div>
 
@@ -1422,7 +1422,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Thu nhập đầu tư tháng này</p>
                     <div className="input-group">
                       <label>Số tiền (VNĐ)</label>
-                      <input type="number" value={investmentIncome} onChange={(e) => setInvestmentIncome(parseInt(e.target.value) || 0)} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                      <input type="text" value={investmentIncome ? investmentIncome.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setInvestmentIncome(parseInt(e.target.value.replace(/\./g, '')) || 0)} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
                   </div>
                 </div>
@@ -1434,7 +1434,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                     <div className="input-group">
                       <label>Số tiền gửi (VNĐ)</label>
-                      <input type="number" value={bankSaving.amount} onChange={(e) => setBankSaving({...bankSaving, amount: parseInt(e.target.value) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                      <input type="text" value={bankSaving.amount ? bankSaving.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setBankSaving({...bankSaving, amount: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
                     <div className="input-group">
                       <label>Lãi suất (%/năm)</label>
@@ -1460,7 +1460,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     </div>
                     <div className="input-group">
                       <label>Số tiền cần (VNĐ)</label>
-                      <input type="number" value={userGoal.targetAmount} onChange={(e) => setUserGoal({...userGoal, targetAmount: parseInt(e.target.value) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                      <input type="text" value={userGoal.targetAmount ? userGoal.targetAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setUserGoal({...userGoal, targetAmount: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
                     <div className="input-group">
                       <label>Thời hạn</label>
@@ -1496,7 +1496,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
               <div className="input-group">
                 <label>Số tiền (VNĐ)</label>
-                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} required placeholder="50000" min="1000" />
+                <input type="text" value={amount ? amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={e => setAmount(e.target.value.replace(/\./g, ''))} required placeholder="50.000" />
               </div>
               <div className="input-group">
                 <label>Ngày</label>
