@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Cropper from 'react-easy-crop';
 
 const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [transactions, setTransactions] = useState([]);
@@ -19,6 +20,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   // Profile Form State
   const [newPhone, setNewPhone] = useState('');
   const [showPhoneInput, setShowPhoneInput] = useState(false);
+
+  // Avatar Crop State
+  const [avatarImage, setAvatarImage] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
 
   const fetchTransactions = async () => {
     try {
@@ -95,12 +103,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       const res = await axios.post('/api/users/upgrade-plan', { targetPlan }, { headers: { Authorization: `Bearer ${token}` } });
       alert(res.data.message);
       
-      // Update local storage so the whole app updates
       const updatedUser = { ...user, plan: targetPlan };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       fetchProfile();
-      window.location.reload(); // Reload to refresh sidebar badge
+      window.location.reload();
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi nâng cấp');
     }
@@ -117,15 +124,59 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     }
   };
 
-  const handleAvatarUpload = async (e) => {
+  const handleAvatarUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('avatar', file);
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      setAvatarImage(reader.result);
+      setIsCropModalOpen(true);
+    });
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset input
+  };
 
+  const getCroppedImg = async (imageSrc, pixelCrop) => {
+    const image = new Image();
+    image.src = imageSrc;
+    await new Promise(resolve => (image.onload = resolve));
+
+    const canvas = document.createElement('canvas');
+    // Size cố định 256x256
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      256,
+      256
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg', 0.9);
+    });
+  };
+
+  const handleCropComplete = async () => {
+    if (!croppedAreaPixels || !avatarImage) return;
+    
     try {
       setLoading(true);
+      const croppedBlob = await getCroppedImg(avatarImage, croppedAreaPixels);
+      
+      const formData = new FormData();
+      formData.append('avatar', croppedBlob, 'avatar.jpg');
+
       const token = localStorage.getItem('token');
       await axios.post('/api/users/update-avatar', formData, {
         headers: { 
@@ -134,7 +185,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         }
       });
       alert('Cập nhật Avatar thành công!');
-      fetchProfile(); // reload profile to get new avatar URL
+      setIsCropModalOpen(false);
+      setAvatarImage(null);
+      fetchProfile(); 
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi cập nhật ảnh đại diện');
     } finally {
@@ -368,7 +421,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
       {/* Profile Modal */}
       {isProfileOpen && profileData && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
           <div className="modal-content" style={{ maxWidth: '500px' }}>
             <div className="modal-header">
               <h3>Hồ Sơ Cá Nhân</h3>
@@ -455,6 +508,52 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               )}
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Crop Avatar Modal */}
+      {isCropModalOpen && avatarImage && (
+        <div className="modal-overlay" style={{ zIndex: 2000 }}>
+          <div className="modal-content" style={{ maxWidth: '500px', height: '500px', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header">
+              <h3>Cắt Ảnh (Vuông 256x256)</h3>
+              <button className="close-btn" onClick={() => setIsCropModalOpen(false)}>×</button>
+            </div>
+            
+            <div style={{ position: 'relative', flex: 1, width: '100%', background: '#333', borderRadius: '8px', overflow: 'hidden' }}>
+              <Cropper
+                image={avatarImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(croppedArea, croppedAreaPixels) => setCroppedAreaPixels(croppedAreaPixels)}
+              />
+            </div>
+            
+            <div style={{ marginTop: '20px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Thu phóng: {Number(zoom).toFixed(1)}x</label>
+              <input 
+                type="range" 
+                min={1} 
+                max={3} 
+                step={0.1} 
+                value={zoom} 
+                onChange={(e) => setZoom(e.target.value)}
+                style={{ width: '100%', marginTop: '5px', accentColor: 'var(--color-primary)' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button className="btn-primary" onClick={handleCropComplete} disabled={loading} style={{ flex: 1 }}>
+                {loading ? 'Đang xử lý...' : 'Lưu Avatar'}
+              </button>
+              <button className="btn-secondary" onClick={() => setIsCropModalOpen(false)} style={{ marginTop: 0, flex: 1 }}>
+                Hủy
+              </button>
+            </div>
           </div>
         </div>
       )}
