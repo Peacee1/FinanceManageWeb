@@ -3,9 +3,24 @@ const db = require('../config/db');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
-    res.json(result.rows[0]);
+    
+    let userProfile = result.rows[0];
+    if (!userProfile.custom_categories) {
+      userProfile.custom_categories = [
+        { name: 'Ăn uống', type: 'EXPENSE', color: '#FB7185' },
+        { name: 'Mua sắm', type: 'EXPENSE', color: '#F472B6' },
+        { name: 'Di chuyển', type: 'EXPENSE', color: '#FBBF24' },
+        { name: 'Hoá đơn', type: 'EXPENSE', color: '#34D399' },
+        { name: 'Giải trí', type: 'EXPENSE', color: '#67E8F9' },
+        { name: 'Lương', type: 'INCOME', color: '#34D399' },
+        { name: 'Đầu tư', type: 'INCOME', color: '#7C3AED' },
+        { name: 'Khác', type: 'INCOME', color: '#9CA3AF' },
+        { name: 'Khác', type: 'EXPENSE', color: '#9CA3AF' }
+      ];
+    }
+    res.json(userProfile);
   } catch (err) {
     res.status(500).json({ message: 'Lỗi server' });
   }
@@ -151,4 +166,16 @@ const initGoal = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar, initGoal };
+// Cập nhật danh mục
+const updateCategories = async (req, res) => {
+  const { categories } = req.body;
+  try {
+    await db.query('UPDATE users SET custom_categories = $1 WHERE id = $2', [JSON.stringify(categories), req.user.userId]);
+    res.json({ message: 'Cập nhật danh mục thành công' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar, initGoal, updateCategories };

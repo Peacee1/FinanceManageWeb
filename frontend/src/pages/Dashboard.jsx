@@ -54,6 +54,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   // Checkin Modal State
   const [isCheckinOpen, setIsCheckinOpen] = useState(false);
 
+  // Category State
+  const [newCategory, setNewCategory] = useState({ name: '', type: 'EXPENSE', color: '#7C3AED' });
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+
   // Monthly Budget State
   const [monthlyBudget, setMonthlyBudget] = useState(() => {
     const saved = localStorage.getItem('monthlyBudget');
@@ -199,6 +203,21 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       setIsGoalInitialized(true);
     } catch (error) {
       alert('Lỗi lưu thông tin mục tiêu');
+    }
+  };
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    if (!newCategory.name.trim()) return;
+    const updatedCategories = [...(profileData.custom_categories || []), newCategory];
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/update-categories', { categories: updatedCategories }, { headers: { Authorization: `Bearer ${token}` } });
+      setProfileData({ ...profileData, custom_categories: updatedCategories });
+      setNewCategory({ name: '', type: 'EXPENSE', color: '#7C3AED' });
+      setIsAddingCategory(false);
+    } catch (error) {
+      alert('Lỗi thêm danh mục');
     }
   };
 
@@ -527,7 +546,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <li className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveTab('budget')}><WalletCards size={20}/> Ngân sách</li>
           <li className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}><PieChartIcon size={20}/> Báo cáo</li>
           <li className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')}><Target size={20}/> Mục tiêu</li>
-          <li className="nav-item"><Tags size={20}/> Danh mục</li>
+          <li className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}><Tags size={20}/> Danh mục</li>
           <li className="nav-item" onClick={() => setIsProfileOpen(true)}><User size={20}/> Tài khoản</li>
           <li className="nav-item"><Settings size={20}/> Cài đặt</li>
         </ul>
@@ -1553,6 +1572,52 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         )}
       </div>
 
+        {activeTab === 'categories' && (
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: '800' }}>Quản lý Danh mục</h2>
+              <button 
+                onClick={() => setIsAddingCategory(true)}
+                style={{ padding: '10px 20px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                + Thêm danh mục
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              {/* Cột Chi tiêu */}
+              <div className="widget" style={{ padding: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px', color: 'var(--color-expense)' }}>Chi tiêu (Expense)</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(profileData?.custom_categories || []).filter(c => c.type === 'EXPENSE').map((cat, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: cat.color }}></div>
+                        <span style={{ fontWeight: '600' }}>{cat.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cột Thu nhập */}
+              <div className="widget" style={{ padding: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px', color: 'var(--color-income)' }}>Thu nhập (Income)</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(profileData?.custom_categories || []).filter(c => c.type === 'INCOME').map((cat, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: cat.color }}></div>
+                        <span style={{ fontWeight: '600' }}>{cat.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       {/* Modals from old code... */}
       {isModalOpen && (
         <div className="modal-overlay">
@@ -1564,14 +1629,19 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             <form onSubmit={handleAddTransaction}>
               <div className="input-group">
                 <label>Loại</label>
-                <select style={{padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)'}} value={type} onChange={e => setType(e.target.value)}>
+                <select style={{padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)'}} value={type} onChange={e => { setType(e.target.value); setCategory(''); }}>
                   <option value="EXPENSE">Chi tiêu</option>
                   <option value="INCOME">Thu nhập</option>
                 </select>
               </div>
               <div className="input-group">
                 <label>Danh mục</label>
-                <input type="text" value={category} onChange={e => setCategory(e.target.value)} required placeholder="Ví dụ: Lương, Shopping..." />
+                <select style={{padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} value={category} onChange={e => setCategory(e.target.value)} required>
+                  <option value="" disabled>Chọn danh mục</option>
+                  {(profileData?.custom_categories || []).filter(c => c.type === type).map((cat, i) => (
+                    <option key={i} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="input-group">
                 <label>Số tiền (VNĐ)</label>
@@ -1828,6 +1898,40 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </div>
         </div>
       )}
+
+      {/* Add Category Modal */}
+      {isAddingCategory && (
+        <div className="modal-overlay" style={{ zIndex: 2000 }}>
+          <div className="modal-content" style={{ maxWidth: '400px', padding: '30px' }}>
+            <div className="modal-header" style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Thêm danh mục mới</h3>
+              <button className="close-btn" onClick={() => setIsAddingCategory(false)}>×</button>
+            </div>
+            <form onSubmit={handleAddCategory}>
+              <div className="input-group">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>Loại danh mục</label>
+                <select style={{padding: '12px 16px', borderRadius: '10px', border: '2px solid var(--color-border)', width: '100%', boxSizing: 'border-box', outline: 'none'}} value={newCategory.type} onChange={e => setNewCategory({...newCategory, type: e.target.value})}>
+                  <option value="EXPENSE">Chi tiêu</option>
+                  <option value="INCOME">Thu nhập</option>
+                </select>
+              </div>
+              <div className="input-group" style={{ marginTop: '15px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>Tên danh mục</label>
+                <input type="text" value={newCategory.name} onChange={e => setNewCategory({...newCategory, name: e.target.value})} required placeholder="Ví dụ: Lương tháng 13" style={{padding: '12px 16px', borderRadius: '10px', border: '2px solid var(--color-border)', width: '100%', boxSizing: 'border-box', outline: 'none'}} />
+              </div>
+              <div className="input-group" style={{ marginTop: '15px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>Màu sắc (RGB Picker)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <input type="color" value={newCategory.color} onChange={e => setNewCategory({...newCategory, color: e.target.value})} style={{ width: '50px', height: '40px', padding: '0', border: 'none', borderRadius: '8px', cursor: 'pointer', background: 'transparent' }} />
+                  <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', fontFamily: 'monospace', background: 'var(--color-background)', padding: '8px 12px', borderRadius: '8px' }}>{newCategory.color}</span>
+                </div>
+              </div>
+              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', marginTop: '25px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>Lưu danh mục</button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Edit Budget Modal */}
       {isEditBudgetOpen && (
         <div className="modal-overlay" style={{ zIndex: 2000 }}>
