@@ -132,12 +132,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const currentYear = currentDate.getFullYear();
   const currentMonthTx = transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear);
 
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+  const handlePrevDate = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 1));
   };
 
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+  const handleNextDate = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1));
   };
   
   const handleToday = () => {
@@ -401,9 +401,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                   <div style={{display: 'flex', gap: '10px'}}>
                     <div className="date-selector" style={{padding: '0.4rem 0.8rem', background: '#F8F9FA'}}>
-                      <button className="btn-icon" onClick={handlePrevMonth}><ChevronLeft size={16}/></button>
-                      <span style={{fontSize: '0.8rem', cursor: 'pointer'}} onClick={handleToday}>Hôm nay</span>
-                      <button className="btn-icon" onClick={handleNextMonth}><ChevronRight size={16}/></button>
+                      <button className="btn-icon" onClick={handlePrevDate}><ChevronLeft size={16}/></button>
+                      <span style={{fontSize: '0.8rem', cursor: 'pointer'}} onClick={handleToday}>
+                        {currentDate.toDateString() === new Date().toDateString() ? 'Hôm nay' : currentDate.toLocaleDateString('vi-VN')}
+                      </span>
+                      <button className="btn-icon" onClick={handleNextDate}><ChevronRight size={16}/></button>
                     </div>
                     <div style={{display: 'flex', background: '#F8F9FA', padding: '4px', borderRadius: '8px', gap: '4px'}}>
                       <div style={{padding: '4px 12px', background: 'white', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'}}>Tháng</div>
@@ -417,11 +419,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div>
                 </div>
                 <div className="cal-grid">
-                  {grid.map((day, i) => (
-                    <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.isToday ? 'today' : ''}`} 
+                  {grid.map((day, i) => {
+                    const isSelectedDate = !day.muted && day.date === currentDate.getDate();
+                    return (
+                    <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.isToday ? 'today' : ''} ${isSelectedDate ? 'active' : ''}`} 
                          onClick={() => !day.muted && setSelectedDayInfo(day)}
-                         style={{ cursor: day.muted ? 'not-allowed' : 'pointer' }}>
-                      <div className="cal-date">{day.date}</div>
+                         style={{ cursor: day.muted ? 'not-allowed' : 'pointer', border: isSelectedDate ? '2px solid var(--color-primary)' : '' }}>
+                      <div className="cal-date" style={{background: isSelectedDate ? 'var(--color-primary)' : '', color: isSelectedDate ? 'white' : ''}}>{day.date}</div>
                       {day.incomes.slice(0,1).map((t, j) => (
                         <div key={j} className="tx-badge income"><div className="tx-dot income"></div> +{formatCompact(t.amount)}</div>
                       ))}
