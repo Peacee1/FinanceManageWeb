@@ -38,6 +38,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   // Day Details State
   const [selectedDayInfo, setSelectedDayInfo] = useState(null);
 
+  // Month navigation state
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -125,9 +128,21 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     return amount;
   };
 
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
   const currentMonthTx = transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear);
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+  };
+  
+  const handleToday = () => {
+    setCurrentDate(new Date());
+  };
   
   const totalIncome = currentMonthTx.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
   const totalExpense = currentMonthTx.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
@@ -245,12 +260,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
             
             <div className="date-selector">
-              <button className="btn-icon"><ChevronLeft size={20}/></button>
+              <button className="btn-icon" onClick={handlePrevMonth}><ChevronLeft size={20}/></button>
               <span>📅 Tháng {currentMonth + 1}, {currentYear}</span>
-              <button className="btn-icon"><ChevronRight size={20}/></button>
+              <button className="btn-icon" onClick={handleNextMonth}><ChevronRight size={20}/></button>
             </div>
             
-            <button className="btn-today">Hôm nay</button>
+            <button className="btn-today" onClick={handleToday}>Hôm nay</button>
             
             <div className="notification">
               <Bell size={20} color="var(--color-text-secondary)"/>
@@ -359,8 +374,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                   <div style={{display: 'flex', gap: '10px'}}>
                     <div className="date-selector" style={{padding: '0.4rem 0.8rem', background: '#F8F9FA'}}>
-                      <button className="btn-icon"><ChevronLeft size={16}/></button>
-                      <span style={{fontSize: '0.8rem'}}>Hôm nay</span>
+                      <button className="btn-icon" onClick={handlePrevMonth}><ChevronLeft size={16}/></button>
+                      <span style={{fontSize: '0.8rem', cursor: 'pointer'}} onClick={handleToday}>Hôm nay</span>
+                      <button className="btn-icon" onClick={handleNextMonth}><ChevronRight size={16}/></button>
                     </div>
                     <div style={{display: 'flex', background: '#F8F9FA', padding: '4px', borderRadius: '8px', gap: '4px'}}>
                       <div style={{padding: '4px 12px', background: 'white', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'}}>Tháng</div>
