@@ -243,8 +243,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         </ul>
 
         <div className="promo-card">
-          <img src="https://cdn-icons-png.flaticon.com/512/616/616554.png" alt="Cat" className="promo-img"/>
-          <h4>Cùng kiểm soát chi tiêu tốt hơn!</h4>
+          <img src="/cat_mascot.png" alt="Cat" className="promo-img" style={{width: 80}}/>
+          <h4 style={{fontSize: '1rem'}}>Cùng kiểm soát chi tiêu tốt hơn!</h4>
           <p>Nâng cấp để mở khóa thêm nhiều tính năng</p>
           <button className="btn-promo" onClick={() => setIsProfileOpen(true)}>Nâng cấp Pro</button>
         </div>
@@ -555,19 +555,19 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
 
               {/* Quick Actions */}
-              <div className="widget">
+              <div className="widget" style={{position: 'fixed', bottom: '24px', right: '24px', width: '340px', zIndex: 1000, boxShadow: '0 12px 36px rgba(0,0,0,0.12)', border: '1px solid rgba(124,58,237,0.1)', background: 'white'}}>
                 <h3 className="widget-title" style={{marginBottom: '1rem'}}>Thao tác nhanh</h3>
-                <div className="quick-actions">
-                  <button className="btn-quick" style={{background: '#ECFDF5', color: '#059669'}} onClick={() => {setType('INCOME'); setIsModalOpen(true);}}>
+                <div className="quick-actions" style={{gridTemplateColumns: '1fr 1fr', gap: '10px'}}>
+                  <button className="btn-quick" style={{background: '#ECFDF5', color: '#059669', padding: '12px 8px'}} onClick={() => {setType('INCOME'); setIsModalOpen(true);}}>
                     <Plus size={16}/> Thêm khoản thu
                   </button>
-                  <button className="btn-quick" style={{background: '#FFF1F2', color: '#E11D48'}} onClick={() => {setType('EXPENSE'); setIsModalOpen(true);}}>
+                  <button className="btn-quick" style={{background: '#FFF1F2', color: '#E11D48', padding: '12px 8px'}} onClick={() => {setType('EXPENSE'); setIsModalOpen(true);}}>
                     <Minus size={16}/> Thêm khoản chi
                   </button>
-                  <button className="btn-quick" style={{background: '#F5F3FF', color: '#7C3AED'}}>
+                  <button className="btn-quick" style={{background: '#F5F3FF', color: '#7C3AED', padding: '12px 8px'}}>
                     <WalletCards size={16}/> Lập ngân sách
                   </button>
-                  <button className="btn-quick" style={{background: '#EFF6FF', color: '#2563EB'}}>
+                  <button className="btn-quick" style={{background: '#EFF6FF', color: '#2563EB', padding: '12px 8px'}}>
                     <FileDown size={16}/> Xuất báo cáo
                   </button>
                 </div>
