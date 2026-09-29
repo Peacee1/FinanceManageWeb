@@ -725,3 +725,25 @@ When making technical decisions, prioritize:
 ```
 
 The final implementation should be simple, secure, readable, and production-oriented rather than over-engineered.
+
+---
+
+## 25. Design System & Color Palette
+
+Always use the following exact color palette defined for Peacee1:
+
+| Vai trò | Màu | HEX |
+|---|---|---|
+| Primary | Electric Purple | `#7C3AED` |
+| Primary Hover | Deep Purple | `#6D28D9` |
+| Secondary | Bubblegum Pink | `#F472B6` |
+| Accent | Lime | `#C7F464` |
+| Accent 2 | Sky Blue | `#67E8F9` |
+| Income | Mint Green | `#34D399` |
+| Expense | Coral Red | `#FB7185` |
+| Warning | Soft Orange | `#FBBF24` |
+| Background | Lavender White | `#FAF9FF` |
+| Card | White | `#FFFFFF` |
+| Text | Dark Purple/Black | `#181525` |
+| Secondary Text | Muted Purple Gray | `#716B7A` |
+| Border | Lavender Gray | `#E9E5F3` |

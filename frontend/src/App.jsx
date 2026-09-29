@@ -38,7 +38,7 @@ function App() {
           path="/" 
           element={
             user ? 
-            <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>
+            <div className="dashboard-container">
               <h1>Peacee1 - Dashboard Quản Lý Tài Chính</h1>
               <div style={{ margin: '15px 0', fontSize: '1.2rem' }}>
                 Gói tài khoản hiện tại: {getPlanBadge(user.plan)}
