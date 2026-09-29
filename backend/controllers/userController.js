@@ -109,11 +109,15 @@ const checkIn = async (req, res) => {
       }
     }
 
-    const newCoin = user.coin + 20;
+    let addedCoin = 20;
+    if (newStreak > 0 && newStreak % 30 === 0) addedCoin = 500;
+    else if (newStreak > 0 && newStreak % 7 === 0) addedCoin = 100;
+
+    const newCoin = user.coin + addedCoin;
 
     await db.query('UPDATE users SET coin = $1, last_checkin_date = $2, checkin_streak = $3 WHERE id = $4', [newCoin, todayStr, newStreak, req.user.userId]);
 
-    res.json({ message: 'Điểm danh thành công! Nhận 20 coin.', coin: newCoin, streak: newStreak });
+    res.json({ message: `Điểm danh thành công! Nhận ${addedCoin} coin.`, coin: newCoin, streak: newStreak, addedCoin });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Lỗi server' });

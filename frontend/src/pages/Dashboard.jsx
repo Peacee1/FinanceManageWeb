@@ -41,6 +41,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   // Month navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Checkin Modal State
+  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
+
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -146,6 +149,20 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   const handleNextDate = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1));
+  };
+
+  const handleCheckin = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/users/checkin', {}, { headers: { Authorization: `Bearer ${token}` } });
+      fetchProfile(); // update coins and streak
+      alert(res.data.message);
+    } catch (error) {
+      alert(error.response?.data?.message || 'Lỗi điểm danh');
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleToday = () => {
@@ -301,6 +318,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
             
             <button className="btn-today" onClick={handleToday}>Hôm nay</button>
+            <button className="btn-today" style={{background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none'}} onClick={() => setIsCheckinOpen(true)}>🎁 Điểm danh</button>
             
             <div className="notification">
               <Bell size={20} color="var(--color-text-secondary)"/>
@@ -736,19 +754,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   {profileData.phone || 'Chưa cập nhật'} 
                   {profileData.phone ? 
                     (profileData.phone_verified ? 
-                      <span style={{color: 'var(--color-income)', fontSize: '0.85rem', fontWeight: '600'}}>✓ Đã xác thực</span> : 
-                      <button className="verify-btn">Xác thực</button>) : 
-                    <button className="verify-btn">Thêm SDT</button>}
-                </span>
-              </div>
-            </div>
-
-            <button className="btn-promo" onClick={() => setIsProfileOpen(false)}>Hoàn tất</button>
-          </div>
-        </div>
-      )}
-
-      {isCropModalOpen && avatarImage && (
+                      <span style={{color: 'var(--color-income)', fontSize: '0.85rem', fontWeight: '600'}}>✓ Đã xác thực</sp      {isCropModalOpen && avatarImage && (
         <div className="modal-overlay" style={{ zIndex: 2000 }}>
           <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
             <div className="modal-header">
@@ -757,6 +763,105 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
             <div style={{ position: 'relative', flex: 1, background: '#333', borderRadius: '8px', overflow: 'hidden' }}>
               <Cropper image={avatarImage} crop={crop} zoom={zoom} aspect={1} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(c, cp) => setCroppedAreaPixels(cp)} />
+            </div>
+            <button className="btn-promo" style={{marginTop: '15px'}} onClick={handleCropComplete} disabled={loading}>
+              {loading ? 'Đang xử lý...' : 'Lưu Avatar'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isCheckinOpen && profileData && (
+        <div className="modal-overlay">
+          <div className="modal-content checkin-modal" style={{ padding: 0, overflow: 'hidden', maxWidth: '600px', background: 'var(--color-bg)' }}>
+            
+            {/* Banner Section */}
+            <div style={{ 
+              background: 'linear-gradient(135deg, #7C3AED 0%, #a78bfa 100%)', 
+              color: 'white', padding: '30px', position: 'relative', textAlign: 'center' 
+            }}>
+              <button className="close-btn" style={{ position: 'absolute', top: 15, right: 15, color: 'white', background: 'rgba(0,0,0,0.2)', borderRadius: '50%', width: 30, height: 30 }} onClick={() => setIsCheckinOpen(false)}>×</button>
+              <h2 style={{ fontSize: '1.8rem', marginBottom: '5px', fontWeight: '800' }}>Điểm danh mỗi ngày</h2>
+              <h1 style={{ fontSize: '2.5rem', color: '#FBBF24', textShadow: '0 2px 10px rgba(0,0,0,0.2)', marginBottom: '10px' }}>Nhận 20 coin!</h1>
+              <p style={{ fontSize: '0.95rem', opacity: 0.9 }}>Duy trì thói quen tốt, quản lý chi tiêu hiệu quả hơn<br/>và nhận thêm nhiều phần thưởng hấp dẫn.</p>
+            </div>
+
+            {/* Content Section */}
+            <div style={{ padding: '25px' }}>
+              
+              <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
+                <div style={{ flex: 1, background: 'white', padding: '15px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+                  <div style={{ fontSize: '2rem' }}>🔥</div>
+                  <div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{profileData.checkin_streak || 0}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Ngày liên tiếp</div>
+                  </div>
+                </div>
+                <div style={{ flex: 1, background: 'white', padding: '15px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+                  <div style={{ fontSize: '2rem' }}>🪙</div>
+                  <div>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{profileData.coin || 0}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Coin hiện có</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', marginBottom: '25px' }}>
+                {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                  const isClaimed = day <= ((profileData.checkin_streak || 0) % 7 || (profileData.checkin_streak > 0 && (profileData.checkin_streak % 7 === 0) ? 7 : 0));
+                  const isGift = day === 7;
+                  return (
+                    <div key={day} style={{ 
+                      flex: 1, 
+                      background: isClaimed ? '#EDE9FE' : 'white',
+                      border: isClaimed ? '2px solid #7C3AED' : '1px solid #E9E5F3',
+                      borderRadius: '10px', padding: '12px 5px', textAlign: 'center',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.02)',
+                      opacity: isClaimed ? 1 : 0.6
+                    }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: '600', color: isClaimed ? '#7C3AED' : 'var(--color-text-secondary)', marginBottom: '8px' }}>Ngày {day}</div>
+                      <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>
+                        {isClaimed ? '✅' : (isGift ? '🎁' : '🪙')}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isGift ? '#F59E0B' : 'inherit' }}>
+                        +{isGift ? 100 : 20}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button className="btn-primary" style={{ width: '100%', padding: '15px', fontSize: '1.1rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)' }} onClick={handleCheckin} disabled={loading}>
+                {loading ? 'Đang xử lý...' : '🪙 Điểm danh hôm nay'}
+              </button>
+
+              <div style={{ marginTop: '20px', background: 'white', borderRadius: '12px', padding: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', fontSize: '0.95rem' }}>
+                  🎁 Phần thưởng thêm
+                </h4>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <div style={{ flex: 1, background: '#FEF3C7', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>👑</div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#92400E' }}>Duy trì 7 ngày</div>
+                    <div style={{ fontSize: '0.7rem', color: '#B45309' }}>+100 coin</div>
+                  </div>
+                  <div style={{ flex: 1, background: '#DBEAFE', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>⭐</div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#1E40AF' }}>Duy trì 30 ngày</div>
+                    <div style={{ fontSize: '0.7rem', color: '#1D4ED8' }}>+500 coin</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;={setZoom} onCropComplete={(c, cp) => setCroppedAreaPixels(cp)} />
             </div>
             <button className="btn-promo" style={{marginTop: '15px'}} onClick={handleCropComplete} disabled={loading}>
               {loading ? 'Đang xử lý...' : 'Lưu Avatar'}
