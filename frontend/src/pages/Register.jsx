@@ -57,8 +57,9 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container">
-      <h2 className="auth-title">Peacee1 - Đăng Ký</h2>
+    <div className="auth-wrapper">
+      <div className="auth-container">
+        <h2 className="auth-title">Peacee1 - Đăng Ký</h2>
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
       <form onSubmit={handleRegister}>
@@ -83,7 +84,8 @@ const Register = () => {
         </button>
       </form>
       <div className="auth-link">
-        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+          Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+        </div>
       </div>
     </div>
   );

@@ -35,8 +35,9 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <h2 className="auth-title">Peacee1 - Đăng Nhập</h2>
+    <div className="auth-wrapper">
+      <div className="auth-container">
+        <h2 className="auth-title">Peacee1 - Đăng Nhập</h2>
       {error && <div className="error-message">{error}</div>}
       <form onSubmit={handleLogin}>
         <div className="input-group">
@@ -64,7 +65,8 @@ const Login = () => {
         </button>
       </form>
       <div className="auth-link">
-        Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+        </div>
       </div>
     </div>
   );
