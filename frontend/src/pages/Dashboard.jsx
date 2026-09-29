@@ -734,8 +734,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                 {getPlanBadge(profileData.plan)}
               </div>
-              <div style={{ display: 'inline-block', padding: '6px 16px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '20px', color: '#D97706', fontWeight: '700', fontSize: '1rem', marginTop: '5px' }}>
-                🪙 {profileData.coin} Coins
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 16px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '20px', color: '#D97706', fontWeight: '700', fontSize: '1rem', marginTop: '5px' }}>
+                <img src="/coin_icon.png" alt="Coin" style={{ width: '20px', height: '20px' }} /> {profileData.coin} Coins
               </div>
             </div>
 
@@ -807,7 +807,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
                 <div style={{ flex: 1, background: 'white', padding: '15px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                  <div style={{ fontSize: '2rem' }}>🪙</div>
+                  <img src="/coin_icon.png" alt="Coin" style={{ width: '32px', height: '32px' }} />
                   <div>
                     <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{profileData.coin || 0}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Coin hiện có</div>
@@ -829,8 +829,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       opacity: isClaimed ? 1 : 0.6
                     }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: '600', color: isClaimed ? '#7C3AED' : 'var(--color-text-secondary)', marginBottom: '8px' }}>Ngày {day}</div>
-                      <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>
-                        {isClaimed ? '✅' : (isGift ? '🎁' : '🪙')}
+                      <div style={{ fontSize: '1.5rem', marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                        {isClaimed ? '✅' : (isGift ? '🎁' : <img src="/coin_icon.png" alt="Coin" style={{ width: '24px', height: '24px' }} />)}
                       </div>
                       <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isGift ? '#F59E0B' : 'inherit' }}>
                         +{isGift ? 100 : 20}
@@ -840,8 +840,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 })}
               </div>
 
-              <button className="btn-primary" style={{ width: '100%', padding: '15px', fontSize: '1.1rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)' }} onClick={handleCheckin} disabled={loading}>
-                {loading ? 'Đang xử lý...' : '🪙 Điểm danh hôm nay'}
+              <button className="btn-primary" style={{ width: '100%', padding: '15px', fontSize: '1.1rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={handleCheckin} disabled={loading}>
+                {loading ? 'Đang xử lý...' : <><img src="/coin_icon.png" alt="Coin" style={{ width: '24px', height: '24px' }} /> Điểm danh hôm nay</>}
               </button>
 
               <div style={{ marginTop: '20px', background: 'white', borderRadius: '12px', padding: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
