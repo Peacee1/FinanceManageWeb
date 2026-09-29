@@ -204,12 +204,30 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     name: key, value: expensesByCategory[key]
   })) : [{ name: 'Chưa có', value: 1 }];
 
-  // Dummy Chart Data
-  const lineData = Array.from({length: 7}, (_, i) => ({
-    name: `${(i+1)*4}/09`,
-    income: Math.floor(Math.random() * 5000000),
-    expense: Math.floor(Math.random() * 4000000)
-  }));
+  // Computed Chart Data from currentMonthTx
+  const daysInMonthChart = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const intervals = [
+    { start: 1, end: 5 },
+    { start: 6, end: 10 },
+    { start: 11, end: 15 },
+    { start: 16, end: 20 },
+    { start: 21, end: 25 },
+    { start: 26, end: daysInMonthChart },
+  ];
+
+  const lineData = intervals.map(interval => {
+    const txInInterval = currentMonthTx.filter(t => {
+      const day = parseInt(t.date.split('-')[2]);
+      return day >= interval.start && day <= interval.end;
+    });
+    const income = txInInterval.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
+    const expense = txInInterval.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
+    return {
+      name: `${interval.end}/${String(currentMonth + 1).padStart(2, '0')}`,
+      income,
+      expense
+    };
+  });
 
   const avatarSrc = profileData?.avatar_url 
     ? (profileData.avatar_url.startsWith('http') ? profileData.avatar_url : `/api${profileData.avatar_url}`) 
