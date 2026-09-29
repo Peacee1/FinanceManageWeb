@@ -490,7 +490,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   });
 
   const avatarSrc = profileData?.avatar_url 
-    ? (profileData.avatar_url.startsWith('http') ? profileData.avatar_url : `/api${profileData.avatar_url}`) 
+    ? (profileData.avatar_url.startsWith('http') ? profileData.avatar_url : `/api${profileData.avatar_url}?t=${Date.now()}`) 
     : null;
 
   // Calculate Data for Reports and Budget Tabs
