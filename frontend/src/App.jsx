@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -38,15 +39,7 @@ function App() {
           path="/" 
           element={
             user ? 
-            <div className="dashboard-container">
-              <h1>Peacee1 - Dashboard Quản Lý Tài Chính</h1>
-              <div style={{ margin: '15px 0', fontSize: '1.2rem' }}>
-                Gói tài khoản hiện tại: {getPlanBadge(user.plan)}
-              </div>
-              <button className="btn-primary" style={{ width: 'auto', marginTop: '20px' }} onClick={handleLogout}>
-                Đăng xuất
-              </button>
-            </div> 
+            <Dashboard user={user} handleLogout={handleLogout} getPlanBadge={getPlanBadge} />
             : <Navigate to="/login" />
           } 
         />
