@@ -796,43 +796,55 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
 
             {/* Content Section */}
-            <div style={{ padding: '25px' }}>
+            <div style={{ padding: '20px 25px 25px' }}>
               
-              <div style={{ display: 'flex', gap: '15px', marginBottom: '25px' }}>
-                <div style={{ flex: 1, background: 'white', padding: '15px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                  <div style={{ fontSize: '2rem' }}>🔥</div>
+              {/* 3 Info Cards */}
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ flex: 1, background: 'white', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+                  <div style={{ fontSize: '1.8rem' }}>🔥</div>
                   <div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{profileData.checkin_streak || 0}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Ngày liên tiếp</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#181525', lineHeight: 1 }}>{profileData.checkin_streak || 0}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>Ngày liên tiếp</div>
+                    <div style={{ fontSize: '0.65rem', color: '#7C3AED', marginTop: '2px' }}>Điểm danh mỗi ngày để duy trì chuỗi!</div>
                   </div>
                 </div>
-                <div style={{ flex: 1, background: 'white', padding: '15px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                  <img src="/coin_icon.png" alt="Coin" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+                <div style={{ flex: 1, background: 'white', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+                  <img src="/coin_icon.png" alt="Coin" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
                   <div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{profileData.coin || 0}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Coin hiện có</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#181525', lineHeight: 1 }}>{(profileData.coin || 0).toLocaleString('vi-VN')}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>Coin hiện có</div>
                   </div>
+                </div>
+                <div style={{ flex: 1, background: 'white', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+                  <div style={{ fontSize: '1.8rem' }}>🎁</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>Điểm danh đủ 7 ngày nhận thêm phần thưởng lớn!</div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', marginBottom: '25px' }}>
+              {/* 7-day streak tracker */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '6px', marginBottom: '20px' }}>
                 {[1, 2, 3, 4, 5, 6, 7].map((day) => {
-                  const isClaimed = day <= ((profileData.checkin_streak || 0) % 7 || (profileData.checkin_streak > 0 && (profileData.checkin_streak % 7 === 0) ? 7 : 0));
+                  const streak = profileData.checkin_streak || 0;
+                  const isClaimed = day <= (streak % 7 || (streak > 0 && streak % 7 === 0 ? 7 : 0));
                   const isGift = day === 7;
                   return (
                     <div key={day} style={{ 
                       flex: 1, 
                       background: isClaimed ? '#EDE9FE' : 'white',
                       border: isClaimed ? '2px solid #7C3AED' : '1px solid #E9E5F3',
-                      borderRadius: '10px', padding: '12px 5px', textAlign: 'center',
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.02)',
-                      opacity: isClaimed ? 1 : 0.6
+                      borderRadius: '10px', padding: '10px 4px', textAlign: 'center',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.04)',
                     }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: '600', color: isClaimed ? '#7C3AED' : 'var(--color-text-secondary)', marginBottom: '8px' }}>Ngày {day}</div>
-                      <div style={{ fontSize: '1.5rem', marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
-                        {isClaimed ? '✅' : (isGift ? '🎁' : <img src="/coin_icon.png" alt="Coin" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />)}
+                      <div style={{ fontSize: '0.7rem', fontWeight: '600', color: isClaimed ? '#7C3AED' : 'var(--color-text-secondary)', marginBottom: '6px' }}>Ngày {day}</div>
+                      <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'center', height: '28px', alignItems: 'center' }}>
+                        {isClaimed
+                          ? <span style={{ fontSize: '1.4rem' }}>✅</span>
+                          : isGift
+                            ? <span style={{ fontSize: '1.4rem' }}>🎁</span>
+                            : <img src="/coin_icon.png" alt="Coin" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+                        }
                       </div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isGift ? '#F59E0B' : 'inherit' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: isGift ? '#F59E0B' : '#181525' }}>
                         +{isGift ? 100 : 20}
                       </div>
                     </div>
@@ -840,24 +852,31 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 })}
               </div>
 
-              <button className="btn-primary" style={{ width: '100%', padding: '15px', fontSize: '1.1rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={handleCheckin} disabled={loading}>
-                {loading ? 'Đang xử lý...' : <><img src="/coin_icon.png" alt="Coin" style={{ width: '24px', height: '24px', objectFit: 'contain' }} /> Điểm danh hôm nay</>}
+              {/* Checkin button */}
+              <button className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleCheckin} disabled={loading}>
+                {loading ? 'Đang xử lý...' : <><img src="/coin_icon.png" alt="Coin" style={{ width: '22px', height: '22px', objectFit: 'contain' }} /> Điểm danh hôm nay (+20 coin)</>}
               </button>
 
-              <div style={{ marginTop: '20px', background: 'white', borderRadius: '12px', padding: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', fontSize: '0.95rem' }}>
+              {/* Bonus rewards */}
+              <div style={{ marginTop: '18px', background: 'white', borderRadius: '12px', padding: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', fontSize: '0.9rem', color: '#181525' }}>
                   🎁 Phần thưởng thêm
                 </h4>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <div style={{ flex: 1, background: '#FEF3C7', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>👑</div>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#92400E' }}>Duy trì 7 ngày</div>
-                    <div style={{ fontSize: '0.7rem', color: '#B45309' }}>+100 coin</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ flex: 1, background: '#FEF3C7', padding: '10px 8px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.4rem', marginBottom: '4px' }}>👑</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#92400E' }}>Duy trì 7 ngày</div>
+                    <div style={{ fontSize: '0.68rem', color: '#B45309', marginTop: '2px' }}>Nhận 100 coin bonus</div>
                   </div>
-                  <div style={{ flex: 1, background: '#DBEAFE', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>⭐</div>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#1E40AF' }}>Duy trì 30 ngày</div>
-                    <div style={{ fontSize: '0.7rem', color: '#1D4ED8' }}>+500 coin</div>
+                  <div style={{ flex: 1, background: '#DBEAFE', padding: '10px 8px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.4rem', marginBottom: '4px' }}>⭐</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#1E40AF' }}>Duy trì 30 ngày</div>
+                    <div style={{ fontSize: '0.68rem', color: '#1D4ED8', marginTop: '2px' }}>Nhận 500 coin bonus</div>
+                  </div>
+                  <div style={{ flex: 1, background: '#D1FAE5', padding: '10px 8px', borderRadius: '10px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.4rem', marginBottom: '4px' }}>🏆</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#065F46' }}>Duy trì liên tiếp</div>
+                    <div style={{ fontSize: '0.68rem', color: '#047857', marginTop: '2px' }}>Nhiều phần thưởng đặc biệt hơn</div>
                   </div>
                 </div>
               </div>
