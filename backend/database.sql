@@ -20,3 +20,8 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 -- Dành cho trường hợp cập nhật bảng cũ (nếu có lỗi thì bỏ qua)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'normal';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS coin INTEGER DEFAULT 5000;
+

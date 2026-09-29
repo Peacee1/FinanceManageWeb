@@ -4,16 +4,22 @@ import axios from 'axios';
 const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [profileData, setProfileData] = useState(null);
   
-  // Form State
+  // Transaction Form State
   const [type, setType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Ăn uống');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
 
-  // Lấy dữ liệu
+  // Profile Form State
+  const [newPhone, setNewPhone] = useState('');
+  const [showPhoneInput, setShowPhoneInput] = useState(false);
+
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -26,71 +32,78 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     }
   };
 
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProfileData(res.data);
+    } catch (error) {
+      console.error('Lỗi lấy profile:', error);
+    }
+  };
+
   useEffect(() => {
     fetchTransactions();
   }, []);
 
-  // Tính toán
-  const totalIncome = transactions.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
-  const totalExpense = transactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
-  const balance = totalIncome - totalExpense;
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-  
-  const formatCompact = (amount) => {
-    if (amount >= 1000000) return (amount / 1000000).toFixed(1) + 'M';
-    if (amount >= 1000) return (amount / 1000).toFixed(0) + 'k';
-    return amount;
+  const openProfile = () => {
+    setIsDropdownOpen(false);
+    fetchProfile();
+    setIsProfileOpen(true);
   };
 
-  // Tạo lưới lịch đơn giản (35 ô = 5 tuần)
-  const generateCalendar = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
-    // Ngày 1 của tháng là thứ mấy (0=CN, 1=T2, ... 6=T7)
-    let firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    firstDay = firstDay === 0 ? 7 : firstDay; // Chỉnh lại T2 là 1, CN là 7
-
-    const grid = [];
-    
-    // Ngày tháng trước (muted)
-    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
-    for (let i = firstDay - 1; i > 0; i--) {
-      grid.push({ date: prevMonthDays - i + 1, muted: true, incomes: [], expenses: [] });
+  const handleVerifyEmail = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/verify-email', {}, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Đã gửi mã xác thực tới email của bạn (Mô phỏng thành công)');
+      fetchProfile();
+    } catch (error) {
+      alert('Lỗi xác thực email');
     }
+  };
 
-    // Ngày tháng này
-    for (let i = 1; i <= daysInMonth; i++) {
-      // Tìm các giao dịch trong ngày i
-      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-      const dayTransactions = transactions.filter(t => t.date.startsWith(dateStr));
+  const handleAddPhone = async () => {
+    if (!newPhone) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/update-phone', { phone: newPhone }, { headers: { Authorization: `Bearer ${token}` } });
+      setShowPhoneInput(false);
+      fetchProfile();
+    } catch (error) {
+      alert('Lỗi cập nhật số điện thoại');
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/verify-phone', {}, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Xác thực SĐT thành công (Mô phỏng)');
+      fetchProfile();
+    } catch (error) {
+      alert('Lỗi xác thực SĐT');
+    }
+  };
+
+  const handleUpgrade = async (targetPlan) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/users/upgrade-plan', { targetPlan }, { headers: { Authorization: `Bearer ${token}` } });
+      alert(res.data.message);
       
-      const incomes = dayTransactions.filter(t => t.type === 'INCOME');
-      const expenses = dayTransactions.filter(t => t.type === 'EXPENSE');
-
-      grid.push({ date: i, muted: false, incomes, expenses });
+      // Update local storage so the whole app updates
+      const updatedUser = { ...user, plan: targetPlan };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      fetchProfile();
+      window.location.reload(); // Reload to refresh sidebar badge
+    } catch (error) {
+      alert(error.response?.data?.message || 'Lỗi nâng cấp');
     }
-
-    // Ngày tháng sau (muted) lấp đầy 35 ô
-    let nextDay = 1;
-    while (grid.length < 35) {
-      grid.push({ date: nextDay++, muted: true, incomes: [], expenses: [] });
-    }
-    
-    // Đảm bảo lưới có đủ hàng (bội số của 7)
-    while (grid.length % 7 !== 0) {
-      grid.push({ date: nextDay++, muted: true, incomes: [], expenses: [] });
-    }
-
-    return grid;
   };
-
-  const grid = generateCalendar();
 
   const handleAddTransaction = async (e) => {
     e.preventDefault();
@@ -113,6 +126,42 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     }
   };
 
+  const totalIncome = transactions.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
+  const totalExpense = transactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
+  const balance = totalIncome - totalExpense;
+
+  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  const formatCompact = (amount) => {
+    if (amount >= 1000000) return (amount / 1000000).toFixed(1) + 'M';
+    if (amount >= 1000) return (amount / 1000).toFixed(0) + 'k';
+    return amount;
+  };
+
+  const generateCalendar = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    firstDay = firstDay === 0 ? 7 : firstDay;
+
+    const grid = [];
+    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+    for (let i = firstDay - 1; i > 0; i--) grid.push({ date: prevMonthDays - i + 1, muted: true, incomes: [], expenses: [] });
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      const dayTransactions = transactions.filter(t => t.date.startsWith(dateStr));
+      grid.push({ date: i, muted: false, incomes: dayTransactions.filter(t => t.type === 'INCOME'), expenses: dayTransactions.filter(t => t.type === 'EXPENSE') });
+    }
+
+    let nextDay = 1;
+    while (grid.length < 35 || grid.length % 7 !== 0) grid.push({ date: nextDay++, muted: true, incomes: [], expenses: [] });
+    return grid;
+  };
+
+  const grid = generateCalendar();
+
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -129,13 +178,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <li className="nav-item">📊 Reports</li>
           <li className="nav-item">🎯 Budget</li>
         </ul>
-        <div style={{ padding: '1rem' }}>
-          <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-            {getPlanBadge(user.plan)}
-          </div>
-          <button className="btn-outline" style={{ width: '100%', borderColor: 'var(--color-expense)', color: 'var(--color-expense)' }} onClick={handleLogout}>
-            Đăng xuất
-          </button>
+        <div style={{ padding: '1rem', textAlign: 'center' }}>
+          {getPlanBadge(user.plan)}
         </div>
       </div>
 
@@ -148,8 +192,20 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <span style={{ fontSize: '1.25rem', cursor: 'pointer' }}>🔔</span>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', placeItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-              {user.name.charAt(0).toUpperCase()}
+            <div className="avatar-container">
+              <div 
+                style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', placeItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              
+              {isDropdownOpen && (
+                <div className="avatar-dropdown">
+                  <div className="dropdown-item" onClick={openProfile}>👤 Hồ sơ cá nhân</div>
+                  <div className="dropdown-item danger" onClick={handleLogout}>🚪 Đăng xuất</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -197,7 +253,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             ))}
           </div>
-
           <button className="add-btn" onClick={() => setIsModalOpen(true)}>
             ＋ Add Transaction
           </button>
@@ -243,6 +298,85 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 Hủy
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
+      {isProfileOpen && profileData && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>Hồ Sơ Cá Nhân</h3>
+              <button className="close-btn" onClick={() => setIsProfileOpen(false)}>×</button>
+            </div>
+            
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'inline-flex', placeItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold' }}>
+                {profileData.name.charAt(0).toUpperCase()}
+              </div>
+              <h2 style={{ margin: '10px 0 5px', fontSize: '1.5rem' }}>{profileData.name}</h2>
+              <div>{getPlanBadge(profileData.plan)}</div>
+              <div style={{ marginTop: '10px', fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-warning)' }}>
+                🪙 {profileData.coin} Coins
+              </div>
+            </div>
+
+            <div className="profile-info-row">
+              <span className="profile-info-label">Email:</span>
+              <div className="profile-info-value">
+                {profileData.email}
+                {!profileData.email_verified && <button className="verify-btn" onClick={handleVerifyEmail}>Xác thực ngay</button>}
+                {profileData.email_verified && <span style={{color: 'var(--color-income)', marginLeft: '10px'}}>✓ Đã xác thực</span>}
+              </div>
+            </div>
+
+            <div className="profile-info-row">
+              <span className="profile-info-label">Số điện thoại:</span>
+              <div className="profile-info-value">
+                {profileData.phone ? (
+                  <>
+                    {profileData.phone}
+                    {!profileData.phone_verified && <button className="verify-btn" onClick={handleVerifyPhone}>Xác thực</button>}
+                    {profileData.phone_verified && <span style={{color: 'var(--color-income)', marginLeft: '10px'}}>✓ Đã xác thực</span>}
+                  </>
+                ) : (
+                  <>
+                    {!showPhoneInput ? (
+                      <button className="verify-btn" style={{background: 'var(--color-secondary)'}} onClick={() => setShowPhoneInput(true)}>Thêm SĐT</button>
+                    ) : (
+                      <div style={{display: 'flex', gap: '5px'}}>
+                        <input type="text" placeholder="Nhập SĐT..." style={{padding: '4px', width: '120px'}} value={newPhone} onChange={e => setNewPhone(e.target.value)} />
+                        <button className="verify-btn" onClick={handleAddPhone}>Lưu</button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Upgrade Section */}
+            <h4 style={{marginTop: '20px', marginBottom: '10px'}}>🚀 Nâng Cấp Tài Khoản</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {(profileData.plan === 'normal') && (
+                <div className="upgrade-card">
+                  <h4>Gói Plus</h4>
+                  <p style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: '5px 0'}}>1000 Coins</p>
+                  <button className="upgrade-btn" onClick={() => handleUpgrade('plus')}>Nâng cấp</button>
+                </div>
+              )}
+              
+              {(profileData.plan === 'normal' || profileData.plan === 'plus') && (
+                <div className="upgrade-card" style={{borderColor: 'var(--color-primary)'}}>
+                  <h4>Gói Ultra 💎</h4>
+                  <p style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: '5px 0'}}>
+                    {profileData.plan === 'normal' ? '3500' : '3000'} Coins
+                  </p>
+                  <button className="upgrade-btn" onClick={() => handleUpgrade('ultra')}>Nâng cấp</button>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       )}

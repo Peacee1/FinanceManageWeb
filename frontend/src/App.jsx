@@ -25,8 +25,8 @@ function App() {
     switch (plan) {
       case 'ultra':
         return <span className="badge badge-ultra">Ultra 💎</span>;
-      case 'pro':
-        return <span className="badge badge-pro">Pro ⭐</span>;
+      case 'plus':
+        return <span className="badge badge-pro">Plus ⭐</span>;
       default:
         return <span className="badge badge-normal">Normal</span>;
     }
