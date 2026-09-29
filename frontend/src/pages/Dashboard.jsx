@@ -30,6 +30,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   // Goals Dashboard State
   const [bankSaving, setBankSaving] = useState({ amount: 5000000, rate: 6, months: 6 });
   const [investmentIncome, setInvestmentIncome] = useState(2000000);
+  const [customNormalSaving, setCustomNormalSaving] = useState(null);
+  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(null);
   const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
   
   // Transaction Form State
@@ -1536,9 +1538,21 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             ) : (
               <div style={{width: '100%', maxWidth: '1000px'}}>
-                <div style={{ marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Mục tiêu của bạn</h2>
-                  <p style={{ color: 'var(--color-text-secondary)' }}>Theo dõi và quản lý các mục tiêu tài chính.</p>
+                <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Mục tiêu của bạn</h2>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>Theo dõi và quản lý các khoản tiết kiệm.</p>
+                  </div>
+                  <div style={{ background: 'var(--color-primary)', color: 'white', padding: '15px 25px', borderRadius: '16px', boxShadow: '0 8px 20px rgba(124,58,237,0.3)' }}>
+                    <div style={{ fontSize: '0.85rem', opacity: 0.9, marginBottom: '5px' }}>Tổng tiền đang tiết kiệm</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>
+                      {formatCurrency(
+                        (customNormalSaving !== null ? customNormalSaving : Math.max((parseInt(profileData?.salary) || 0) - totalExpense, 0)) +
+                        (customBankSavingTotal !== null ? customBankSavingTotal : Math.round(bankSaving.amount * (1 + (bankSaving.rate / 100) * (bankSaving.months / 12)))) +
+                        (investmentIncome || 0)
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
@@ -1548,7 +1562,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Lương tháng - Chi tiêu</p>
                     <div className="input-group">
                       <label>Số tiền (VNĐ)</label>
-                      <input type="text" value={Math.max((parseInt(goalForm.salary) || 0) - totalExpense, 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} onChange={() => {}} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
+                      <input type="text" 
+                             value={(customNormalSaving !== null ? customNormalSaving : Math.max((parseInt(profileData?.salary) || 0) - totalExpense, 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} 
+                             onChange={(e) => setCustomNormalSaving(parseInt(e.target.value.replace(/\./g, '')) || 0)} 
+                             style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
                   </div>
 
@@ -1581,8 +1598,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       <input type="number" value={bankSaving.months} onChange={(e) => setBankSaving({...bankSaving, months: parseInt(e.target.value) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                     </div>
                   </div>
-                  <div style={{ marginTop: '15px', padding: '15px', background: 'var(--color-background)', borderRadius: '12px', fontWeight: '600' }}>
-                    Tổng tiền nhận được sau {bankSaving.months} tháng: <span style={{color: 'var(--color-primary)'}}>{formatCurrency(bankSaving.amount * (1 + (bankSaving.rate / 100) * (bankSaving.months / 12)))}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px', padding: '15px', background: 'var(--color-background)', borderRadius: '12px', fontWeight: '600' }}>
+                    <span>Tổng tiền nhận được sau {bankSaving.months} tháng:</span>
+                    <input type="text" 
+                           value={(customBankSavingTotal !== null ? customBankSavingTotal : Math.round(bankSaving.amount * (1 + (bankSaving.rate / 100) * (bankSaving.months / 12)))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} 
+                           onChange={(e) => setCustomBankSavingTotal(parseInt(e.target.value.replace(/\./g, '')) || 0)} 
+                           style={{padding: '8px', borderRadius: '8px', border: '1px solid var(--color-primary)', width: '150px', fontWeight: 'bold', color: 'var(--color-primary)'}} />
+                    <span>VNĐ</span>
                   </div>
                 </div>
 
