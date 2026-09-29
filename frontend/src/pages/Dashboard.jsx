@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
-  ResponsiveContainer, PieChart, Pie, Cell 
+  ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area, Legend
 } from 'recharts';
 
 const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
@@ -325,6 +325,106 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     ? (profileData.avatar_url.startsWith('http') ? profileData.avatar_url : `/api${profileData.avatar_url}`) 
     : null;
 
+  // Calculate Data for Reports and Budget Tabs
+  
+  const uniqueCategories = [...new Set(currentMonthTx.filter(t => t.type === 'EXPENSE').map(t => t.category))];
+  const dynamicBudgets = {};
+  if (uniqueCategories.length > 0) {
+    const avgBudget = Math.floor(monthlyBudget / uniqueCategories.length);
+    uniqueCategories.forEach(c => dynamicBudgets[c] = avgBudget);
+  } else {
+    ['Ăn uống', 'Shopping', 'Di chuyển', 'Giải trí', 'Khác'].forEach(c => dynamicBudgets[c] = monthlyBudget / 5);
+  }
+
+  const budgetHistory = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(currentYear, currentMonth - i, 1);
+    const m = d.getMonth();
+    const y = d.getFullYear();
+    const txInMonth = transactions.filter(t => new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === y);
+    const spent = txInMonth.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
+    const b = monthlyBudget; 
+    const stat = i === 0 ? 'Đang diễn ra' : (spent > b ? 'Vượt ngân sách' : 'Hoàn thành');
+    const c = i === 0 ? '#7C3AED' : (spent > b ? '#E11D48' : '#16A34A');
+    const bg = i === 0 ? '#F5F3FF' : (spent > b ? '#FFE4E6' : '#DCFCE7');
+    budgetHistory.push({ m: m + 1, y, b, s: spent, stat, c, bg });
+  }
+
+  const yearBudgetData = Array.from({length: 12}, (_, i) => {
+    const txInMonth = transactions.filter(t => new Date(t.date).getMonth() === i && new Date(t.date).getFullYear() === currentYear);
+    const spent = txInMonth.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
+    return { name: `Th${i + 1}`, budget: monthlyBudget / 1000000, spent: spent / 1000000 };
+  });
+
+  const dailyExpenseData = [];
+  for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i+= 5) {
+    const tx = currentMonthTx.filter(t => t.type === 'EXPENSE' && new Date(t.date).getDate() >= i && new Date(t.date).getDate() < i+5);
+    const amount = tx.reduce((sum, t) => sum + parseInt(t.amount), 0);
+    dailyExpenseData.push({ date: `${i}/${currentMonth + 1}`, amount: amount / 1000 });
+  }
+
+  const incomeVsExpenseData = [...budgetHistory].reverse().map(bh => {
+    const txInMonth = transactions.filter(t => new Date(t.date).getMonth() === (bh.m - 1) && new Date(t.date).getFullYear() === bh.y);
+    const income = txInMonth.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
+    return { month: `Th${bh.m}`, income: income / 1000000, expense: bh.s / 1000000 };
+  });
+
+  const cumulativeData = dailyExpenseData.map((d, i) => {
+    const dayEnd = (i * 5) + 5;
+    const tx = currentMonthTx.filter(t => new Date(t.date).getDate() <= dayEnd);
+    const inc = tx.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
+    const exp = tx.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
+    return { date: d.date, balance: (inc - exp) / 1000000 };
+  });
+
+  const weekdayData = [
+    { day: 'CN', val: 0 }, { day: 'T2', val: 0 }, { day: 'T3', val: 0 }, 
+    { day: 'T4', val: 0 }, { day: 'T5', val: 0 }, { day: 'T6', val: 0 }, { day: 'T7', val: 0 }
+  ];
+  currentMonthTx.filter(t => t.type === 'EXPENSE').forEach(t => {
+    const w = new Date(t.date).getDay();
+    weekdayData[w].val += parseInt(t.amount) / 1000;
+  });
+  const shiftedWeekdayData = [...weekdayData.slice(1), weekdayData[0]];
+
+  const fixedCategories = ['Nhà ở', 'Hóa đơn', 'Tiền điện', 'Tiền nước', 'Học phí'];
+  let fixedAmt = 0;
+  let flexAmt = 0;
+  currentMonthTx.filter(t => t.type === 'EXPENSE').forEach(t => {
+    if (fixedCategories.some(c => t.category.toLowerCase().includes(c.toLowerCase()))) {
+      fixedAmt += parseInt(t.amount);
+    } else {
+      flexAmt += parseInt(t.amount);
+    }
+  });
+  if (fixedAmt === 0 && flexAmt === 0) flexAmt = 1;
+
+  const lastMonthTx = transactions.filter(t => new Date(t.date).getMonth() === (currentMonth === 0 ? 11 : currentMonth - 1) && new Date(t.date).getFullYear() === (currentMonth === 0 ? currentYear - 1 : currentYear));
+  const lastMonthExpense = lastMonthTx.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
+  const pctChange = lastMonthExpense ? ((totalExpense - lastMonthExpense) / lastMonthExpense * 100).toFixed(1) : 0;
+  const isGoodTrend = totalExpense <= lastMonthExpense;
+
+  const avg3Months = budgetHistory.slice(1, 4).reduce((sum, h) => sum + h.s, 0) / 3 || 0;
+  const projectedEndMonth = (totalExpense / new Date().getDate()) * new Date(currentYear, currentMonth + 1, 0).getDate() || 0;
+  
+  const topCategories = Object.keys(expensesByCategory)
+    .map(name => ({ name, val: expensesByCategory[name] }))
+    .sort((a, b) => b.val - a.val)
+    .slice(0, 5);
+  if (topCategories.length === 0) topCategories.push({ name: 'Chưa có', val: 0 });
+
+  const heatmapData = Array.from({length: 40}).map((_, i) => {
+    const d = new Date(currentYear, currentMonth, i - 5);
+    if (d > new Date() || d.getMonth() !== currentMonth) return 0;
+    const tx = currentMonthTx.filter(t => new Date(t.date).getDate() === d.getDate() && t.type === 'EXPENSE');
+    const amt = tx.reduce((sum, t) => sum + parseInt(t.amount), 0);
+    if (amt === 0) return 0;
+    if (amt < 100000) return 1;
+    if (amt < 300000) return 2;
+    if (amt < 1000000) return 3;
+    return 4;
+  });
+
   const renderSidebarBadge = (plan) => {
     if (plan === 'ultra') return <div className="pro-badge" style={{background: '#EDE9FE', color: '#7C3AED', borderColor: '#DDD6FE'}}>💎 Ultra</div>;
     if (plan === 'plus') return <div className="pro-badge">⭐ Plus</div>;
@@ -350,7 +450,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </li>
           <li className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}><CircleDollarSign size={20}/> Thu chi</li>
           <li className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveTab('budget')}><WalletCards size={20}/> Ngân sách</li>
-          <li className="nav-item"><PieChartIcon size={20}/> Báo cáo</li>
+          <li className={`nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}><PieChartIcon size={20}/> Báo cáo</li>
           <li className="nav-item"><Target size={20}/> Mục tiêu</li>
           <li className="nav-item"><Tags size={20}/> Danh mục</li>
           <li className="nav-item" onClick={() => setIsProfileOpen(true)}><User size={20}/> Tài khoản</li>
@@ -878,10 +978,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {['Ăn uống', 'Shopping', 'Di chuyển', 'Giải trí', 'Khác'].map((cat, idx) => {
+                  {(uniqueCategories.length > 0 ? uniqueCategories : ['Ăn uống', 'Shopping', 'Di chuyển', 'Giải trí', 'Khác']).map((cat, idx) => {
                     const spent = currentMonthTx.filter(t => t.type==='EXPENSE' && t.category===cat).reduce((s, t)=>s+t.amount, 0);
-                    const mockBudgets = { 'Ăn uống': 700000, 'Shopping': 500000, 'Di chuyển': 300000, 'Giải trí': 300000, 'Khác': 300000 };
-                    const b = mockBudgets[cat] || 200000;
+                    const b = dynamicBudgets[cat] || (monthlyBudget / 5);
                     const remain = b - spent;
                     const pct = Math.min((spent/b)*100, 100);
                     
@@ -961,13 +1060,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div></div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {[
-                    { m: 9, b: 2500000, s: 1500000, stat: 'Đang diễn ra', c: '#7C3AED', bg: '#F5F3FF' },
-                    { m: 8, b: 2000000, s: 1820000, stat: 'Hoàn thành', c: '#16A34A', bg: '#DCFCE7' },
-                    { m: 7, b: 2000000, s: 1450000, stat: 'Hoàn thành', c: '#16A34A', bg: '#DCFCE7' },
-                    { m: 6, b: 2000000, s: 1980000, stat: 'Vượt ngân sách', c: '#E11D48', bg: '#FFE4E6' },
-                    { m: 5, b: 1500000, s: 1200000, stat: 'Hoàn thành', c: '#16A34A', bg: '#DCFCE7' }
-                  ].map((row, i) => (
+                  {budgetHistory.map((row, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
                       <div style={{fontWeight: '600'}}>Tháng {row.m}, {currentYear}</div>
                       <div style={{textAlign: 'right'}}>{formatCurrency(row.b)}</div>
@@ -991,14 +1084,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                   <div style={{ height: 180, width: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={[
-                        { name: 'Th1', budget: 20, spent: 15 }, { name: 'Th2', budget: 20, spent: 18 },
-                        { name: 'Th3', budget: 20, spent: 19 }, { name: 'Th4', budget: 20, spent: 14 },
-                        { name: 'Th5', budget: 15, spent: 12 }, { name: 'Th6', budget: 20, spent: 22 },
-                        { name: 'Th7', budget: 20, spent: 14 }, { name: 'Th8', budget: 20, spent: 18 },
-                        { name: 'Th9', budget: 25, spent: 15 }, { name: 'Th10', budget: 0, spent: 0 },
-                        { name: 'Th11', budget: 0, spent: 0 }, { name: 'Th12', budget: 0, spent: 0 },
-                      ]} margin={{top: 10, right: 0, left: -25, bottom: 0}}>
+                      <LineChart data={yearBudgetData} margin={{top: 10, right: 0, left: -25, bottom: 0}}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E9E5F3"/>
                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#716B7A'}} dy={5}/>
                         <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#716B7A'}} tickFormatter={v => v + 'M'}/>
@@ -1042,6 +1128,224 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Báo cáo phân tích</h2>
+              <p style={{ color: 'var(--color-text-secondary)' }}>Thống kê chi tiết tình hình tài chính của bạn</p>
+            </div>
+            
+            {/* 6. Xu hướng chi tiêu (Metric cards) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' }}>
+              <div className="widget">
+                <h3 style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '5px'}}>So với tháng trước</h3>
+                <div style={{fontSize: '1.5rem', fontWeight: '800'}}>{pctChange > 0 ? '+' : ''}{pctChange}%</div>
+                <div style={{fontSize: '0.8rem', color: isGoodTrend ? 'var(--color-income)' : 'var(--color-expense)', marginTop: '5px'}}>
+                  {isGoodTrend ? '↓ Giảm chi tiêu (Tốt)' : '↑ Tăng chi tiêu (Cần chú ý)'}
+                </div>
+              </div>
+              <div className="widget">
+                <h3 style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '5px'}}>Trung bình 3 tháng</h3>
+                <div style={{fontSize: '1.5rem', fontWeight: '800'}}>{formatCurrency(avg3Months)}</div>
+                <div style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '5px'}}>
+                  {totalExpense < avg3Months ? 'Tháng này đang tiêu ít hơn TB' : 'Tháng này đang tiêu nhiều hơn TB'}
+                </div>
+              </div>
+              <div className="widget">
+                <h3 style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '5px'}}>Dự báo cuối tháng</h3>
+                <div style={{fontSize: '1.5rem', fontWeight: '800'}}>{formatCurrency(projectedEndMonth)}</div>
+                <div style={{fontSize: '0.8rem', color: projectedEndMonth > monthlyBudget ? 'var(--color-expense)' : 'var(--color-income)', marginTop: '5px'}}>
+                  {projectedEndMonth > monthlyBudget ? '↑ Có thể vượt ngân sách dự kiến' : '↓ An toàn trong ngân sách'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              {/* 1. Chi tiêu theo thời gian */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Chi tiêu theo thời gian (Tháng này)</h3>
+                <div style={{ height: 300, width: '100%' }}>
+                  <ResponsiveContainer>
+                    <LineChart data={dailyExpenseData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} tickFormatter={v => v + 'k'}/>
+                      <RechartsTooltip />
+                      <Line type="monotone" dataKey="amount" stroke="#7C3AED" strokeWidth={3} dot={{r: 4, fill: '#7C3AED'}} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 2. Chi tiêu theo danh mục */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Cơ cấu chi tiêu</h3>
+                <div style={{ height: 250, width: '100%' }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie data={pieData} innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value" stroke="none">
+                        {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />)}
+                      </Pie>
+                      <RechartsTooltip formatter={(val) => formatCurrency(val)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+                  {pieData.map((item, i) => (
+                    <div key={i} style={{display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem'}}>
+                      <div style={{width: 8, height: 8, borderRadius: '50%', background: getCategoryColor(item.name)}}></div>
+                      {item.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              {/* 3. Thu nhập vs Chi tiêu */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Thu nhập vs Chi tiêu (6 tháng)</h3>
+                <div style={{ height: 250, width: '100%' }}>
+                  <ResponsiveContainer>
+                    <BarChart data={incomeVsExpenseData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} tickFormatter={v => v + 'M'}/>
+                      <RechartsTooltip />
+                      <Legend iconType="circle" wrapperStyle={{fontSize: '12px'}} />
+                      <Bar dataKey="income" name="Thu nhập" fill="#34D399" radius={[4, 4, 0, 0]} barSize={15} />
+                      <Bar dataKey="expense" name="Chi tiêu" fill="#FB7185" radius={[4, 4, 0, 0]} barSize={15} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 9. Dòng tiền tích lũy */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Dòng tiền tích lũy</h3>
+                <div style={{ height: 250, width: '100%' }}>
+                  <ResponsiveContainer>
+                    <AreaChart data={cumulativeData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                      <defs>
+                        <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#60A5FA" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} tickFormatter={v => v + 'M'}/>
+                      <RechartsTooltip />
+                      <Area type="monotone" dataKey="balance" name="Số dư" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorBalance)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              {/* 5. Top danh mục chi nhiều nhất */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Top danh mục chi tiêu</h3>
+                <div style={{ height: 220, width: '100%' }}>
+                  <ResponsiveContainer>
+                    <BarChart layout="vertical" data={topCategories} margin={{top: 0, right: 20, left: 20, bottom: 0}}>
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 12}} width={70} />
+                      <RechartsTooltip />
+                      <Bar dataKey="val" fill="#A78BFA" radius={[0, 4, 4, 0]} barSize={20}>
+                        {topCategories.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 7. Chi tiêu theo ngày trong tuần */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Chi tiêu theo thứ</h3>
+                <div style={{ height: 220, width: '100%' }}>
+                  <ResponsiveContainer>
+                    <BarChart data={shiftedWeekdayData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 12}} />
+                      <YAxis hide />
+                      <RechartsTooltip />
+                      <Bar dataKey="val" fill="#FBBF24" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 8. Cố định vs Linh hoạt */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Cố định vs Linh hoạt</h3>
+                <div style={{ height: 180, width: '100%' }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie data={[{name: 'Cố định (Nhà, Hóa đơn)', value: fixedAmt}, {name: 'Linh hoạt (Khác)', value: flexAmt}]} innerRadius={50} outerRadius={70} dataKey="value" stroke="none">
+                        <Cell fill="#6366F1" />
+                        <Cell fill="#EC4899" />
+                      </Pie>
+                      <RechartsTooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', fontSize: '0.8rem', marginTop: '10px' }}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}><div style={{width: 8, height: 8, borderRadius: '50%', background: '#6366F1'}}></div> Cố định {Math.round(fixedAmt/(fixedAmt+flexAmt)*100)}%</div>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}><div style={{width: 8, height: 8, borderRadius: '50%', background: '#EC4899'}}></div> Linh hoạt {Math.round(flexAmt/(fixedAmt+flexAmt)*100)}%</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              {/* 4. Ngân sách vs Thực tế (Progress bars) */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Ngân sách vs Thực tế</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {budgetHistory.slice(0, 3).map((m, i) => {
+                    const spentPct = Math.min(Math.round((m.s / m.b) * 100) || 0, 100);
+                    return (
+                    <div key={i}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '5px' }}>
+                        <span style={{fontWeight: '600'}}>Tháng {m.m}</span>
+                        <span style={{color: 'var(--color-text-secondary)'}}>{spentPct}% ngân sách</span>
+                      </div>
+                      <div style={{ height: 8, background: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${spentPct}%`, height: '100%', background: spentPct > 90 ? 'var(--color-expense)' : '#34D399', borderRadius: '4px' }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 10. Heatmap lịch chi tiêu */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Cường độ chi tiêu (30 ngày qua)</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '4px' }}>
+                  {heatmapData.map((val, i) => {
+                    const intensities = ['#F3F4F6', '#D8B4FE', '#C084FC', '#A855F7', '#9333EA'];
+                    return (
+                      <div key={i} style={{ aspectRatio: '1/1', background: intensities[val], borderRadius: '4px' }} title={`Cường độ: ${val}`}></div>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>
+                  <span>Ít</span>
+                  <div style={{width: 10, height: 10, background: '#F3F4F6', borderRadius: '2px'}}></div>
+                  <div style={{width: 10, height: 10, background: '#D8B4FE', borderRadius: '2px'}}></div>
+                  <div style={{width: 10, height: 10, background: '#C084FC', borderRadius: '2px'}}></div>
+                  <div style={{width: 10, height: 10, background: '#A855F7', borderRadius: '2px'}}></div>
+                  <div style={{width: 10, height: 10, background: '#9333EA', borderRadius: '2px'}}></div>
+                  <span>Nhiều</span>
                 </div>
               </div>
             </div>
