@@ -735,7 +735,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 {getPlanBadge(profileData.plan)}
               </div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 16px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '20px', color: '#D97706', fontWeight: '700', fontSize: '1rem', marginTop: '5px' }}>
-                <img src="/coin_icon.png" alt="Coin" style={{ width: '20px', height: '20px' }} /> {profileData.coin} Coins
+                <img src="/coin_icon.png" alt="Coin" style={{ width: '20px', height: '20px' }} onError={(e) => { e.target.style.display='none'; e.target.parentNode.prepend(Object.assign(document.createElement('span'), {textContent: '🪙', style: 'font-size:18px'})); }} /> {profileData.coin} Coins
               </div>
             </div>
 
@@ -790,9 +790,24 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div className="modal-content checkin-modal" style={{ padding: 0, overflow: 'hidden', maxWidth: '600px', background: 'var(--color-bg)' }}>
             
             {/* Banner Section */}
-            <div style={{ position: 'relative', background: '#F8F9FA' }}>
-              <button className="close-btn" style={{ position: 'absolute', top: 15, right: 15, color: '#333', background: 'rgba(255,255,255,0.8)', borderRadius: '50%', width: 30, height: 30, zIndex: 10, boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} onClick={() => setIsCheckinOpen(false)}>×</button>
-              <img src="/checkin_banner.png" alt="Banner Điểm Danh" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
+            <div style={{ position: 'relative', background: 'linear-gradient(135deg, #7C3AED 0%, #a855f7 50%, #ec4899 100%)', padding: '30px 25px', textAlign: 'left', overflow: 'hidden' }}>
+              <button className="close-btn" style={{ position: 'absolute', top: 15, right: 15, color: 'white', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', width: 30, height: 30, zIndex: 10, border: 'none', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setIsCheckinOpen(false)}>×</button>
+              {/* Decorative stars */}
+              <div style={{ position: 'absolute', top: '15px', left: '40%', fontSize: '1rem', opacity: 0.6 }}>⭐</div>
+              <div style={{ position: 'absolute', top: '30px', right: '80px', fontSize: '0.8rem', opacity: 0.5 }}>⭐</div>
+              <div style={{ position: 'absolute', bottom: '20px', left: '55%', fontSize: '1.2rem', opacity: 0.5 }}>⭐</div>
+              {/* Cat mascot placeholder */}
+              <div style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)' }}>
+                <img src="/cat_mascot.png" alt="cat" style={{ height: '100px', filter: 'drop-shadow(0 4px 15px rgba(0,0,0,0.3))' }} />
+              </div>
+              <div style={{ maxWidth: '60%' }}>
+                <h2 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '700', margin: '0 0 4px', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>Điểm danh mỗi ngày</h2>
+                <h1 style={{ color: '#FBBF24', fontSize: '2.2rem', fontWeight: '900', margin: '0 0 8px', textShadow: '0 3px 12px rgba(0,0,0,0.4)' }}>Nhận 20 coin!</h1>
+                <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', margin: 0, lineHeight: 1.4 }}>Duy trì thói quen tốt, quản lý chi tiêu<br/>hiệu quả hơn và nhận phần thưởng hấp dẫn.</p>
+              </div>
+              {/* Floating coins */}
+              <div style={{ position: 'absolute', bottom: '10px', right: '130px', fontSize: '1.5rem', opacity: 0.8 }}>💰</div>
+              <div style={{ position: 'absolute', top: '10px', right: '130px', fontSize: '1.2rem', opacity: 0.7 }}>💰</div>
             </div>
 
             {/* Content Section */}
@@ -807,7 +822,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
                 <div style={{ flex: 1, background: 'white', padding: '15px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                  <img src="/coin_icon.png" alt="Coin" style={{ width: '32px', height: '32px' }} />
+                  <div style={{ fontSize: '2rem' }}>🪙</div>
                   <div>
                     <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{profileData.coin || 0}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Coin hiện có</div>
@@ -830,7 +845,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: '600', color: isClaimed ? '#7C3AED' : 'var(--color-text-secondary)', marginBottom: '8px' }}>Ngày {day}</div>
                       <div style={{ fontSize: '1.5rem', marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
-                        {isClaimed ? '✅' : (isGift ? '🎁' : <img src="/coin_icon.png" alt="Coin" style={{ width: '24px', height: '24px' }} />)}
+                        {isClaimed ? '✅' : (isGift ? '🎁' : '🪙')}
                       </div>
                       <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isGift ? '#F59E0B' : 'inherit' }}>
                         +{isGift ? 100 : 20}
@@ -841,7 +856,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
 
               <button className="btn-primary" style={{ width: '100%', padding: '15px', fontSize: '1.1rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }} onClick={handleCheckin} disabled={loading}>
-                {loading ? 'Đang xử lý...' : <><img src="/coin_icon.png" alt="Coin" style={{ width: '24px', height: '24px' }} /> Điểm danh hôm nay</>}
+                {loading ? 'Đang xử lý...' : '🪙 Điểm danh hôm nay'}
               </button>
 
               <div style={{ marginTop: '20px', background: 'white', borderRadius: '12px', padding: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
