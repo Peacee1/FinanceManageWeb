@@ -349,7 +349,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             <Gift size={20} color="#F472B6" /> Điểm danh nhận quà
           </li>
           <li className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}><CircleDollarSign size={20}/> Thu chi</li>
-          <li className="nav-item"><WalletCards size={20}/> Ngân sách</li>
+          <li className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveTab('budget')}><WalletCards size={20}/> Ngân sách</li>
           <li className="nav-item"><PieChartIcon size={20}/> Báo cáo</li>
           <li className="nav-item"><Target size={20}/> Mục tiêu</li>
           <li className="nav-item"><Tags size={20}/> Danh mục</li>
@@ -464,12 +464,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             </div>
 
-            <div className="stat-card" style={{ position: 'relative' }}>
+            <div className="stat-card" style={{ position: 'relative', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }} onClick={() => setActiveTab('budget')} onMouseEnter={e => {e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)'}} onMouseLeave={e => {e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'}}>
               <div className="stat-header">
                 <div className="stat-icon" style={{background: 'rgba(245, 158, 11, 0.1)'}}>
                   <Target color="#F59E0B" size={24}/>
                 </div>
-                <button onClick={() => { setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer' }}>
+                <button onClick={(e) => { e.stopPropagation(); setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', zIndex: 2 }}>
                   ✏️ Sửa
                 </button>
               </div>
@@ -753,6 +753,296 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'budget' && (
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Ngân sách</h2>
+              <p style={{ color: 'var(--color-text-secondary)' }}>Lập kế hoạch chi tiêu và kiểm soát ngân sách theo tháng, theo năm</p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '20px', scrollbarWidth: 'none' }}>
+              <button style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'white' }}><ChevronLeft size={16}/></button>
+              <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'white', fontWeight: 'bold' }}>{currentYear}</button>
+              <button style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'white' }}><ChevronRight size={16}/></button>
+              
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                <button key={m} style={{ 
+                  padding: '8px 16px', 
+                  borderRadius: '8px', 
+                  border: 'none',
+                  background: m === currentMonth + 1 ? '#7C3AED' : 'white',
+                  color: m === currentMonth + 1 ? 'white' : 'var(--color-text-secondary)',
+                  fontWeight: m === currentMonth + 1 ? 'bold' : 'normal',
+                  minWidth: '60px'
+                }}>
+                  Th{m}
+                </button>
+              ))}
+            </div>
+
+            {/* Top row cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              
+              {/* Card 1: Budget remaining */}
+              <div className="widget" style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                  <div className="stat-icon" style={{background: 'rgba(245, 158, 11, 0.1)'}}>
+                    <Target color="#F59E0B" size={24}/>
+                  </div>
+                  <button onClick={() => { setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '4px 12px', fontSize: '0.8rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ✏️ Sửa
+                  </button>
+                </div>
+                <div className="stat-title">Còn lại trong ngân sách</div>
+                <h3 className="stat-amount" style={{color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit', fontSize: '1.8rem', marginTop: '5px'}}>
+                  {totalExpense > monthlyBudget ? `-${formatCurrency(totalExpense - monthlyBudget)}` : formatCurrency(monthlyBudget - totalExpense)}
+                </h3>
+                <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px'}}>
+                  <div className="progress-container" style={{flex: 1, marginTop: 0, height: 8}}>
+                    <div className="progress-bar" style={{background: totalExpense > monthlyBudget ? 'var(--color-expense)' : '#7C3AED', width: `${Math.min((totalExpense / monthlyBudget) * 100, 100)}%`}}></div>
+                  </div>
+                  <span style={{fontSize: '0.9rem', fontWeight: 'bold', color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit'}}>{Math.min(Math.round((totalExpense / monthlyBudget) * 100), 100)}%</span>
+                </div>
+                <div style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px'}}>
+                  Giới hạn: {monthlyBudget.toLocaleString('vi-VN')} đ / tháng
+                </div>
+              </div>
+
+              {/* Card 2: Donut chart */}
+              <div className="widget" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Tổng chi tiêu theo danh mục</h3>
+                  <div style={{fontSize: '0.8rem', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: '6px', color: 'var(--color-text-secondary)'}}>Tháng này ⌄</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                  <div style={{ width: 140, height: 140, position: 'relative' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={pieData} innerRadius={50} outerRadius={70} paddingAngle={2} dataKey="value" stroke="none">
+                          {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name)} />)}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+                      <span style={{fontSize: '0.7rem', color: 'var(--color-text-secondary)'}}>Đã chi</span>
+                      <span style={{fontWeight: 'bold', fontSize: '0.9rem'}}>{formatCompact(totalExpense)}</span>
+                      <span style={{fontSize: '0.65rem', color: 'var(--color-text-secondary)'}}>/ {formatCompact(monthlyBudget)}</span>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, marginLeft: '20px' }}>
+                    {pieData.map((item, i) => (
+                      <div key={i} style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '10px'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                          <div style={{width: 10, height: 10, borderRadius: '50%', background: getCategoryColor(item.name)}}></div>
+                          <span>{item.name}</span>
+                        </div>
+                        <div style={{fontWeight: '600'}}>{formatCurrency(item.value)}</div>
+                        <div style={{color: 'var(--color-text-secondary)', width: '30px', textAlign: 'right'}}>{totalExpense > 0 ? Math.round((item.value/totalExpense)*100) : 0}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Promo */}
+              <div className="widget" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '30px' }}>
+                <img src="/cat_mascot.png" alt="Mascot" style={{ width: 100, marginBottom: '15px' }} />
+                <h3 style={{ fontSize: '1rem', color: '#4C1D95', marginBottom: '8px' }}>Bạn còn <span style={{fontSize: '1.2rem', fontWeight: '800'}}>{formatCurrency(Math.max(monthlyBudget - totalExpense, 0))}</span></h3>
+                <p style={{ fontSize: '0.85rem', color: '#6D28D9' }}>trong ngân sách tháng này. Cố lên nhé! 💪</p>
+              </div>
+
+            </div>
+
+            {/* Middle row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              
+              {/* Budget by category */}
+              <div className="widget">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Ngân sách theo danh mục</h3>
+                  <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}><Plus size={14}/> Thêm danh mục</button>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 20px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
+                  <div>Danh mục</div>
+                  <div style={{textAlign: 'right'}}>Ngân sách</div>
+                  <div style={{textAlign: 'right'}}>Đã chi</div>
+                  <div style={{textAlign: 'right'}}>Còn lại</div>
+                  <div>Tiến độ</div>
+                  <div></div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {['Ăn uống', 'Shopping', 'Di chuyển', 'Giải trí', 'Khác'].map((cat, idx) => {
+                    const spent = currentMonthTx.filter(t => t.type==='EXPENSE' && t.category===cat).reduce((s, t)=>s+t.amount, 0);
+                    const mockBudgets = { 'Ăn uống': 700000, 'Shopping': 500000, 'Di chuyển': 300000, 'Giải trí': 300000, 'Khác': 300000 };
+                    const b = mockBudgets[cat] || 200000;
+                    const remain = b - spent;
+                    const pct = Math.min((spent/b)*100, 100);
+                    
+                    return (
+                      <div key={cat} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 20px', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{width: 32, height: 32, borderRadius: '8px', background: `${getCategoryColor(cat)}15`, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                            {getCategoryIcon(cat, getCategoryColor(cat))}
+                          </div>
+                          <span style={{fontWeight: '600'}}>{cat}</span>
+                        </div>
+                        <div style={{textAlign: 'right'}}>{formatCurrency(b)}</div>
+                        <div style={{textAlign: 'right'}}>{formatCurrency(spent)}</div>
+                        <div style={{textAlign: 'right', color: remain >= 0 ? 'var(--color-income)' : 'var(--color-expense)'}}>{formatCurrency(Math.abs(remain))}</div>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                          <div style={{flex: 1, height: 6, background: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden'}}>
+                            <div style={{width: `${pct}%`, height: '100%', background: getCategoryColor(cat), borderRadius: '3px'}}></div>
+                          </div>
+                          <span style={{fontSize: '0.75rem', color: 'var(--color-text-secondary)', width: '30px'}}>{Math.round(pct)}%</span>
+                        </div>
+                        <div style={{cursor: 'pointer', color: 'var(--color-text-secondary)'}}><MoreVertical size={16}/></div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Quick budgets */}
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Ngân sách nhanh</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
+                    <div>
+                      <div style={{ fontWeight: '700' }}>Tiết kiệm</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ width: 40, height: 40, background: 'white', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
+                    <div>
+                      <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
+                      <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ width: 40, height: 40, background: '#FEF3C7', color: '#D97706', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⭐</div>
+                    <div>
+                      <div style={{ fontWeight: '700' }}>Thoải mái</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Chi tiêu linh hoạt vẫn kiểm soát</div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ width: 40, height: 40, background: '#DBEAFE', color: '#2563EB', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚙️</div>
+                    <div>
+                      <div style={{ fontWeight: '700' }}>Tùy chỉnh</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Tạo ngân sách theo nhu cầu</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+              
+              {/* History */}
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px' }}>Lịch sử ngân sách</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
+                  <div>Thời gian</div>
+                  <div style={{textAlign: 'right'}}>Ngân sách</div>
+                  <div style={{textAlign: 'right'}}>Đã chi</div>
+                  <div style={{textAlign: 'right'}}>Còn lại</div>
+                  <div style={{textAlign: 'center'}}>Trạng thái</div>
+                  <div></div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {[
+                    { m: 9, b: 2500000, s: 1500000, stat: 'Đang diễn ra', c: '#7C3AED', bg: '#F5F3FF' },
+                    { m: 8, b: 2000000, s: 1820000, stat: 'Hoàn thành', c: '#16A34A', bg: '#DCFCE7' },
+                    { m: 7, b: 2000000, s: 1450000, stat: 'Hoàn thành', c: '#16A34A', bg: '#DCFCE7' },
+                    { m: 6, b: 2000000, s: 1980000, stat: 'Vượt ngân sách', c: '#E11D48', bg: '#FFE4E6' },
+                    { m: 5, b: 1500000, s: 1200000, stat: 'Hoàn thành', c: '#16A34A', bg: '#DCFCE7' }
+                  ].map((row, i) => (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
+                      <div style={{fontWeight: '600'}}>Tháng {row.m}, {currentYear}</div>
+                      <div style={{textAlign: 'right'}}>{formatCurrency(row.b)}</div>
+                      <div style={{textAlign: 'right'}}>{formatCurrency(row.s)}</div>
+                      <div style={{textAlign: 'right', color: row.b - row.s >= 0 ? 'var(--color-income)' : 'var(--color-expense)'}}>{formatCurrency(Math.abs(row.b - row.s))}</div>
+                      <div style={{display: 'flex', justifyContent: 'center'}}>
+                        <span style={{background: row.bg, color: row.c, padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700'}}>{row.stat}</span>
+                      </div>
+                      <div style={{cursor: 'pointer', color: 'var(--color-text-secondary)', textAlign: 'right'}}><MoreVertical size={16}/></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chart & Settings */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="widget">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Ngân sách năm {currentYear}</h3>
+                    <div style={{fontSize: '0.75rem', border: '1px solid var(--color-border)', padding: '4px 8px', borderRadius: '6px'}}>Năm {currentYear} ⌄</div>
+                  </div>
+                  <div style={{ height: 180, width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={[
+                        { name: 'Th1', budget: 20, spent: 15 }, { name: 'Th2', budget: 20, spent: 18 },
+                        { name: 'Th3', budget: 20, spent: 19 }, { name: 'Th4', budget: 20, spent: 14 },
+                        { name: 'Th5', budget: 15, spent: 12 }, { name: 'Th6', budget: 20, spent: 22 },
+                        { name: 'Th7', budget: 20, spent: 14 }, { name: 'Th8', budget: 20, spent: 18 },
+                        { name: 'Th9', budget: 25, spent: 15 }, { name: 'Th10', budget: 0, spent: 0 },
+                        { name: 'Th11', budget: 0, spent: 0 }, { name: 'Th12', budget: 0, spent: 0 },
+                      ]} margin={{top: 10, right: 0, left: -25, bottom: 0}}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E9E5F3"/>
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#716B7A'}} dy={5}/>
+                        <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#716B7A'}} tickFormatter={v => v + 'M'}/>
+                        <RechartsTooltip />
+                        <Line type="stepAfter" dataKey="budget" stroke="#C4B5FD" strokeWidth={2} dot={false} />
+                        <Line type="monotone" dataKey="spent" stroke="#7C3AED" strokeWidth={3} dot={{r: 3, fill: '#7C3AED'}} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '10px', fontSize: '0.8rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{width: 12, height: 12, background: '#C4B5FD', borderRadius: '3px'}}></div> Ngân sách</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{width: 12, height: 12, background: '#7C3AED', borderRadius: '3px'}}></div> Đã chi</div>
+                  </div>
+                </div>
+
+                <div className="widget">
+                  <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '15px' }}>Cài đặt ngân sách</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{width: 32, height: 32, background: '#FEF3C7', color: '#D97706', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><Bell size={16}/></div>
+                        <div>
+                          <div style={{fontWeight: '600', fontSize: '0.85rem'}}>Nhắc nhở khi chi tiêu gần hết</div>
+                          <div style={{fontSize: '0.75rem', color: 'var(--color-text-secondary)'}}>Thông báo khi đã chi 80% ngân sách</div>
+                        </div>
+                      </div>
+                      <div style={{ width: 40, height: 22, background: '#7C3AED', borderRadius: '11px', position: 'relative', cursor: 'pointer' }}>
+                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, right: 2 }}></div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{width: 32, height: 32, background: '#F3F4F6', color: '#6B7280', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><Settings size={16}/></div>
+                        <div>
+                          <div style={{fontWeight: '600', fontSize: '0.85rem'}}>Tự động tạo ngân sách tháng mới</div>
+                          <div style={{fontSize: '0.75rem', color: 'var(--color-text-secondary)'}}>Sao chép ngân sách từ tháng trước</div>
+                        </div>
+                      </div>
+                      <div style={{ width: 40, height: 22, background: '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer' }}>
+                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, left: 2 }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
