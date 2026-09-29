@@ -72,6 +72,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   // Month navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
 
   // Checkin Modal State
   const [isCheckinOpen, setIsCheckinOpen] = useState(false);
@@ -365,9 +367,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     if (amount >= 1000) return (amount / 1000).toFixed(0) + 'k';
     return amount;
   };
-
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
   const currentMonthTx = transactions.filter(t => new Date(t.date).getMonth() === currentMonth && new Date(t.date).getFullYear() === currentYear);
 
   const handlePrevMonth = () => {
