@@ -48,4 +48,42 @@ const addTransaction = async (req, res) => {
   }
 };
 
-module.exports = { getTransactions, addTransaction };
+// Xoá giao dịch
+const deleteTransaction = async (req, res) => {
+  const userId = req.user.userId;
+  const { id } = req.params;
+
+  try {
+    const result = await db.query('DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *', [id, userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền xoá' });
+    }
+    res.json({ message: 'Xoá giao dịch thành công', transaction: result.rows[0] });
+  } catch (error) {
+    console.error('Lỗi khi xoá giao dịch:', error);
+    res.status(500).json({ message: 'Lỗi server khi xoá giao dịch' });
+  }
+};
+
+// Cập nhật giao dịch
+const updateTransaction = async (req, res) => {
+  const userId = req.user.userId;
+  const { id } = req.params;
+  const { type, amount, category, date, description } = req.body;
+
+  try {
+    const result = await db.query(
+      'UPDATE transactions SET type = COALESCE($1, type), amount = COALESCE($2, amount), category = COALESCE($3, category), date = COALESCE($4, date), description = COALESCE($5, description) WHERE id = $6 AND user_id = $7 RETURNING *',
+      [type, amount, category, date, description, id, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền sửa' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Lỗi khi sửa giao dịch:', error);
+    res.status(500).json({ message: 'Lỗi server khi sửa giao dịch' });
+  }
+};
+
+module.exports = { getTransactions, addTransaction, deleteTransaction, updateTransaction };

@@ -47,6 +47,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   // Day Details State
   const [selectedDayInfo, setSelectedDayInfo] = useState(null);
+  const [hoveredTx, setHoveredTx] = useState(null);
+  const [editTxId, setEditTxId] = useState(null);
 
   // Month navigation state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -268,20 +270,57 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     } finally { setLoading(false); }
   };
 
+  const handleDeleteTx = async (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xoá giao dịch này?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/transactions/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      setSelectedDayInfo(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          incomes: prev.incomes.filter(t => t.id !== id),
+          expenses: prev.expenses.filter(t => t.id !== id)
+        };
+      });
+      fetchTransactions();
+    } catch (error) {
+      alert('Có lỗi xảy ra khi xoá giao dịch!');
+    }
+  };
+
+  const handleEditTx = (t) => {
+    setEditTxId(t.id);
+    setType(t.type);
+    setCategory(t.category);
+    setAmount(t.amount.toString());
+    setDate(new Date(t.date).toISOString().substring(0, 10));
+    setDescription(t.description || '');
+    setIsModalOpen(true);
+    setSelectedDayInfo(null);
+  };
+
   const handleAddTransaction = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post('/api/transactions', {
-        type, amount: parseInt(amount), category, date, description
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      if (editTxId) {
+        await axios.put(`/api/transactions/${editTxId}`, {
+          type, amount: parseInt(amount), category, date, description
+        }, { headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await axios.post('/api/transactions', {
+          type, amount: parseInt(amount), category, date, description
+        }, { headers: { Authorization: `Bearer ${token}` } });
+      }
       setIsModalOpen(false);
       setAmount('');
       setDescription('');
+      setEditTxId(null);
       fetchTransactions();
     } catch (error) {
-      alert('Có lỗi xảy ra khi thêm giao dịch!');
+      alert('Có lỗi xảy ra khi lưu giao dịch!');
     } finally { setLoading(false); }
   };
 
@@ -1635,8 +1674,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>Thêm Giao Dịch</h3>
-              <button className="close-btn" onClick={() => setIsModalOpen(false)}>×</button>
+              <h3>{editTxId ? 'Sửa Giao Dịch' : 'Thêm Giao Dịch'}</h3>
+              <button className="close-btn" onClick={() => { setIsModalOpen(false); setEditTxId(null); }}>×</button>
             </div>
             <form onSubmit={handleAddTransaction}>
               <div className="input-group">
@@ -1688,19 +1727,31 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               ) : (
                 <>
                   {selectedDayInfo.incomes.map((t, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div key={i} onMouseEnter={() => setHoveredTx(t.id)} onMouseLeave={() => setHoveredTx(null)} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
                       <div>
                         <strong style={{ display: 'block' }}>{t.category}</strong>
                         <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{t.description || 'Thu nhập'}</div>
+                        {hoveredTx === t.id && (
+                          <div style={{display: 'flex', gap: '8px', marginTop: '5px'}}>
+                            <button onClick={() => handleEditTx(t)} style={{fontSize: '0.75rem', background: '#E5E7EB', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Sửa</button>
+                            <button onClick={() => handleDeleteTx(t.id)} style={{fontSize: '0.75rem', background: '#FEE2E2', color: '#EF4444', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Xóa</button>
+                          </div>
+                        )}
                       </div>
                       <div style={{ color: 'var(--color-income)', fontWeight: 'bold' }}>+{formatCurrency(t.amount)}</div>
                     </div>
                   ))}
                   {selectedDayInfo.expenses.map((t, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div key={i} onMouseEnter={() => setHoveredTx(t.id)} onMouseLeave={() => setHoveredTx(null)} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
                       <div>
                         <strong style={{ display: 'block' }}>{t.category}</strong>
                         <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{t.description || 'Chi tiêu'}</div>
+                        {hoveredTx === t.id && (
+                          <div style={{display: 'flex', gap: '8px', marginTop: '5px'}}>
+                            <button onClick={() => handleEditTx(t)} style={{fontSize: '0.75rem', background: '#E5E7EB', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Sửa</button>
+                            <button onClick={() => handleDeleteTx(t.id)} style={{fontSize: '0.75rem', background: '#FEE2E2', color: '#EF4444', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Xóa</button>
+                          </div>
+                        )}
                       </div>
                       <div style={{ color: 'var(--color-expense)', fontWeight: 'bold' }}>-{formatCurrency(t.amount)}</div>
                     </div>
