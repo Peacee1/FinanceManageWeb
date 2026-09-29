@@ -66,7 +66,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const quickActionsRef = useRef(null);
   const [qaPos, setQaPos] = useState(() => {
     const saved = localStorage.getItem('qaPos');
-    return saved ? JSON.parse(saved) : { right: 24, bottom: 24 };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.left !== undefined && parsed.top !== undefined) return parsed;
+    }
+    return { left: window.innerWidth - 364, top: window.innerHeight - 350 };
   });
   const [isDraggingQA, setIsDraggingQA] = useState(false);
   const qaOffset = useRef({ x: 0, y: 0 });
@@ -86,7 +90,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     if (!isDraggingQA) return;
     let newX = e.clientX - qaOffset.current.x;
     let newY = e.clientY - qaOffset.current.y;
-    setQaPos({ left: newX, top: newY, right: 'auto', bottom: 'auto' });
+    setQaPos({ left: newX, top: newY });
   };
 
   const handlePointerUp = (e) => {
@@ -105,20 +109,48 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
     const minDist = Math.min(distLeft, distRight, distTop, distBottom);
 
-    let finalPos = {};
+    let finalLeft = rect.left;
+    let finalTop = rect.top;
+
     if (minDist === distLeft) {
-      finalPos = { left: 24, top: Math.max(24, Math.min(rect.top, wh - rect.height - 24)), right: 'auto', bottom: 'auto' };
+      finalLeft = 24;
+      finalTop = Math.max(24, Math.min(rect.top, wh - rect.height - 24));
     } else if (minDist === distRight) {
-      finalPos = { right: 24, top: Math.max(24, Math.min(rect.top, wh - rect.height - 24)), left: 'auto', bottom: 'auto' };
+      finalLeft = ww - rect.width - 24;
+      finalTop = Math.max(24, Math.min(rect.top, wh - rect.height - 24));
     } else if (minDist === distTop) {
-      finalPos = { top: 24, left: Math.max(24, Math.min(rect.left, ww - rect.width - 24)), right: 'auto', bottom: 'auto' };
+      finalTop = 24;
+      finalLeft = Math.max(24, Math.min(rect.left, ww - rect.width - 24));
     } else {
-      finalPos = { bottom: 24, left: Math.max(24, Math.min(rect.left, ww - rect.width - 24)), right: 'auto', bottom: 'auto' };
+      finalTop = wh - rect.height - 24;
+      finalLeft = Math.max(24, Math.min(rect.left, ww - rect.width - 24));
     }
 
+    const finalPos = { left: finalLeft, top: finalTop };
     setQaPos(finalPos);
     localStorage.setItem('qaPos', JSON.stringify(finalPos));
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      setQaPos(prev => {
+        if (!quickActionsRef.current) return prev;
+        const rect = quickActionsRef.current.getBoundingClientRect();
+        const ww = window.innerWidth;
+        const wh = window.innerHeight;
+        let newLeft = Math.max(24, Math.min(prev.left, ww - rect.width - 24));
+        let newTop = Math.max(24, Math.min(prev.top, wh - rect.height - 24));
+        if (newLeft !== prev.left || newTop !== prev.top) {
+          const newPos = { left: newLeft, top: newTop };
+          localStorage.setItem('qaPos', JSON.stringify(newPos));
+          return newPos;
+        }
+        return prev;
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchTransactions = async () => {
     try {
