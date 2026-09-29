@@ -636,21 +636,50 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 {avatarSrc ? (
-                  <img src={avatarSrc} alt="Avatar" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }}/>
+                  <img src={avatarSrc} alt="Avatar" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '3px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}/>
                 ) : (
-                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold' }}>
+                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold', border: '3px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
                     {profileData.name.charAt(0)}
                   </div>
                 )}
-                <label style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--color-bg)', padding: '5px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
+                <label style={{ position: 'absolute', bottom: -5, right: -5, background: 'white', padding: '6px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   📷 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} disabled={loading} />
                 </label>
               </div>
-              <h2 style={{ margin: '10px 0 5px' }}>{profileData.name}</h2>
-              <div>{getPlanBadge(profileData.plan)}</div>
-              <div style={{ marginTop: '10px', fontWeight: 'bold', color: 'var(--color-warning)' }}>🪙 {profileData.coin} Coins</div>
+              <h2 style={{ margin: '15px 0 5px', fontSize: '1.4rem' }}>{profileData.name}</h2>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                {getPlanBadge(profileData.plan)}
+              </div>
+              <div style={{ display: 'inline-block', padding: '6px 16px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '20px', color: '#D97706', fontWeight: '700', fontSize: '1rem', marginTop: '5px' }}>
+                🪙 {profileData.coin} Coins
+              </div>
             </div>
-            <button className="btn-secondary" onClick={() => setIsProfileOpen(false)}>Đóng</button>
+
+            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '15px', marginBottom: '20px' }}>
+              <div className="profile-info-row">
+                <span className="profile-info-label">Email:</span>
+                <span className="profile-info-value" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                  {profileData.email} 
+                  {profileData.email_verified ? 
+                    <span style={{color: 'var(--color-income)', fontSize: '0.85rem', fontWeight: '600'}}>✓ Đã xác thực</span> : 
+                    <button className="verify-btn">Xác thực</button>}
+                </span>
+              </div>
+              
+              <div className="profile-info-row">
+                <span className="profile-info-label">Số điện thoại:</span>
+                <span className="profile-info-value" style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                  {profileData.phone || 'Chưa cập nhật'} 
+                  {profileData.phone ? 
+                    (profileData.phone_verified ? 
+                      <span style={{color: 'var(--color-income)', fontSize: '0.85rem', fontWeight: '600'}}>✓ Đã xác thực</span> : 
+                      <button className="verify-btn">Xác thực</button>) : 
+                    <button className="verify-btn">Thêm SDT</button>}
+                </span>
+              </div>
+            </div>
+
+            <button className="btn-promo" onClick={() => setIsProfileOpen(false)}>Hoàn tất</button>
           </div>
         </div>
       )}
