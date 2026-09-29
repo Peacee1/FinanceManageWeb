@@ -26,6 +26,16 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/users', userRoutes);
 
+const db = require('./config/db');
+app.get('/api/debug-users', async (req, res) => {
+  try {
+    const result = await db.query('SELECT id, name, avatar_url FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Khởi chạy server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
