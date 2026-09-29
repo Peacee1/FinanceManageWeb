@@ -6,7 +6,8 @@ import {
   PieChart as PieChartIcon, Target, Tags, User, Settings, 
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
-  ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift 
+  ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift,
+  Edit2, Trash2
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -1727,33 +1728,45 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               ) : (
                 <>
                   {selectedDayInfo.incomes.map((t, i) => (
-                    <div key={i} onMouseEnter={() => setHoveredTx(t.id)} onMouseLeave={() => setHoveredTx(null)} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div key={i} onMouseEnter={() => setHoveredTx(t.id)} onMouseLeave={() => setHoveredTx(null)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
                       <div>
                         <strong style={{ display: 'block' }}>{t.category}</strong>
                         <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{t.description || 'Thu nhập'}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         {hoveredTx === t.id && (
-                          <div style={{display: 'flex', gap: '8px', marginTop: '5px'}}>
-                            <button onClick={() => handleEditTx(t)} style={{fontSize: '0.75rem', background: '#E5E7EB', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Sửa</button>
-                            <button onClick={() => handleDeleteTx(t.id)} style={{fontSize: '0.75rem', background: '#FEE2E2', color: '#EF4444', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Xóa</button>
+                          <div style={{display: 'flex', gap: '8px'}}>
+                            <button onClick={() => handleEditTx(t)} style={{background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', padding: '4px'}} title="Sửa">
+                              <Edit2 size={14}/>
+                            </button>
+                            <button onClick={() => handleDeleteTx(t.id)} style={{background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px'}} title="Xóa">
+                              <Trash2 size={14}/>
+                            </button>
                           </div>
                         )}
+                        <div style={{ color: 'var(--color-income)', fontWeight: 'bold' }}>+{formatCurrency(t.amount)}</div>
                       </div>
-                      <div style={{ color: 'var(--color-income)', fontWeight: 'bold' }}>+{formatCurrency(t.amount)}</div>
                     </div>
                   ))}
                   {selectedDayInfo.expenses.map((t, i) => (
-                    <div key={i} onMouseEnter={() => setHoveredTx(t.id)} onMouseLeave={() => setHoveredTx(null)} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
+                    <div key={i} onMouseEnter={() => setHoveredTx(t.id)} onMouseLeave={() => setHoveredTx(null)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' }}>
                       <div>
                         <strong style={{ display: 'block' }}>{t.category}</strong>
                         <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{t.description || 'Chi tiêu'}</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         {hoveredTx === t.id && (
-                          <div style={{display: 'flex', gap: '8px', marginTop: '5px'}}>
-                            <button onClick={() => handleEditTx(t)} style={{fontSize: '0.75rem', background: '#E5E7EB', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Sửa</button>
-                            <button onClick={() => handleDeleteTx(t.id)} style={{fontSize: '0.75rem', background: '#FEE2E2', color: '#EF4444', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer'}}>Xóa</button>
+                          <div style={{display: 'flex', gap: '8px'}}>
+                            <button onClick={() => handleEditTx(t)} style={{background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', padding: '4px'}} title="Sửa">
+                              <Edit2 size={14}/>
+                            </button>
+                            <button onClick={() => handleDeleteTx(t.id)} style={{background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px'}} title="Xóa">
+                              <Trash2 size={14}/>
+                            </button>
                           </div>
                         )}
+                        <div style={{ color: 'var(--color-expense)', fontWeight: 'bold' }}>-{formatCurrency(t.amount)}</div>
                       </div>
-                      <div style={{ color: 'var(--color-expense)', fontWeight: 'bold' }}>-{formatCurrency(t.amount)}</div>
                     </div>
                   ))}
                 </>
