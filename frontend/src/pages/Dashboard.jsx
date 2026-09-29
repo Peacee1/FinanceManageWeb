@@ -977,7 +977,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             <div className="widget" style={{ padding: '30px', borderRadius: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <h2 style={{ fontSize: '1.4rem', fontWeight: '800' }}>Lịch sử thu chi</h2>
-                <button className="btn-primary" onClick={() => setIsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}>
+                <button className="btn-primary" onClick={() => setIsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', width: 'auto' }}>
                   <Plus size={18} /> Thêm giao dịch
                 </button>
               </div>
@@ -989,7 +989,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 ) : (
                   [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, idx) => (
-                    <div key={t.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderRadius: '16px', background: '#FAFAFA', border: '1px solid #F3F4F6', transition: 'all 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+                    <div key={t.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderRadius: '16px', background: '#FAFAFA', border: '1px solid #F3F4F6', transition: 'all 0.2s' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <div style={{ width: 48, height: 48, borderRadius: '12px', background: `${getCategoryColor(t.category)}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {getCategoryIcon(t.category, getCategoryColor(t.category))}
@@ -1007,8 +1007,23 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           </div>
                         </div>
                       </div>
-                      <div style={{ fontWeight: '800', fontSize: '1.1rem', color: t.type === 'INCOME' ? 'var(--color-income)' : 'var(--color-expense)' }}>
-                        {t.type === 'INCOME' ? '+' : '-'}{parseInt(t.amount).toLocaleString('vi-VN')} đ
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ fontWeight: '800', fontSize: '1.1rem', color: t.type === 'INCOME' ? 'var(--color-income)' : 'var(--color-expense)' }}>
+                          {t.type === 'INCOME' ? '+' : '-'}{parseInt(t.amount).toLocaleString('vi-VN')} đ
+                        </div>
+                        <div style={{position: 'relative'}}>
+                          <MoreVertical size={16} color="var(--color-text-secondary)" style={{cursor: 'pointer'}} onClick={() => setOpenTxMenu(openTxMenu === t.id ? null : t.id)}/>
+                          {openTxMenu === t.id && (
+                            <div style={{position: 'absolute', right: 0, top: '100%', background: 'white', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', padding: '5px', zIndex: 100, display: 'flex', flexDirection: 'column', minWidth: '120px'}}>
+                              <button onClick={() => { handleEditTx(t); setOpenTxMenu(null); }} className="hover-bg-gray" style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '0.9rem', width: '100%', textAlign: 'left', borderRadius: '4px', color: 'var(--color-text)'}}>
+                                <Edit2 size={14} /> Sửa
+                              </button>
+                              <button onClick={() => { handleDeleteTx(t.id); setOpenTxMenu(null); }} className="hover-bg-red" style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '0.9rem', color: '#EF4444', width: '100%', textAlign: 'left', borderRadius: '4px'}}>
+                                <Trash2 size={14} /> Xóa
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
