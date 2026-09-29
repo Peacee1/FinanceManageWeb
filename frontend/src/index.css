@@ -701,3 +701,19 @@ body {
   margin-top: 10px;
 }
 
+
+.verify-btn {
+  background-color: #F5F3FF;
+  color: #7C3AED;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.verify-btn:hover {
+  background-color: #EDE9FE;
+}
