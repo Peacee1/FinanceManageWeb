@@ -226,7 +226,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       {/* Sidebar */}
       <div className="sidebar">
         <div className="sidebar-header">
-          <div className="logo-text">💜 Peacee1</div>
+          <div className="logo-text" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <img src="/wallet_logo.png" alt="Logo" style={{height: '32px'}} />
+            Peacee1
+          </div>
           {renderSidebarBadge(user.plan)}
         </div>
         
