@@ -278,6 +278,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         
         <ul className="nav-menu">
           <li className="nav-item active"><LayoutDashboard size={20}/> Tổng quan</li>
+          <li className="nav-item" onClick={() => setIsCheckinOpen(true)} style={{ background: 'linear-gradient(90deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', color: '#7C3AED', fontWeight: 'bold', borderLeft: '4px solid #7C3AED' }}>
+            <Gift size={20} color="#F472B6" /> Điểm danh nhận quà
+          </li>
           <li className="nav-item"><CalendarRange size={20}/> Lịch giao dịch</li>
           <li className="nav-item"><CircleDollarSign size={20}/> Thu chi</li>
           <li className="nav-item"><WalletCards size={20}/> Ngân sách</li>
@@ -318,7 +321,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
             
             <button className="btn-today" onClick={handleToday}>Hôm nay</button>
-            <button className="btn-today" style={{background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none'}} onClick={() => setIsCheckinOpen(true)}>🎁 Điểm danh</button>
             
             <div className="notification">
               <Bell size={20} color="var(--color-text-secondary)"/>
@@ -788,14 +790,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div className="modal-content checkin-modal" style={{ padding: 0, overflow: 'hidden', maxWidth: '600px', background: 'var(--color-bg)' }}>
             
             {/* Banner Section */}
-            <div style={{ 
-              background: 'linear-gradient(135deg, #7C3AED 0%, #a78bfa 100%)', 
-              color: 'white', padding: '30px', position: 'relative', textAlign: 'center' 
-            }}>
-              <button className="close-btn" style={{ position: 'absolute', top: 15, right: 15, color: 'white', background: 'rgba(0,0,0,0.2)', borderRadius: '50%', width: 30, height: 30 }} onClick={() => setIsCheckinOpen(false)}>×</button>
-              <h2 style={{ fontSize: '1.8rem', marginBottom: '5px', fontWeight: '800' }}>Điểm danh mỗi ngày</h2>
-              <h1 style={{ fontSize: '2.5rem', color: '#FBBF24', textShadow: '0 2px 10px rgba(0,0,0,0.2)', marginBottom: '10px' }}>Nhận 20 coin!</h1>
-              <p style={{ fontSize: '0.95rem', opacity: 0.9 }}>Duy trì thói quen tốt, quản lý chi tiêu hiệu quả hơn<br/>và nhận thêm nhiều phần thưởng hấp dẫn.</p>
+            <div style={{ position: 'relative', background: '#F8F9FA' }}>
+              <button className="close-btn" style={{ position: 'absolute', top: 15, right: 15, color: '#333', background: 'rgba(255,255,255,0.8)', borderRadius: '50%', width: 30, height: 30, zIndex: 10, boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} onClick={() => setIsCheckinOpen(false)}>×</button>
+              <img src="/checkin_banner.png" alt="Banner Điểm Danh" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
             </div>
 
             {/* Content Section */}
