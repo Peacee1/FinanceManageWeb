@@ -1323,7 +1323,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ width: `${spentPct}%`, height: '100%', background: spentPct > 90 ? 'var(--color-expense)' : '#34D399', borderRadius: '4px' }}></div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
