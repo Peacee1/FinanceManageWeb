@@ -1570,7 +1570,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             )}
           </div>
         )}
-      </div>
 
         {activeTab === 'categories' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
@@ -1617,6 +1616,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
           </div>
         )}
+      </div>
+
 
       {/* Modals from old code... */}
       {isModalOpen && (
