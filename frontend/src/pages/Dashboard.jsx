@@ -661,29 +661,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     {totalExpense > monthlyBudget ? `Vượt ${formatCompact(totalExpense - monthlyBudget)}` : `Còn lại ${formatCompact(monthlyBudget - totalExpense)}`}
                   </span>
                 </div>
-                
-                <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '15px'}}>
-                  {['Shopping', 'Ăn uống', 'Di chuyển', 'Giải trí', 'Khác'].map(cat => {
-                    const spent = currentMonthTx.filter(t => t.type==='EXPENSE' && t.category===cat).reduce((s, t)=>s+t.amount, 0);
-                    const budget = 2000000;
-                    return (
-                      <div key={cat} style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                        <div className="tx-icon" style={{background: `${getCategoryColor(cat)}15`, width: 36, height: 36}}>
-                          {getCategoryIcon(cat, getCategoryColor(cat))}
-                        </div>
-                        <div style={{flex: 1}}>
-                          <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '600', marginBottom: '4px'}}>
-                            <span>{cat}</span>
-                            <span style={{fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 'normal'}}>{Math.min(Math.round((spent/budget)*100), 100)}% &nbsp; {formatCompact(spent)} / {formatCompact(budget)}</span>
-                          </div>
-                          <div className="progress-container" style={{height: 6, marginTop: 0}}>
-                            <div className="progress-bar" style={{background: getCategoryColor(cat), width: `${Math.min((spent/budget)*100, 100)}%`}}></div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
               </div>
 
               {/* Quick Actions */}
