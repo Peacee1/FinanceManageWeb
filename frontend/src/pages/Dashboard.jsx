@@ -767,6 +767,15 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       )}
 
       {isCropModalOpen && avatarImage && (
+        <div className="modal-overlay" style={{ zIndex: 2000 }}>
+          <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+            <div className="modal-header">
+              <h3>Cắt Ảnh</h3>
+              <button className="close-btn" onClick={() => setIsCropModalOpen(false)}>×</button>
+            </div>
+            <div style={{ position: 'relative', flex: 1, background: '#333', borderRadius: '8px', overflow: 'hidden' }}>
+              <Cropper image={avatarImage} crop={crop} zoom={zoom} aspect={1} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(c, cp) => setCroppedAreaPixels(cp)} />
+            </div>
             <button className="btn-promo" style={{marginTop: '15px'}} onClick={handleCropComplete} disabled={loading}>
               {loading ? 'Đang xử lý...' : 'Lưu Avatar'}
             </button>
