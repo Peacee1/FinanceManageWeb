@@ -433,7 +433,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div key={j} className="tx-badge expense"><div className="tx-dot expense"></div> -{formatCompact(t.amount)}</div>
                       ))}
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               </div>
 
