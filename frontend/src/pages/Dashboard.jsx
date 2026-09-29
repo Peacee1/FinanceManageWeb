@@ -405,20 +405,28 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card" style={{ position: 'relative' }}>
               <div className="stat-header">
                 <div className="stat-icon" style={{background: 'rgba(245, 158, 11, 0.1)'}}>
                   <Target color="#F59E0B" size={24}/>
                 </div>
+                <button onClick={() => { setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer' }}>
+                  ✏️ Sửa
+                </button>
               </div>
               <div className="stat-content">
                 <div className="stat-title">Còn lại trong ngân sách</div>
-                <h3 className="stat-amount">{(10000000 - totalExpense) > 0 ? formatCurrency(10000000 - totalExpense) : '0 đ'}</h3>
+                <h3 className="stat-amount" style={{color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit'}}>
+                  {totalExpense > monthlyBudget ? `-${formatCurrency(totalExpense - monthlyBudget)}` : formatCurrency(monthlyBudget - totalExpense)}
+                </h3>
                 <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px'}}>
                   <div className="progress-container" style={{flex: 1, marginTop: 0}}>
-                    <div className="progress-bar" style={{background: 'var(--color-primary)', width: `${Math.min((totalExpense / 10000000) * 100, 100)}%`}}></div>
+                    <div className="progress-bar" style={{background: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'var(--color-primary)', width: `${Math.min((totalExpense / monthlyBudget) * 100, 100)}%`}}></div>
                   </div>
-                  <span style={{fontSize: '0.8rem', fontWeight: 'bold'}}>{Math.min(Math.round((totalExpense / 10000000) * 100), 100)}%</span>
+                  <span style={{fontSize: '0.8rem', fontWeight: 'bold', color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit'}}>{Math.min(Math.round((totalExpense / monthlyBudget) * 100), 100)}%</span>
+                </div>
+                <div style={{fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '4px'}}>
+                  Giới hạn: {monthlyBudget.toLocaleString('vi-VN')} đ / tháng
                 </div>
               </div>
             </div>
