@@ -39,7 +39,7 @@ function App() {
           element={
             user ? 
             <div style={{ color: 'white', textAlign: 'center', marginTop: '50px' }}>
-              <h1>Xin chào, {user.name}!</h1>
+              <h1>Peacee1 - Dashboard Quản Lý Tài Chính</h1>
               <div style={{ margin: '15px 0', fontSize: '1.2rem' }}>
                 Gói tài khoản hiện tại: {getPlanBadge(user.plan)}
               </div>

@@ -37,7 +37,7 @@ const Register = () => {
 
   return (
     <div className="auth-container">
-      <h2 className="auth-title">Tạo Tài Khoản</h2>
+      <h2 className="auth-title">Peacee1 - Đăng Ký</h2>
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
       <form onSubmit={handleRegister}>
