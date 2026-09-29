@@ -161,7 +161,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-      const dayTx = currentMonthTx.filter(t => t.date.startsWith(dateStr));
+      const dayTx = currentMonthTx.filter(t => t?.date && new Date(t.date).getDate() === i);
       const cellDate = new Date(currentYear, currentMonth, i);
       const isFuture = cellDate > todayDate;
       const isToday = cellDate.getTime() === todayDate.getTime();
@@ -217,7 +217,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   const lineData = intervals.map(interval => {
     const txInInterval = currentMonthTx.filter(t => {
-      const day = parseInt(t.date.split('-')[2]);
+      const day = t?.date ? new Date(t.date).getDate() : 0;
       return day >= interval.start && day <= interval.end;
     });
     const income = txInInterval.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
