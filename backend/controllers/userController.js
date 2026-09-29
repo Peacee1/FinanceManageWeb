@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     res.json(result.rows[0]);
   } catch (err) {
@@ -75,4 +75,49 @@ const upgradePlan = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan };
+// Điểm danh nhận coin
+const checkIn = async (req, res) => {
+  try {
+    const result = await db.query('SELECT last_checkin_date, checkin_streak, coin FROM users WHERE id = $1', [req.user.userId]);
+    const user = result.rows[0];
+    
+    // Convert to VN timezone offset effectively
+    const today = new Date();
+    today.setHours(today.getHours() + 7);
+    const todayStr = today.toISOString().split('T')[0];
+
+    const lastCheckinDate = user.last_checkin_date ? new Date(user.last_checkin_date) : null;
+    let lastCheckinStr = null;
+    if (lastCheckinDate) {
+       lastCheckinDate.setHours(lastCheckinDate.getHours() + 7);
+       lastCheckinStr = lastCheckinDate.toISOString().split('T')[0];
+    }
+
+    if (lastCheckinStr === todayStr) {
+      return res.status(400).json({ message: 'Bạn đã điểm danh hôm nay rồi!' });
+    }
+
+    let newStreak = 1;
+    if (lastCheckinStr) {
+      const yesterday = new Date();
+      yesterday.setHours(yesterday.getHours() + 7);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      if (lastCheckinStr === yesterdayStr) {
+        newStreak = user.checkin_streak + 1;
+      }
+    }
+
+    const newCoin = user.coin + 20;
+
+    await db.query('UPDATE users SET coin = $1, last_checkin_date = $2, checkin_streak = $3 WHERE id = $4', [newCoin, todayStr, newStreak, req.user.userId]);
+
+    res.json({ message: 'Điểm danh thành công! Nhận 20 coin.', coin: newCoin, streak: newStreak });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn };

@@ -46,6 +46,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   useEffect(() => {
     fetchTransactions();
+    fetchProfile();
   }, []);
 
   const openProfile = () => {
@@ -102,6 +103,17 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       window.location.reload(); // Reload to refresh sidebar badge
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi nâng cấp');
+    }
+  };
+
+  const handleCheckIn = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/users/checkin', {}, { headers: { Authorization: `Bearer ${token}` } });
+      alert(res.data.message);
+      fetchProfile();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Lỗi điểm danh');
     }
   };
 
@@ -180,6 +192,24 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         </ul>
         <div style={{ padding: '1rem', textAlign: 'center' }}>
           {getPlanBadge(user.plan)}
+          
+          {profileData && (
+            <div style={{ margin: '15px 0', padding: '10px', background: 'var(--color-bg)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+              <div style={{ fontWeight: 'bold', color: 'var(--color-warning)', fontSize: '1.2rem' }}>
+                🪙 {profileData.coin}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '10px' }}>
+                🔥 Streak: {profileData.checkin_streak} ngày
+              </div>
+              <button 
+                className="btn-primary" 
+                style={{ padding: '8px', fontSize: '0.9rem', background: 'linear-gradient(135deg, var(--color-warning), #F59E0B)' }}
+                onClick={handleCheckIn}
+              >
+                Điểm danh (+20🪙)
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
