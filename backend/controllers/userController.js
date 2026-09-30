@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     
     let userProfile = result.rows[0];
@@ -180,7 +180,7 @@ const updateCategories = async (req, res) => {
 
 // Cập nhật cài đặt (budgets, goals...)
 const updateSettings = async (req, res) => {
-  const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos } = req.body;
+  const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos, budgetSettings } = req.body;
   try {
     const fields = [];
     const values = [];
@@ -193,6 +193,7 @@ const updateSettings = async (req, res) => {
     if (customBankSavingTotal !== undefined) { fields.push(`custom_bank_saving_total = $${count++}`); values.push(customBankSavingTotal); }
     if (userGoal !== undefined) { fields.push(`user_goal = $${count++}`); values.push(JSON.stringify(userGoal)); }
     if (qaPos !== undefined) { fields.push(`qa_pos = $${count++}`); values.push(JSON.stringify(qaPos)); }
+    if (budgetSettings !== undefined) { fields.push(`budget_settings = $${count++}`); values.push(JSON.stringify(budgetSettings)); }
 
     if (fields.length > 0) {
       values.push(req.user.userId);

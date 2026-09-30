@@ -90,6 +90,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   // Monthly Budget State
   const [monthlyBudgets, setMonthlyBudgets] = useState({});
+  const [budgetSettings, setBudgetSettings] = useState({ reminder: true, autoCopy: false });
 
   const getBudgetForMonth = (m, y) => {
     const key = `${y}-${m}`;
@@ -208,6 +209,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       const p = res.data;
       if (p.bank_saving) setBankSaving(p.bank_saving);
       if (p.monthly_budgets) setMonthlyBudgets(p.monthly_budgets);
+      if (p.budget_settings) setBudgetSettings(p.budget_settings);
       if (p.user_goal) setUserGoal(p.user_goal);
       if (p.qa_pos) setQaPos(p.qa_pos);
       if (p.investment_income != null) setInvestmentIncome(Number(p.investment_income));
@@ -1386,8 +1388,15 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           <div style={{fontSize: '0.75rem', color: 'var(--color-text-secondary)'}}>Thông báo khi đã chi 80% ngân sách</div>
                         </div>
                       </div>
-                      <div style={{ width: 40, height: 22, background: '#7C3AED', borderRadius: '11px', position: 'relative', cursor: 'pointer' }}>
-                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, right: 2 }}></div>
+                      <div 
+                        style={{ width: 40, height: 22, background: budgetSettings.reminder ? '#7C3AED' : '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer', transition: 'background 0.3s' }}
+                        onClick={() => {
+                          const newSettings = { ...budgetSettings, reminder: !budgetSettings.reminder };
+                          setBudgetSettings(newSettings);
+                          updateSettingsAPI({ budgetSettings: newSettings });
+                        }}
+                      >
+                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, left: budgetSettings.reminder ? 'auto' : 2, right: budgetSettings.reminder ? 2 : 'auto', transition: 'all 0.3s' }}></div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1398,8 +1407,15 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           <div style={{fontSize: '0.75rem', color: 'var(--color-text-secondary)'}}>Sao chép ngân sách từ tháng trước</div>
                         </div>
                       </div>
-                      <div style={{ width: 40, height: 22, background: '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer' }}>
-                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, left: 2 }}></div>
+                      <div 
+                        style={{ width: 40, height: 22, background: budgetSettings.autoCopy ? '#7C3AED' : '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer', transition: 'background 0.3s' }}
+                        onClick={() => {
+                          const newSettings = { ...budgetSettings, autoCopy: !budgetSettings.autoCopy };
+                          setBudgetSettings(newSettings);
+                          updateSettingsAPI({ budgetSettings: newSettings });
+                        }}
+                      >
+                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, left: budgetSettings.autoCopy ? 'auto' : 2, right: budgetSettings.autoCopy ? 2 : 'auto', transition: 'all 0.3s' }}></div>
                       </div>
                     </div>
                   </div>
