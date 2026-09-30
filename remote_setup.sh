@@ -30,7 +30,9 @@ sudo systemctl restart postgresql
 # Thiết lập Backend
 cd /home/ec2-user/FinanceManageWeb/backend
 npm install
+EXISTING_GEMINI_KEY=$(grep GEMINI_API_KEY .env 2>/dev/null | cut -d'=' -f2-)
 echo -e "PORT=5000\nJWT_SECRET=bi_mat_tren_server\nDB_USER=postgres\nDB_HOST=localhost\nDB_NAME=quanlychitieu\nDB_PASSWORD=123456\nDB_PORT=5432" > .env
+if [ -n "$EXISTING_GEMINI_KEY" ]; then echo "GEMINI_API_KEY=$EXISTING_GEMINI_KEY" >> .env; fi
 pm2 restart backend-api || pm2 start index.js --name "backend-api"
 
 # Thiết lập Frontend
