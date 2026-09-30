@@ -1078,7 +1078,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <button className="btn-quick" style={{background: '#FFF1F2', color: '#E11D48', padding: '12px 8px'}} onClick={() => {setType('EXPENSE'); setIsModalOpen(true);}}>
                     <Minus size={16}/> Thêm khoản chi
                   </button>
-                  <button className="btn-quick" style={{background: '#F5F3FF', color: '#7C3AED', padding: '12px 8px'}}>
+                  <button className="btn-quick" style={{background: 'rgba(124,58,237,0.1)', color: '#7C3AED', padding: '12px 8px'}}>
                     <WalletCards size={16}/> Lập ngân sách
                   </button>
                   <button className="btn-quick" style={{background: '#EFF6FF', color: '#2563EB', padding: '12px 8px'}}>
@@ -1109,18 +1109,18 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 ) : (
                   [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).map((t, idx) => (
-                    <div key={t.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderRadius: '16px', background: '#FAFAFA', border: '1px solid #F3F4F6', transition: 'all 0.2s' }}>
+                    <div key={t.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', borderRadius: '16px', background: 'var(--color-card)', border: '1px solid var(--color-border)', transition: 'all 0.2s' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <div style={{ width: 48, height: 48, borderRadius: '12px', background: `${getCategoryColor(t.category)}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {getCategoryIcon(t.category, getCategoryColor(t.category))}
                         </div>
                         <div>
-                          <div style={{ fontWeight: '700', fontSize: '1rem', color: '#111827', marginBottom: '4px' }}>{t.category}</div>
+                          <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--color-text)', marginBottom: '4px' }}>{t.category}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>{new Date(t.date).toLocaleDateString('vi-VN')}</span>
                             {t.description && (
                               <>
-                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#D1D5DB' }}></span>
+                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-text-secondary)' }}></span>
                                 <span>{t.description}</span>
                               </>
                             )}
@@ -1245,7 +1245,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
 
               {/* Card 3: Promo */}
-              <div className="widget" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '30px' }}>
+              <div className="widget" style={{ background: 'linear-gradient(135deg, var(--promo-bg-1) 0%, var(--promo-bg-2) 100%)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '30px' }}>
                 <img src="/cat_budget_mascot.png" alt="Mascot" style={{ width: 100, marginBottom: '15px' }} />
                 <h3 style={{ fontSize: '1rem', color: '#4C1D95', marginBottom: '8px' }}>Bạn còn <span style={{fontSize: '1.2rem', fontWeight: '800'}}>{monthlyBudget ? formatCurrency(Math.max(monthlyBudget - totalExpense, 0)) : '---'}</span></h3>
                 <p style={{ fontSize: '0.85rem', color: '#6D28D9' }}>trong ngân sách tháng này. Cố lên nhé! 💪</p>
@@ -1317,7 +1317,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
                         </div>
                       </div>
-                      <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ padding: '20px 15px', background: 'rgba(124,58,237,0.1)', borderRadius: '16px', border: '1px solid rgba(124,58,237,0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
                         <div>
                           <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
@@ -1360,7 +1360,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
                       </div>
                     </div>
-                    <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ padding: '20px 15px', background: 'rgba(124,58,237,0.1)', borderRadius: '16px', border: '1px solid rgba(124,58,237,0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
                       <div>
                         <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>

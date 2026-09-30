@@ -40,6 +40,7 @@
 
 input, select, textarea {
   color: var(--color-text);
+  background: transparent;
 }
 
 button {
@@ -357,7 +358,7 @@ html {
 
 .search-shortcut {
   font-size: 0.7rem;
-  background: #F3F4F6;
+  background: var(--color-bg);
   padding: 2px 6px;
   border-radius: 4px;
   color: var(--color-text-secondary);
