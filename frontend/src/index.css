@@ -12,6 +12,8 @@
   --color-text: #181525;
   --color-text-secondary: #716B7A;
   --color-border: #E9E5F3;
+  --promo-bg-1: #F5F3FF;
+  --promo-bg-2: #EDE9FE;
 
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -28,10 +30,20 @@
   --color-border: #2D2844;
   --color-primary: #9333EA; /* Slightly brighter primary for dark mode */
   --color-primary-hover: #A855F7;
+  --promo-bg-1: #1E1B4B;
+  --promo-bg-2: #2E1065;
 }
 
 * {
   box-sizing: border-box;
+}
+
+input, select, textarea {
+  color: var(--color-text);
+}
+
+button {
+  color: var(--color-text);
 }
 
 body {
@@ -257,7 +269,7 @@ html {
 }
 
 .promo-card {
-  background: linear-gradient(180deg, #F5F3FF 0%, #EDE9FE 100%);
+  background: linear-gradient(180deg, var(--promo-bg-1) 0%, var(--promo-bg-2) 100%);
   border-radius: 16px;
   padding: 1.5rem 1rem;
   text-align: center;

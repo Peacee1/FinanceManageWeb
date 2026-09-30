@@ -827,14 +827,14 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <div style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '4px'}}>Tháng {currentMonth + 1}, {currentYear}</div>
                   </div>
                   <div style={{display: 'flex', gap: '10px'}}>
-                    <div className="date-selector" style={{padding: '0.4rem 0.8rem', background: '#F8F9FA'}}>
+                    <div className="date-selector" style={{padding: '0.4rem 0.8rem', background: 'var(--color-bg)'}}>
                       <button className="btn-icon" onClick={handlePrevDate}><ChevronLeft size={16}/></button>
                       <span style={{fontSize: '0.8rem', cursor: 'pointer'}} onClick={handleToday}>
                         {currentDate.toDateString() === new Date().toDateString() ? 'Hôm nay' : currentDate.toLocaleDateString('vi-VN')}
                       </span>
                       <button className="btn-icon" onClick={handleNextDate}><ChevronRight size={16}/></button>
                     </div>
-                    <div style={{display: 'flex', background: '#F8F9FA', padding: '4px', borderRadius: '8px', gap: '4px'}}>
+                    <div style={{display: 'flex', background: 'var(--color-bg)', padding: '4px', borderRadius: '8px', gap: '4px'}}>
                       <div style={{padding: '4px 12px', background: 'white', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'}}>Tháng</div>
                       <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Tuần</div>
                       <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Ngày</div>
@@ -902,7 +902,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{position: 'relative'}}>
                           <MoreVertical size={16} color="var(--color-text-secondary)" style={{cursor: 'pointer'}} onClick={() => setOpenTxMenu(openTxMenu === t.id ? null : t.id)}/>
                           {openTxMenu === t.id && (
-                            <div style={{position: 'absolute', right: 0, top: '100%', background: 'white', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', padding: '5px', zIndex: 100, display: 'flex', flexDirection: 'column', minWidth: '120px'}}>
+                            <div style={{position: 'absolute', right: 0, top: '100%', background: 'var(--color-card)', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', padding: '5px', zIndex: 100, display: 'flex', flexDirection: 'column', minWidth: '120px'}}>
                               <button onClick={() => { handleEditTx(t); setOpenTxMenu(null); }} className="hover-bg-gray" style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '0.9rem', width: '100%', textAlign: 'left', borderRadius: '4px', color: 'var(--color-text)'}}>
                                 <Edit2 size={14} /> Sửa
                               </button>
@@ -1134,7 +1134,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{position: 'relative'}}>
                           <MoreVertical size={16} color="var(--color-text-secondary)" style={{cursor: 'pointer'}} onClick={() => setOpenTxMenu(openTxMenu === t.id ? null : t.id)}/>
                           {openTxMenu === t.id && (
-                            <div style={{position: 'absolute', right: 0, top: '100%', background: 'white', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', padding: '5px', zIndex: 100, display: 'flex', flexDirection: 'column', minWidth: '120px'}}>
+                            <div style={{position: 'absolute', right: 0, top: '100%', background: 'var(--color-card)', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', padding: '5px', zIndex: 100, display: 'flex', flexDirection: 'column', minWidth: '120px'}}>
                               <button onClick={() => { handleEditTx(t); setOpenTxMenu(null); }} className="hover-bg-gray" style={{display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '0.9rem', width: '100%', textAlign: 'left', borderRadius: '4px', color: 'var(--color-text)'}}>
                                 <Edit2 size={14} /> Sửa
                               </button>
@@ -1161,9 +1161,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
 
             <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '20px', scrollbarWidth: 'none' }}>
-              <button style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'white' }}><ChevronLeft size={16}/></button>
-              <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'white', fontWeight: 'bold' }}>{currentYear}</button>
-              <button style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'white' }}><ChevronRight size={16}/></button>
+              <button style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-card)' }}><ChevronLeft size={16}/></button>
+              <button style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-card)', fontWeight: 'bold' }}>{currentYear}</button>
+              <button style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-card)' }}><ChevronRight size={16}/></button>
               
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
                 <button key={m} style={{ 
@@ -2225,7 +2225,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   return (
                     <div key={day} style={{ 
                       flex: 1, 
-                      background: isClaimed ? '#EDE9FE' : 'white',
+                      background: isClaimed ? 'rgba(124,58,237,0.1)' : 'var(--color-card)',
                       border: isClaimed ? '2px solid #7C3AED' : '1px solid #E9E5F3',
                       borderRadius: '10px', padding: '10px 4px', textAlign: 'center',
                       boxShadow: '0 2px 5px rgba(0,0,0,0.04)',
