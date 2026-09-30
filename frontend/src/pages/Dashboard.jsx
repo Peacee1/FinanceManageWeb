@@ -1700,9 +1700,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         )}
 
         {activeTab === 'goals' && (
-          <div className="dashboard-scroll" style={{ padding: '0 20px 20px', display: 'flex', justifyContent: 'center' }}>
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
             {!isGoalInitialized ? (
-              <div style={{ maxWidth: '500px', width: '100%', marginTop: '50px', background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+              <div style={{ maxWidth: '500px', width: '100%', boxSizing: 'border-box', marginTop: isMobile ? '20px' : '50px', background: 'white', padding: isMobile ? '20px' : '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center' }}>
                 <img src="/goal_mascot.png" alt="Goal Mascot" style={{ width: 150, marginBottom: '20px' }} />
                 <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '10px', color: 'var(--color-text)' }}>Bắt đầu tiết kiệm cho những mục tiêu to lớn nhé!</h2>
                 <p style={{ color: 'var(--color-text-secondary)', marginBottom: '30px' }}>Để gợi ý lộ trình tốt nhất, Peacee1 cần biết một vài thông tin cơ bản về bạn.</p>
