@@ -56,6 +56,18 @@ html {
   transition: transform 0.3s ease;
 }
 
+@media (max-width: 768px) {
+  .auth-mascot {
+    display: none !important;
+  }
+  .auth-content {
+    padding: 10px !important;
+  }
+  .auth-container {
+    padding: 30px 20px !important;
+  }
+}
+
 .auth-container:hover {
   transform: translateY(-5px);
 }
