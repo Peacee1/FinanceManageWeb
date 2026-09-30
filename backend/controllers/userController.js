@@ -168,8 +168,15 @@ const initGoal = async (req, res) => {
 
 // Cập nhật danh mục
 const updateCategories = async (req, res) => {
-  const { categories } = req.body;
+  const { categories, isAdding } = req.body;
   try {
+    if (isAdding) {
+      const userRes = await db.query('SELECT coin FROM users WHERE id = $1', [req.user.userId]);
+      if (userRes.rows[0].coin < 100) {
+        return res.status(400).json({ message: 'Không đủ 100 coin để thêm danh mục mới' });
+      }
+      await db.query('UPDATE users SET coin = coin - 100 WHERE id = $1', [req.user.userId]);
+    }
     await db.query('UPDATE users SET custom_categories = $1 WHERE id = $2', [JSON.stringify(categories), req.user.userId]);
     res.json({ message: 'Cập nhật danh mục thành công' });
   } catch (err) {

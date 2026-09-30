@@ -263,15 +263,21 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!newCategory.name.trim()) return;
+    
+    if ((profileData?.coin || 0) < 100) {
+      alert("Bạn không đủ 100 coin để thêm danh mục mới. Hãy điểm danh hằng ngày để nhận thêm coin!");
+      return;
+    }
+
     const updatedCategories = [...(profileData.custom_categories || []), newCategory];
     try {
       const token = localStorage.getItem('token');
-      await axios.post('/api/users/update-categories', { categories: updatedCategories }, { headers: { Authorization: `Bearer ${token}` } });
-      setProfileData({ ...profileData, custom_categories: updatedCategories });
+      await axios.post('/api/users/update-categories', { categories: updatedCategories, isAdding: true }, { headers: { Authorization: `Bearer ${token}` } });
+      setProfileData({ ...profileData, custom_categories: updatedCategories, coin: profileData.coin - 100 });
       setNewCategory({ name: '', type: 'EXPENSE', color: '#7C3AED' });
       setIsAddingCategory(false);
     } catch (error) {
-      alert('Lỗi thêm danh mục');
+      alert(error.response?.data?.message || 'Lỗi thêm danh mục');
     }
   };
 
@@ -2243,7 +2249,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', fontFamily: 'monospace', background: 'var(--color-background)', padding: '8px 12px', borderRadius: '8px' }}>{newCategory.color}</span>
                 </div>
               </div>
-              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', marginTop: '25px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>Lưu danh mục</button>
+              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', marginTop: '25px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                Lưu danh mục <span style={{display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem'}}><Coins size={14}/> -100</span>
+              </button>
             </form>
           </div>
         </div>
