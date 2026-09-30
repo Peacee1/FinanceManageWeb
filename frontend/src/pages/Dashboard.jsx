@@ -96,6 +96,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [cropTarget, setCropTarget] = useState('profile');
 
   // Day Details State
   const [selectedDayInfo, setSelectedDayInfo] = useState(null);
@@ -359,7 +360,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     }
   }, [activeTab]);
 
-  const handleAvatarUpload = (e) => {
+  const handleAvatarUpload = (e, target = 'profile') => {
+    setCropTarget(target);
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -2192,10 +2194,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   >
                     {bizAvatarPreview ? <img src={bizAvatarPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '2rem' }}>📷</span>}
                   </div>
-                  <input id="biz-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-                    const file = e.target.files[0];
-                    if (file) { setBizAvatarFile(file); setBizAvatarPreview(URL.createObjectURL(file)); }
-                  }} />
+                  <input id="biz-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleAvatarUpload(e, 'biz')} />
                   <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Nhấp để tải ảnh quán</p>
                 </div>
 
@@ -2345,10 +2344,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ width: '56px', height: '56px', borderRadius: '12px', border: '2px dashed var(--color-border)', cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onClick={() => document.getElementById('prod-avatar-input').click()}>
                           {prodAvatarPreview ? <img src={prodAvatarPreview} alt="p" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span>📷</span>}
                         </div>
-                        <input id="prod-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-                          const f = e.target.files[0];
-                          if (f) { setProdAvatarFile(f); setProdAvatarPreview(URL.createObjectURL(f)); }
-                        }} />
+                        <input id="prod-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleAvatarUpload(e, 'prod')} />
                         <input value={prodForm.name} onChange={e => setProdForm(f => ({ ...f, name: e.target.value }))} placeholder="Tên sản phẩm" style={{ flex: 2, minWidth: '120px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
                         <input type="number" value={prodForm.price} onChange={e => setProdForm(f => ({ ...f, price: e.target.value }))} placeholder="Giá (VND)" style={{ flex: 1, minWidth: '100px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
                         <button onClick={async () => {
@@ -2413,10 +2409,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px dashed var(--color-border)', cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onClick={() => document.getElementById('emp-avatar-input').click()}>
                           {empAvatarPreview ? <img src={empAvatarPreview} alt="e" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '1.4rem' }}>👤</span>}
                         </div>
-                        <input id="emp-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-                          const f = e.target.files[0];
-                          if (f) { setEmpAvatarFile(f); setEmpAvatarPreview(URL.createObjectURL(f)); }
-                        }} />
+                        <input id="emp-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleAvatarUpload(e, 'emp')} />
                         <input value={empForm.name} onChange={e => setEmpForm(f => ({ ...f, name: e.target.value }))} placeholder="Tên nhân viên *" style={{ flex: 2, minWidth: '120px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
                         <input type="number" value={empForm.age} onChange={e => setEmpForm(f => ({ ...f, age: e.target.value }))} placeholder="Tuổi" style={{ width: '80px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
                         <input type="number" value={empForm.salary} onChange={e => setEmpForm(f => ({ ...f, salary: e.target.value }))} placeholder="Lương (VND)" style={{ flex: 1, minWidth: '100px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />

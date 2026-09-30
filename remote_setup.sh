@@ -48,7 +48,7 @@ sudo bash -c 'cat > /etc/nginx/conf.d/quanlychitieu.conf <<EOF
 server {
     listen 80;
     server_name _;
-    client_max_body_size 50M;
+    client_max_body_size 1M;
 
     root /usr/share/nginx/html;
     index index.html;
