@@ -29,6 +29,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--color-bg);
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 /* Authentication Pages */
