@@ -178,4 +178,32 @@ const updateCategories = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar, initGoal, updateCategories };
+// Cập nhật cài đặt (budgets, goals...)
+const updateSettings = async (req, res) => {
+  const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos } = req.body;
+  try {
+    const fields = [];
+    const values = [];
+    let count = 1;
+
+    if (monthlyBudgets !== undefined) { fields.push(`monthly_budgets = $${count++}`); values.push(JSON.stringify(monthlyBudgets)); }
+    if (bankSaving !== undefined) { fields.push(`bank_saving = $${count++}`); values.push(JSON.stringify(bankSaving)); }
+    if (investmentIncome !== undefined) { fields.push(`investment_income = $${count++}`); values.push(investmentIncome); }
+    if (customNormalSaving !== undefined) { fields.push(`custom_normal_saving = $${count++}`); values.push(customNormalSaving); }
+    if (customBankSavingTotal !== undefined) { fields.push(`custom_bank_saving_total = $${count++}`); values.push(customBankSavingTotal); }
+    if (userGoal !== undefined) { fields.push(`user_goal = $${count++}`); values.push(JSON.stringify(userGoal)); }
+    if (qaPos !== undefined) { fields.push(`qa_pos = $${count++}`); values.push(JSON.stringify(qaPos)); }
+
+    if (fields.length > 0) {
+      values.push(req.user.userId);
+      const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${count}`;
+      await db.query(query, values);
+    }
+    res.json({ message: 'Lưu cài đặt thành công' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+module.exports = { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar, initGoal, updateCategories, updateSettings };

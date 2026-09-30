@@ -38,18 +38,23 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isGoalInitialized, setIsGoalInitialized] = useState(false);
   const [goalForm, setGoalForm] = useState({ salary: '15000000', age: '25', gender: 'Nam' });
   
-  const [bankSaving, setBankSaving] = useState(() => safeJsonParse(localStorage.getItem('bankSaving'), { amount: 5000000, rate: 6, months: 6 }));
-  const [investmentIncome, setInvestmentIncome] = useState(() => safeJsonParse(localStorage.getItem('investmentIncome'), 2000000));
-  const [customNormalSaving, setCustomNormalSaving] = useState(() => safeJsonParse(localStorage.getItem('customNormalSaving'), null));
-  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(() => safeJsonParse(localStorage.getItem('customBankSavingTotal'), null));
-  const [userGoal, setUserGoal] = useState(() => safeJsonParse(localStorage.getItem('userGoal'), { name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 }));
+  const [bankSaving, setBankSaving] = useState({ amount: 5000000, rate: 6, months: 6 });
+  const [investmentIncome, setInvestmentIncome] = useState(2000000);
+  const [customNormalSaving, setCustomNormalSaving] = useState(null);
+  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(null);
+  const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
   
-  const handleSaveGoals = () => {
-    localStorage.setItem('bankSaving', JSON.stringify(bankSaving));
-    localStorage.setItem('investmentIncome', JSON.stringify(investmentIncome));
-    localStorage.setItem('customNormalSaving', JSON.stringify(customNormalSaving));
-    localStorage.setItem('customBankSavingTotal', JSON.stringify(customBankSavingTotal));
-    localStorage.setItem('userGoal', JSON.stringify(userGoal));
+  const updateSettingsAPI = async (payload) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/settings', payload, { headers: { Authorization: `Bearer ${token}` } });
+    } catch (e) {
+      console.error('Lỗi lưu cài đặt', e);
+    }
+  };
+
+  const handleSaveGoals = async () => {
+    await updateSettingsAPI({ bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal });
     alert('Lưu cài đặt mục tiêu thành công!');
   };
   const [type, setType] = useState('EXPENSE');
@@ -84,9 +89,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   // Monthly Budget State
-  const [monthlyBudgets, setMonthlyBudgets] = useState(() => {
-    return safeJsonParse(localStorage.getItem('monthlyBudgets'), {});
-  });
+  const [monthlyBudgets, setMonthlyBudgets] = useState({});
 
   const getBudgetForMonth = (m, y) => {
     const key = `${y}-${m}`;
@@ -108,14 +111,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   // Draggable Quick Actions State
   const quickActionsRef = useRef(null);
-  const [qaPos, setQaPos] = useState(() => {
-    const saved = localStorage.getItem('qaPos');
-    if (saved) {
-      const parsed = safeJsonParse(saved, null);
-      if (parsed && parsed.left !== undefined && parsed.top !== undefined) return parsed;
-    }
-    return { left: window.innerWidth - 364, top: window.innerHeight - 350 };
-  });
+  const [qaPos, setQaPos] = useState({ left: window.innerWidth - 364, top: window.innerHeight - 350 });
   const [isDraggingQA, setIsDraggingQA] = useState(false);
   const qaOffset = useRef({ x: 0, y: 0 });
 
@@ -172,7 +168,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
     const finalPos = { left: finalLeft, top: finalTop };
     setQaPos(finalPos);
-    localStorage.setItem('qaPos', JSON.stringify(finalPos));
+    updateSettingsAPI({ qaPos: finalPos });
   };
 
   useEffect(() => {
@@ -186,7 +182,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         let newTop = Math.max(24, Math.min(prev.top, wh - rect.height - 24));
         if (newLeft !== prev.left || newTop !== prev.top) {
           const newPos = { left: newLeft, top: newTop };
-          localStorage.setItem('qaPos', JSON.stringify(newPos));
+          updateSettingsAPI({ qaPos: newPos });
           return newPos;
         }
         return prev;
@@ -209,6 +205,14 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       const token = localStorage.getItem('token');
       const res = await axios.get('/api/users/me', { headers: { Authorization: `Bearer ${token}` } });
       setProfileData(res.data);
+      const p = res.data;
+      if (p.bank_saving) setBankSaving(p.bank_saving);
+      if (p.monthly_budgets) setMonthlyBudgets(p.monthly_budgets);
+      if (p.user_goal) setUserGoal(p.user_goal);
+      if (p.qa_pos) setQaPos(p.qa_pos);
+      if (p.investment_income != null) setInvestmentIncome(Number(p.investment_income));
+      if (p.custom_normal_saving != null) setCustomNormalSaving(Number(p.custom_normal_saving));
+      if (p.custom_bank_saving_total != null) setCustomBankSavingTotal(Number(p.custom_bank_saving_total));
       if (res.data.is_goal_initialized) {
         setIsGoalInitialized(true);
         setGoalForm({
@@ -2201,7 +2205,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 if (!isNaN(newBudget) && newBudget > 0) {
                   setMonthlyBudgets(prev => {
                     const updated = { ...prev, [`${currentYear}-${currentMonth + 1}`]: newBudget };
-                    localStorage.setItem('monthlyBudgets', JSON.stringify(updated));
+                    updateSettingsAPI({ monthlyBudgets: updated });
                     return updated;
                   });
                   setIsEditBudgetOpen(false);

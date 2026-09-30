@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -9,6 +10,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const validatePassword = (pwd) => {
@@ -73,7 +75,23 @@ const Register = () => {
         </div>
         <div className="input-group">
           <label>Mật khẩu</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Tạo mật khẩu bảo mật" required />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input 
+              type={showPassword ? "text" : "password"} 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              placeholder="Tạo mật khẩu bảo mật" 
+              required 
+              style={{ width: '100%', paddingRight: '40px' }}
+            />
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <small style={{ color: 'var(--color-text-secondary)', marginTop: '5px', fontSize: '0.8rem' }}>
             Yêu cầu: Ít nhất 8 ký tự, 1 chữ hoa, 1 số, 1 ký tự đặc biệt.
           </small>

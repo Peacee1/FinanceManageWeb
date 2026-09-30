@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar, initGoal, updateCategories } = require('../controllers/userController');
+const { getProfile, verifyEmail, updatePhone, verifyPhone, upgradePlan, checkIn, updateAvatar, initGoal, updateCategories, updateSettings } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 
 const storage = multer.diskStorage({
@@ -24,5 +24,6 @@ router.post('/checkin', protect, checkIn);
 router.post('/update-avatar', protect, upload.single('avatar'), updateAvatar);
 router.post('/init-goal', protect, initGoal);
 router.post('/update-categories', protect, updateCategories);
+router.post('/settings', protect, updateSettings);
 
 module.exports = router;
