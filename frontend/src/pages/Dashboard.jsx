@@ -759,30 +759,55 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         {activeTab === 'overview' && (
           <div className="dashboard-scroll">
           {/* AI Advisor Banner */}
-          <div onClick={handleAiAnalyze} style={{
-            margin: '0 20px 16px',
-            padding: '14px 24px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #7C3AED 0%, #F472B6 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(124,58,237,0.35)',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(124,58,237,0.45)'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 20px rgba(124,58,237,0.35)'; }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ fontSize: '1.8rem' }}>🤖</div>
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '1rem', color: 'white' }}>✨ Trợ lý AI phân tích tài chính</div>
-                <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)' }}>Nhận gợi ý cá nhân hóa từ Google Gemini AI dựa trên thu chi của bạn</div>
+          {(() => {
+            const isPro = user.plan === 'plus' || user.plan === 'ultra';
+            return (
+              <div
+                onClick={isPro ? handleAiAnalyze : () => setIsProfileOpen(true)}
+                style={{
+                  margin: '0 20px 16px',
+                  padding: '0',
+                  borderRadius: '20px',
+                  background: isPro
+                    ? 'linear-gradient(135deg, #7C3AED 0%, #F472B6 100%)'
+                    : 'linear-gradient(135deg, #4B5563 0%, #374151 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  boxShadow: isPro ? '0 4px 20px rgba(124,58,237,0.35)' : '0 4px 12px rgba(0,0,0,0.2)',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  overflow: 'hidden',
+                  minHeight: '90px',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
+              >
+                {/* Cat mascot */}
+                <img
+                  src="/cat_ai_mascot.png"
+                  alt="AI Cat"
+                  style={{ width: 90, height: 90, objectFit: 'contain', flexShrink: 0, marginLeft: '8px' }}
+                />
+                <div style={{ flex: 1, padding: '16px 12px' }}>
+                  <div style={{ fontWeight: '800', fontSize: '1rem', color: 'white', marginBottom: '4px' }}>
+                    {isPro ? '✨ Trợ lý AI Tài chính' : '🔒 Trợ lý AI Tài chính'}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)' }}>
+                    {isPro
+                      ? 'Nhận gợi ý cá nhân hóa từ Google Gemini AI'
+                      : 'Tính năng dành riêng cho tài khoản Pro. Bấm để nâng cấp!'}
+                  </div>
+                  {!isPro && (
+                    <div style={{ marginTop: '8px', display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', color: 'white', fontWeight: '700' }}>
+                      ⭐ Nâng cấp Pro
+                    </div>
+                  )}
+                </div>
+                <div style={{ color: 'white', fontSize: '1.5rem', opacity: 0.9, paddingRight: '20px' }}>→</div>
               </div>
-            </div>
-            <div style={{ color: 'white', fontSize: '1.5rem', opacity: 0.9 }}>→</div>
-          </div>
+            );
+          })()}
 
           {/* Top Stat Cards */}
           <div className="cards-row">
@@ -2151,10 +2176,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               justifyContent: 'space-between',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ fontSize: '2rem' }}>🤖</div>
+                <img src="/cat_ai_mascot.png" alt="AI Cat" style={{ width: 56, height: 56, objectFit: 'contain' }} />
                 <div>
                   <div style={{ color: 'white', fontWeight: '800', fontSize: '1.1rem' }}>Trợ lý AI Tài chính</div>
-                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>Phân tích bởi Google Gemini</div>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>Phân tích bởi Google Gemini ✨</div>
                 </div>
               </div>
               {!aiLoading && (
