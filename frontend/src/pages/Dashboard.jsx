@@ -7,7 +7,7 @@ import {
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift,
-  Edit2, Trash2, Menu, X, Sun, Moon, Palette, Briefcase, Building2, Zap, Smartphone, Sliders
+  Edit2, Trash2, Menu, X, Sun, Moon, Palette, Briefcase, Building2, Zap, Smartphone, Sliders, ArrowLeft
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
