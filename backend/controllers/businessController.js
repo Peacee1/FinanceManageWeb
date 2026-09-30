@@ -85,7 +85,8 @@ const addEmployee = async (req, res, next) => {
       if (!biz) return { status: 404, message: 'Chưa có hồ sơ doanh nghiệp.' };
       const count = (await client.query('SELECT COUNT(*) FROM employees WHERE business_id = $1', [biz.id])).rows[0].count;
       if (Number(count) >= biz.max_employees) return { status: 400, message: 'Đã đạt giới hạn nhân viên.' };
-      const code = (await client.query('SELECT COALESCE(MAX(employee_code), 0) + 1 AS code FROM employees WHERE business_id = $1', [biz.id])).rows[0].code;
+      const code = biz.next_employee_code;
+      await client.query('UPDATE businesses SET next_employee_code = next_employee_code + 1 WHERE id = $1', [biz.id]);
       const username = biz.business_code + code;
       const user = (await client.query("INSERT INTO users (name, email, password_hash, plan, role, username, must_change_password) VALUES ($1, $2, $3, 'normal', 'employee', $4, true) RETURNING id", [name, username + '@emp.local', passwordHash, username])).rows[0];
       const employee = (await client.query('INSERT INTO employees (business_id, user_id, employee_code, name, age, salary, avatar_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', [biz.id, user.id, code, name, age || null, salary || 0, req.file ? '/uploads/' + req.file.filename : null])).rows[0];
@@ -131,19 +132,21 @@ const updateEmployee = async (req, res) => {
   } catch (error) { console.error(error); res.status(500).json({ message: 'Loi server.' }); }
 };
 
-const removeEmployee = async (req, res) => {
-  const ownerId = req.user.userId;
-  const { id } = req.params;
+const removeEmployee = async (req, res, next) => {
+  if (!isPositiveInteger(req.params.id)) return res.status(400).json({ message: 'Mã nhân viên không hợp lệ.' });
   try {
-    const bizResult = await db.query('SELECT id FROM businesses WHERE owner_id = $1', [ownerId]);
-    if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay doanh nghiep.' });
-    const empResult = await db.query('SELECT * FROM employees WHERE id = $1 AND business_id = $2', [id, bizResult.rows[0].id]);
-    if (empResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay nhan vien.' });
-    const emp = empResult.rows[0];
-    if (emp.user_id) await db.query("DELETE FROM users WHERE id = $1 AND role = 'employee'", [emp.user_id]);
-    await db.query('DELETE FROM employees WHERE id = $1', [id]);
-    res.json({ message: 'Da xoa nhan vien.' });
-  } catch (error) { console.error(error); res.status(500).json({ message: 'Loi server.' }); }
+    const removed = await db.transaction(async client => {
+      const employee = (await client.query(`SELECT e.* FROM employees e JOIN businesses b ON b.id = e.business_id
+        WHERE e.id = $1 AND b.owner_id = $2 FOR UPDATE OF e`, [req.params.id, req.user.userId])).rows[0];
+      if (!employee) return false;
+      // Keep financial and stock history while revoking the former employee's access.
+      if (employee.user_id) await client.query("UPDATE users SET is_active = false WHERE id = $1 AND role = 'employee'", [employee.user_id]);
+      await client.query('DELETE FROM employees WHERE id = $1', [employee.id]);
+      return true;
+    });
+    if (!removed) return res.status(404).json({ message: 'Không tìm thấy nhân viên.' });
+    res.json({ message: 'Đã xóa nhân viên và khóa tài khoản; lịch sử được giữ nguyên.' });
+  } catch (failure) { next(failure); }
 };
 
 const addProduct = async (req, res) => {
@@ -177,7 +180,7 @@ const listProducts = async (req, res) => {
       if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Chua co ho so doanh nghiep.' });
       businessId = bizResult.rows[0].id;
     }
-    const result = await db.query('SELECT * FROM products WHERE business_id = $1 ORDER BY name ASC', [businessId]);
+    const result = await db.query('SELECT * FROM products WHERE business_id = $1 AND archived_at IS NULL ORDER BY name ASC', [businessId]);
     res.json({ products: result.rows });
   } catch (error) { console.error(error); res.status(500).json({ message: 'Loi server.' }); }
 };
@@ -190,7 +193,7 @@ const updateProduct = async (req, res) => {
   try {
     const bizResult = await db.query('SELECT id FROM businesses WHERE owner_id = $1', [ownerId]);
     if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay doanh nghiep.' });
-    const prodResult = await db.query('SELECT * FROM products WHERE id = $1 AND business_id = $2', [id, bizResult.rows[0].id]);
+    const prodResult = await db.query('SELECT * FROM products WHERE id = $1 AND business_id = $2 AND archived_at IS NULL', [id, bizResult.rows[0].id]);
     if (prodResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay san pham.' });
     const prod = prodResult.rows[0];
     const avatarUrl = req.file ? '/uploads/' + req.file.filename : prod.avatar_url;
@@ -209,9 +212,9 @@ const removeProduct = async (req, res) => {
     const bizResult = await db.query('SELECT id FROM businesses WHERE owner_id = $1', [ownerId]);
     if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay doanh nghiep.' });
     const deleted = await db.query(
-      'DELETE FROM products WHERE id = $1 AND business_id = $2 RETURNING id', [id, bizResult.rows[0].id]
+      'UPDATE products SET archived_at = now() WHERE id = $1 AND business_id = $2 AND archived_at IS NULL AND stock_quantity = 0 RETURNING id', [id, bizResult.rows[0].id]
     );
-    if (deleted.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay san pham.' });
+    if (deleted.rows.length === 0) return res.status(409).json({ message: 'Không tìm thấy sản phẩm hoặc sản phẩm còn tồn kho. Hãy xuất hết tồn kho trước khi xóa.' });
     res.json({ message: 'Da xoa san pham.' });
   } catch (error) { console.error(error); res.status(500).json({ message: 'Loi server.' }); }
 };

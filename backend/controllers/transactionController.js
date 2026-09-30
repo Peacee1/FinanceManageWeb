@@ -40,6 +40,8 @@ const getSummary = async (req, res, next) => {
 };
 
 const addTransaction = async (req, res, next) => {
+  if (req.user.role === 'employee' && !['CASH', 'TRANSFER'].includes(req.body.paymentMethod)) return res.status(400).json({ message: 'Vui lòng chọn tiền mặt hoặc chuyển khoản.' });
+  if (req.body.paymentMethod !== undefined && !['CASH', 'TRANSFER'].includes(req.body.paymentMethod)) return res.status(400).json({ message: 'Hình thức thanh toán không hợp lệ.' });
   const validationError = transactionError(req.body);
   if (validationError) return res.status(400).json({ message: validationError });
   try {
@@ -47,7 +49,7 @@ const addTransaction = async (req, res, next) => {
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
     const { type, amount, category, date, description } = req.body;
     const saleDate = req.user.role === 'employee' ? vietnamDate() : date;
-    const result = await db.query('INSERT INTO transactions (user_id, business_id, type, amount, category, date, description) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', [req.user.userId, scope.businessId, type, amount, category, saleDate, description || '']);
+    const result = await db.query('INSERT INTO transactions (user_id, business_id, type, amount, category, date, description, payment_method) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *', [req.user.userId, scope.businessId, type, amount, category, saleDate, description || '', req.body.paymentMethod || null]);
     res.status(201).json(result.rows[0]);
   } catch (error) { next(error); }
 };
@@ -58,7 +60,7 @@ const deleteTransaction = async (req, res, next) => {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
     const params = [...scope.params, req.params.id];
-    const result = await db.query(`DELETE FROM transactions t WHERE ${scope.clause} AND t.id = $${params.length} RETURNING *`, params);
+    const result = await db.query(`DELETE FROM transactions t WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.id = $${params.length} RETURNING *`, params);
     if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền xóa.' });
     res.json({ message: 'Xóa giao dịch thành công.', transaction: result.rows[0] });
   } catch (error) { next(error); }
@@ -76,7 +78,7 @@ const updateTransaction = async (req, res, next) => {
     const params = [...scope.params];
     const updates = fields.map(field => { params.push(req.body[field]); return `${field} = $${params.length}`; });
     params.push(req.params.id);
-    const result = await db.query(`UPDATE transactions t SET ${updates.join(', ')} WHERE ${scope.clause} AND t.id = $${params.length} RETURNING *`, params);
+    const result = await db.query(`UPDATE transactions t SET ${updates.join(', ')} WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.id = $${params.length} RETURNING *`, params);
     if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền sửa.' });
     res.json(result.rows[0]);
   } catch (error) { next(error); }

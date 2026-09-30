@@ -59,7 +59,7 @@ const login = async (req, res) => {
     }
     const user = result.rows[0];
 
-    if (!user) {
+    if (!user || user.is_active === false) {
       return res.status(401).json({ message: 'Thong tin dang nhap khong dung.' });
     }
 

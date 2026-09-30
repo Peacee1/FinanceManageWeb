@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import Inventory from '../features/inventory/Inventory';
+import { newRequestId } from '../utils/requestId';
 import { vietnamDate } from '../utils/businessDate';
 import { ShoppingBag, Plus, Minus, Trash2, CheckCircle, LogOut, PawPrint, Clock } from 'lucide-react';
 
@@ -10,6 +12,9 @@ const formatCurrency = (amount) => {
 };
 
 const EmployeeDashboard = ({ user, handleLogout }) => {
+  const [activeSection, setActiveSection] = useState('sales');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const checkoutAttempt = useRef(null);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]); // { product, quantity }
   const [todayOrders, setTodayOrders] = useState([]);
@@ -52,6 +57,9 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
   };
 
   const addToCart = (product) => {
+    if (submitting) return;
+    const inCart = cart.find(item => item.product.id === product.id)?.quantity || 0;
+    if (product.track_stock && inCart >= product.stock_quantity) { setSuccessMsg('❌ Không đủ tồn kho.'); return; }
     setCart(prev => {
       const existing = prev.find(c => c.product.id === product.id);
       if (existing) {
@@ -62,10 +70,14 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
   };
 
   const removeFromCart = (productId) => {
+    if (submitting) return;
     setCart(prev => prev.filter(c => c.product.id !== productId));
   };
 
   const updateCartQty = (productId, delta) => {
+    if (submitting) return;
+    const item = cart.find(item => item.product.id === productId);
+    if (delta > 0 && item?.product.track_stock && item.quantity >= item.product.stock_quantity) { setSuccessMsg('❌ Không đủ tồn kho.'); return; }
     setCart(prev => prev.map(c => {
       if (c.product.id === productId) {
         const newQty = c.quantity + delta;
@@ -82,20 +94,22 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
     if (cart.length === 0) return;
     setSubmitting(true);
     try {
-      const description = cart.map(c => `${c.product.name} x${c.quantity}`).join(', ');
-      await axiosAuth.post('/api/transactions?scope=business', {
-        type: 'INCOME',
-        amount: cartTotal,
-        category: 'Ban hang',
-        date: vietnamDate(),
-        description,
-      });
+      if (!paymentMethod) { setSuccessMsg('❌ Vui lòng chọn tiền mặt hoặc chuyển khoản.'); return; }
+      const items = cart.map(item => ({ productId: item.product.id, quantity: item.quantity }));
+      const signature = JSON.stringify({ items, paymentMethod });
+      if (checkoutAttempt.current?.signature !== signature) checkoutAttempt.current = { signature, requestId: newRequestId() };
+      await axiosAuth.post('/api/business/checkout', { items, paymentMethod, requestId: checkoutAttempt.current.requestId, expectedTotal: cartTotal });
+      checkoutAttempt.current = null;
+      setPaymentMethod('');
+      fetchProducts();
       setCart([]);
       setSuccessMsg('Thanh toan thanh cong!');
       fetchTodayOrders();
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error('Loi thanh toan:', err);
+      if (err.response?.status >= 400 && err.response?.status < 500) checkoutAttempt.current = null;
+      fetchProducts();
       setSuccessMsg('❌ ' + (err.response?.data?.message || 'Không thể lưu đơn hàng. Vui lòng thử lại.'));
     } finally {
       setSubmitting(false);
@@ -126,7 +140,13 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 0, minHeight: 'calc(100vh - 70px)' }}>
+      <div style={{ display: 'flex', gap: 12, padding: '12px 20px' }}>
+        <button className="btn-primary" onClick={() => setActiveSection('sales')}>Bán hàng</button>
+        <button className="btn-primary" onClick={() => setActiveSection('inventory')}>Kho hàng · Nhập / xuất</button>
+      </div>
+      {successMsg && <div role={successMsg.startsWith('❌') ? 'alert' : 'status'} style={{ margin: '0 20px 12px', padding: 12, border: '1px solid var(--color-border)', borderRadius: 10 }}>{successMsg}</div>}
+      {activeSection === 'inventory' ? <div style={{ padding: 20 }}><Inventory user={user} /></div> : (
+      <div className="employee-pos-grid">
         {/* Left: Product Grid */}
         <div style={{ padding: '20px', overflowY: 'auto' }}>
           <h3 style={{ fontWeight: '700', marginBottom: '15px', fontSize: '1rem' }}>
@@ -157,6 +177,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
                   )}
                   <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '5px' }}>{product.name}</div>
                   <div style={{ fontWeight: '800', color: 'var(--color-primary)', fontSize: '0.95rem' }}>{formatCurrency(product.price)}</div>
+                  <p style={{ fontSize: '.8rem', marginTop: 6 }}>{product.track_stock ? `Tồn kho: ${product.stock_quantity}` : 'Chưa theo dõi tồn'}</p>
                   <div style={{ marginTop: '8px', background: 'var(--color-primary)', color: 'white', borderRadius: '8px', padding: '4px 8px', fontSize: '0.8rem', fontWeight: '600' }}>+ Thêm</div>
                 </div>
               ))}
@@ -176,6 +197,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
                 <div key={order.id} style={{ background: 'var(--color-card)', borderRadius: '12px', padding: '15px', border: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{order.description || 'Bán hàng'}</div>
+                    <div style={{ fontSize: '.8rem' }}>{order.payment_method === 'CASH' ? 'Tiền mặt' : order.payment_method === 'TRANSFER' ? 'Chuyển khoản' : 'Chưa ghi nhận hình thức'}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{new Date(order.created_at || order.date).toLocaleTimeString('vi-VN')}</div>
                   </div>
                   <div style={{ fontWeight: '800', color: 'var(--color-income)', fontSize: '1rem' }}>+{formatCurrency(order.amount)}</div>
@@ -231,6 +253,11 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
                 <span style={{ fontWeight: '700', fontSize: '1rem' }}>Tổng cộng</span>
                 <span style={{ fontWeight: '900', fontSize: '1.2rem', color: 'var(--color-primary)' }}>{formatCurrency(cartTotal)}</span>
               </div>
+              <label style={{ display: 'block', marginBottom: 12, fontWeight: 600 }}>Hình thức thanh toán <span aria-hidden="true">*</span>
+                <select required value={paymentMethod} onChange={event => setPaymentMethod(event.target.value)} disabled={submitting} style={{ width: '100%', minHeight: 44, marginTop: 8, padding: 10, border: '1px solid var(--color-border)', borderRadius: 10 }}>
+                  <option value="">Chọn hình thức</option><option value="CASH">Tiền mặt</option><option value="TRANSFER">Chuyển khoản</option>
+                </select>
+              </label>
               {successMsg && (
                 <div style={{ background: 'rgba(52,211,153,0.15)', color: '#047857', padding: '10px', borderRadius: '10px', textAlign: 'center', fontWeight: '700', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <CheckCircle size={16} /> {successMsg}
@@ -238,7 +265,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
               )}
               <button
                 onClick={handleCheckout}
-                disabled={submitting}
+                disabled={submitting || !paymentMethod}
                 style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #7C3AED, #9333EA)', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '800', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 8px 20px rgba(124,58,237,0.3)', transition: 'all 0.2s' }}
               >
                 {submitting ? 'Đang xử lý...' : '✓ Thanh toán'}
@@ -246,7 +273,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
             </div>
           )}
         </div>
-      </div>
+      </div>)}
     </div>
   );
 };

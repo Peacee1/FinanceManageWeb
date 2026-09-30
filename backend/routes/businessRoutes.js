@@ -25,6 +25,14 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
+const { listInventory, listMovements, moveStock, updateMovement, deleteMovement, checkout } = require('../controllers/inventoryController');
+router.get('/inventory', protect, listInventory);
+router.post('/inventory/movements', protect, moveStock);
+router.get('/inventory/movements', protect, ownerOnly, listMovements);
+router.put('/inventory/movements/:id', protect, ownerOnly, updateMovement);
+router.delete('/inventory/movements/:id', protect, ownerOnly, deleteMovement);
+router.post('/checkout', protect, checkout);
+
 // Business profile
 router.post('/create', protect, ownerOnly, upload.single('avatar'), validateUpload, createBusiness);
 router.get('/mine', protect, ownerOnly, getMyBusiness);

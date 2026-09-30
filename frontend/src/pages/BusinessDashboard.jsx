@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Cropper from 'react-easy-crop';
+import Inventory from '../features/inventory/Inventory';
 import { 
   LayoutDashboard, CalendarRange, CircleDollarSign, WalletCards, 
   PieChart as PieChartIcon, Target, Tags, User, Settings, 
@@ -817,6 +818,8 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
           
           <li className={`nav-item ${bizSubTab === 'employees' ? 'active' : ''}`} onClick={() => { setBizSubTab('employees'); setIsSidebarOpen(false); }}><Users size={20}/> Nhân viên</li>
           
+          <li className={`nav-item ${bizSubTab === 'inventory' ? 'active' : ''}`} onClick={() => { setBizSubTab('inventory'); setIsSidebarOpen(false); }}><ShoppingBag size={20}/> Kho hàng</li>
+
           <li className={`nav-item ${bizSubTab === 'transactions' ? 'active' : ''}`} onClick={() => { setBizSubTab('transactions'); setIsSidebarOpen(false); }}><CircleDollarSign size={20}/> Sổ quỹ</li>
         </ul>
 
@@ -2350,7 +2353,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
 
                 {/* Sub tabs */}
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', background: 'var(--color-bg)', borderRadius: '14px', padding: '5px' }}>
-                  {['overview', 'products', 'employees'].map(tab => (
+                  {['overview', 'products', 'employees', 'inventory'].map(tab => (
                     <button key={tab} onClick={() => {
                       setBizSubTab(tab);
                       if (tab === 'employees' && bizEmployees.length === 0) {
@@ -2362,12 +2365,14 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                     }}
                       style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: bizSubTab === tab ? '700' : '500', background: bizSubTab === tab ? 'white' : 'transparent', color: bizSubTab === tab ? 'var(--color-primary)' : 'var(--color-text-secondary)', boxShadow: bizSubTab === tab ? '0 2px 8px rgba(124,58,237,0.15)' : 'none', transition: 'all 0.2s' }}
                     >
-                      {tab === 'overview' ? '📊 Tổng quan' : tab === 'products' ? '🛍️ Sản phẩm' : '👥 Nhân viên'}
+                      {tab === 'overview' ? '📊 Tổng quan' : tab === 'products' ? '🛍️ Sản phẩm' : tab === 'inventory' ? '📦 Kho hàng' : '👥 Nhân viên'}
                     </button>
                   ))}
                 </div>
 
                 {bizMsg && <div style={{ background: bizMsg.startsWith('✅') ? 'rgba(52,211,153,0.1)' : 'rgba(251,113,133,0.1)', color: bizMsg.startsWith('✅') ? '#047857' : 'var(--color-expense)', padding: '10px', borderRadius: '10px', marginBottom: '15px', fontWeight: '600' }}>{bizMsg}</div>}
+
+                {bizSubTab === 'inventory' && <Inventory user={user} businessId={Number(id)} />}
 
                 {bizSubTab === 'transactions' && (
                   <div className="widget" style={{ padding: 20 }}>
@@ -2378,10 +2383,10 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                     {transactions.length === 0 ? <p>Chưa có giao dịch doanh nghiệp.</p> : (
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                          <thead><tr><th>Ngày</th><th>Danh mục</th><th>Nội dung</th><th>Số tiền</th></tr></thead>
+                          <thead><tr><th>Ngày</th><th>Danh mục</th><th>Nội dung</th><th>Hình thức</th><th>Số tiền</th></tr></thead>
                           <tbody>{transactions.map(tx => <tr key={tx.id} style={{ borderTop: '1px solid var(--color-border)' }}>
                             <td style={{ padding: 12 }}>{new Date(tx.date).toLocaleDateString('vi-VN')}</td>
-                            <td>{tx.category}</td><td>{tx.description}</td>
+                            <td>{tx.category}</td><td>{tx.description}</td><td>{tx.payment_method === 'CASH' ? 'Tiền mặt' : tx.payment_method === 'TRANSFER' ? 'Chuyển khoản' : 'Chưa ghi nhận'}</td>
                             <td style={{ color: tx.type === 'INCOME' ? 'var(--color-income)' : 'var(--color-expense)', whiteSpace: 'nowrap' }}>{tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}</td>
                           </tr>)}</tbody>
                         </table>
@@ -2470,7 +2475,9 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div key={p.id} className="widget" style={{ padding: '15px', textAlign: 'center', position: 'relative' }}>
                           <button onClick={async () => {
                             if (!window.confirm('Xóa sản phẩm?')) return;
-                            await fetch('/api/business/products/' + p.id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+                            const response = await fetch('/api/business/products/' + p.id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+                            const result = await response.json();
+                            if (!response.ok) { setBizMsg(result.message); return; }
                             setBizProducts(prev => prev.filter(x => x.id !== p.id));
                           }} style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-expense)' }}><Trash2 size={14} /></button>
                           {p.avatar_url ? <img src={p.avatar_url.startsWith('http') ? p.avatar_url : `/api${p.avatar_url}`} alt={p.name} style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover', marginBottom: '8px' }} /> : <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px auto', fontSize: '1.5rem' }}>🛒</div>}
