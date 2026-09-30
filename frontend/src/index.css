@@ -847,3 +847,23 @@ html {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Responsive Grid Classes for Dashboard */
+.grid-responsive-1-1 { display: grid; grid-template-columns: 1fr 1fr; }
+.grid-responsive-2-1 { display: grid; grid-template-columns: 2fr 1fr; }
+.grid-responsive-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+.grid-responsive-1-1-1 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+
+@media (max-width: 1024px) {
+  .grid-responsive-2-1 { grid-template-columns: 1fr; }
+  .grid-responsive-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .grid-responsive-1-1,
+  .grid-responsive-2-1,
+  .grid-responsive-3,
+  .grid-responsive-1-1-1 { 
+    grid-template-columns: 1fr !important; 
+  }
+}

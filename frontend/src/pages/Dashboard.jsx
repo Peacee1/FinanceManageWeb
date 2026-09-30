@@ -1140,7 +1140,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     {isMobile ? <Minus size={20} /> : <MoreHorizontal size={20} />}
                   </div>
                 </div>
-                <div className="quick-actions" style={{gridTemplateColumns: '1fr 1fr', gap: '10px'}}>
+                <div className="quick-actions grid-responsive-1-1" style={{gap: '10px'}}>
                   <button className="btn-quick" style={{background: 'rgba(5,150,105,0.12)', color: 'var(--color-income)', padding: '12px 8px'}} onClick={() => {setType('INCOME'); setIsModalOpen(true);}}>
                     <Plus size={16}/> Thêm khoản thu
                   </button>
@@ -1323,7 +1323,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
 
             {/* Middle row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div className="grid-responsive-2-1" style={{gap: '20px', marginBottom: '20px'}}>
               
               {/* Budget by category */}
               <div className="widget">
@@ -1378,7 +1378,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 
                 {profileData?.plan === 'normal' || !profileData?.plan ? (
                   <div style={{ position: 'relative' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', filter: 'blur(4px)', opacity: 0.5, pointerEvents: 'none' }}>
+                    <div className="grid-responsive-1-1" style={{gap: '15px', filter: 'blur(4px)', opacity: 0.5, pointerEvents: 'none'}}>
                       <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
                         <div>
@@ -1421,7 +1421,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="grid-responsive-1-1" style={{gap: '15px'}}>
                     <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
                       <div>
@@ -1457,7 +1457,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
 
             {/* Bottom row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+            <div className="grid-responsive-2-1" style={{gap: '20px'}}>
               
               {/* History */}
               <div className="widget">
@@ -1569,7 +1569,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
             
             {/* 6. Xu hướng chi tiêu (Metric cards) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' }}>
+            <div className="grid-responsive-3" style={{gap: '20px', marginBottom: '20px'}}>
               <div className="widget">
                 <h3 style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '5px'}}>So với tháng trước</h3>
                 <div style={{fontSize: '1.5rem', fontWeight: '800'}}>{pctChange > 0 ? '+' : ''}{pctChange}%</div>
@@ -1593,7 +1593,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div className="grid-responsive-2-1" style={{gap: '20px', marginBottom: '20px'}}>
               {/* 1. Chi tiêu theo thời gian */}
               <div className="widget">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Chi tiêu theo thời gian (Tháng này)</h3>
@@ -1634,7 +1634,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div className="grid-responsive-1-1" style={{gap: '20px', marginBottom: '20px'}}>
               {/* 3. Thu nhập vs Chi tiêu */}
               <div className="widget">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Thu nhập vs Chi tiêu (6 tháng)</h3>
@@ -1676,7 +1676,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div className="grid-responsive-1-1-1" style={{gap: '20px', marginBottom: '20px'}}>
               {/* 5. Top danh mục chi nhiều nhất */}
               <div className="widget">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Top danh mục chi tiêu</h3>
@@ -1733,7 +1733,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="grid-responsive-1-1" style={{gap: '20px'}}>
               {/* 4. Ngân sách vs Thực tế (Progress bars) */}
               <div className="widget">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Ngân sách vs Thực tế</h3>
@@ -1793,7 +1793,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <label style={{fontWeight: '600'}}>Mức lương hiện tại (VNĐ/tháng)</label>
                     <input type="text" placeholder="Ví dụ: 15.000.000" value={goalForm.salary.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} onChange={e => setGoalForm({...goalForm, salary: e.target.value.replace(/\./g, '')})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="grid-responsive-1-1" style={{gap: '15px'}}>
                     <div className="input-group">
                       <label style={{fontWeight: '600'}}>Tuổi</label>
                       <input type="number" placeholder="25" value={goalForm.age} onChange={e => setGoalForm({...goalForm, age: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
@@ -1835,7 +1835,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                <div className="grid-responsive-1-1" style={{gap: '20px', marginBottom: '20px'}}>
                   {/* Tiết kiệm bình thường */}
                   <div className="widget" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Tiết kiệm bình thường</h3>
@@ -1864,7 +1864,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <div className="widget" style={{ marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '5px' }}>Gửi tiết kiệm</h3>
                   <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '15px' }}>Tính lãi suất theo số tháng gửi.</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                  <div className="grid-responsive-1-1-1" style={{gap: '15px'}}>
                     <div className="input-group">
                       <label>Số tiền gửi (VNĐ)</label>
                       <input type="text" value={bankSaving.amount ? bankSaving.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setBankSaving({...bankSaving, amount: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
@@ -1891,7 +1891,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 {/* Mục tiêu */}
                 <div className="widget">
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Mục tiêu lớn</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="grid-responsive-1-1" style={{gap: '15px'}}>
                     <div className="input-group">
                       <label>Tên mục tiêu</label>
                       <input type="text" value={userGoal.name} onChange={(e) => setUserGoal({...userGoal, name: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
@@ -1942,7 +1942,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </button>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="grid-responsive-1-1" style={{gap: '20px'}}>
               {/* Cột Chi tiêu */}
               <div className="widget" style={{ padding: '20px' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px', color: 'var(--color-expense)' }}>Chi tiêu (Expense)</h3>
@@ -2315,7 +2315,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
             {/* Upgrade Section */}
             <h4 style={{marginTop: '20px', marginBottom: '10px'}}>🚀 Nâng Cấp Tài Khoản</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+            <div className="grid-responsive-1-1" style={{gap: '10px', marginBottom: '20px'}}>
               {(profileData.plan === 'normal') && (
                 <div className="upgrade-card" style={{padding: '15px', border: '1px solid var(--color-border)', borderRadius: '12px', textAlign: 'center'}}>
                   <h4 style={{margin: '0 0 5px'}}>Gói Plus</h4>
