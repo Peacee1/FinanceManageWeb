@@ -718,7 +718,26 @@ body {
   background-color: #EDE9FE;
 }
 
+@media (max-width: 1024px) {
+  .cards-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
+  .cards-row {
+    grid-template-columns: 1fr;
+  }
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+  .modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
   .sidebar {
     position: fixed;
     top: 0;
