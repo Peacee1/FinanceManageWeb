@@ -102,7 +102,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     return null;
   };
 
-  const monthlyBudget = getBudgetForMonth(currentMonth + 1, currentYear) || (localStorage.getItem('monthlyBudget') ? parseInt(localStorage.getItem('monthlyBudget')) : 10000000);
+  const monthlyBudget = getBudgetForMonth(currentMonth + 1, currentYear);
   const [isEditBudgetOpen, setIsEditBudgetOpen] = useState(false);
   const [budgetInputValue, setBudgetInputValue] = useState('');
 
@@ -528,8 +528,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const yearBudgetData = Array.from({length: 12}, (_, i) => {
     const txInMonth = transactions.filter(t => new Date(t.date).getMonth() === i && new Date(t.date).getFullYear() === currentYear);
     const spent = txInMonth.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
-    const mb = getBudgetForMonth(i + 1, currentYear) || monthlyBudget;
-    return { name: `Th${i + 1}`, budget: mb / 1000000, spent: spent / 1000000 };
+    const mb = getBudgetForMonth(i + 1, currentYear);
+    return { name: `Th${i + 1}`, budget: (mb || 0) / 1000000, spent: spent / 1000000 };
   });
 
   const dailyExpenseData = [];
@@ -753,7 +753,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <div className="stat-icon" style={{background: 'rgba(245, 158, 11, 0.1)'}}>
                   <Target color="#F59E0B" size={24}/>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', zIndex: 2 }}>
+                <button onClick={(e) => { e.stopPropagation(); setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', zIndex: 2 }}>
                   ✏️ Sửa
                 </button>
               </div>
@@ -947,7 +947,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <div className="widget">
                 <div className="widget-header">
                   <h3 className="widget-title">Giới hạn chi tiêu tháng</h3>
-                  <button onClick={() => { setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '4px 10px', fontSize: '0.78rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <button onClick={() => { setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '4px 10px', fontSize: '0.78rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     ✏️ Sửa
                   </button>
                 </div>
@@ -965,8 +965,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginTop: '5px', color: 'var(--color-text-secondary)'}}>
                   <span>Đã chi {formatCompact(totalExpense)}</span>
-                  <span style={{color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit'}}>
-                    {totalExpense > monthlyBudget ? `Vượt ${formatCompact(totalExpense - monthlyBudget)}` : `Còn lại ${formatCompact(monthlyBudget - totalExpense)}`}
+                  <span style={{color: monthlyBudget === null ? 'var(--color-text-secondary)' : (totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit')}}>
+                    {monthlyBudget === null ? 'Chưa thiết lập' : (totalExpense > monthlyBudget ? `Vượt ${formatCompact(totalExpense - monthlyBudget)}` : `Còn lại ${formatCompact(monthlyBudget - totalExpense)}`)}
                   </span>
                 </div>
               </div>
@@ -1116,22 +1116,22 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div className="stat-icon" style={{background: 'rgba(245, 158, 11, 0.1)'}}>
                     <Target color="#F59E0B" size={24}/>
                   </div>
-                  <button onClick={() => { setBudgetInputValue((monthlyBudget / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '4px 12px', fontSize: '0.8rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <button onClick={() => { setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '4px 12px', fontSize: '0.8rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     ✏️ Sửa
                   </button>
                 </div>
                 <div className="stat-title">Còn lại trong ngân sách</div>
-                <h3 className="stat-amount" style={{color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit', fontSize: '1.8rem', marginTop: '5px'}}>
-                  {totalExpense > monthlyBudget ? `-${formatCurrency(totalExpense - monthlyBudget)}` : formatCurrency(monthlyBudget - totalExpense)}
+                <h3 className="stat-amount" style={{color: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : 'inherit', fontSize: '1.8rem', marginTop: '5px'}}>
+                  {monthlyBudget === null ? 'Chưa có DL' : (totalExpense > monthlyBudget ? `-${formatCurrency(totalExpense - monthlyBudget)}` : formatCurrency(monthlyBudget - totalExpense))}
                 </h3>
                 <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px'}}>
                   <div className="progress-container" style={{flex: 1, marginTop: 0, height: 8}}>
-                    <div className="progress-bar" style={{background: totalExpense > monthlyBudget ? 'var(--color-expense)' : '#7C3AED', width: `${Math.min((totalExpense / monthlyBudget) * 100, 100)}%`}}></div>
+                    <div className="progress-bar" style={{background: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : '#7C3AED', width: `${monthlyBudget ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0}%`}}></div>
                   </div>
-                  <span style={{fontSize: '0.9rem', fontWeight: 'bold', color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit'}}>{Math.min(Math.round((totalExpense / monthlyBudget) * 100), 100)}%</span>
+                  <span style={{fontSize: '0.9rem', fontWeight: 'bold', color: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : 'inherit'}}>{monthlyBudget ? Math.min(Math.round((totalExpense / monthlyBudget) * 100), 100) : 0}%</span>
                 </div>
                 <div style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px'}}>
-                  Giới hạn: {monthlyBudget.toLocaleString('vi-VN')} đ / tháng
+                  Giới hạn: {monthlyBudget ? monthlyBudget.toLocaleString('vi-VN') + ' đ / tháng' : 'Chưa có dữ liệu'}
                 </div>
               </div>
 
@@ -1153,7 +1153,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <div style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
                       <span style={{fontSize: '0.7rem', color: 'var(--color-text-secondary)'}}>Đã chi</span>
                       <span style={{fontWeight: 'bold', fontSize: '0.9rem'}}>{formatCompact(totalExpense)}</span>
-                      <span style={{fontSize: '0.65rem', color: 'var(--color-text-secondary)'}}>/ {formatCompact(monthlyBudget)}</span>
+                      <span style={{fontSize: '0.65rem', color: 'var(--color-text-secondary)'}}>/ {monthlyBudget ? formatCompact(monthlyBudget) : '---'}</span>
                     </div>
                   </div>
                   <div style={{ flex: 1, marginLeft: '20px' }}>
@@ -1174,7 +1174,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               {/* Card 3: Promo */}
               <div className="widget" style={{ background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '30px' }}>
                 <img src="/cat_budget_mascot.png" alt="Mascot" style={{ width: 100, marginBottom: '15px' }} />
-                <h3 style={{ fontSize: '1rem', color: '#4C1D95', marginBottom: '8px' }}>Bạn còn <span style={{fontSize: '1.2rem', fontWeight: '800'}}>{formatCurrency(Math.max(monthlyBudget - totalExpense, 0))}</span></h3>
+                <h3 style={{ fontSize: '1rem', color: '#4C1D95', marginBottom: '8px' }}>Bạn còn <span style={{fontSize: '1.2rem', fontWeight: '800'}}>{monthlyBudget ? formatCurrency(Math.max(monthlyBudget - totalExpense, 0)) : '---'}</span></h3>
                 <p style={{ fontSize: '0.85rem', color: '#6D28D9' }}>trong ngân sách tháng này. Cố lên nhé! 💪</p>
               </div>
 
@@ -1202,7 +1202,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {(uniqueCategories.length > 0 ? uniqueCategories : ['Ăn uống', 'Shopping', 'Di chuyển', 'Giải trí', 'Khác']).map((cat, idx) => {
                     const spent = currentMonthTx.filter(t => t.type==='EXPENSE' && t.category===cat).reduce((s, t)=>s+parseInt(t.amount), 0);
-                    const b = dynamicBudgets[cat] || (monthlyBudget / 5);
+                    const b = dynamicBudgets[cat] || ((monthlyBudget || 10000000) / 5);
                     const remain = b - spent;
                     const pct = Math.min((spent/b)*100, 100);
                     
@@ -1337,7 +1337,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <span style={{background: row.bg, color: row.c, padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', whiteSpace: 'nowrap'}}>{row.stat}</span>
                       </div>
                       <div style={{textAlign: 'right', color: 'var(--color-text-secondary)'}}>
-                        {row.isCurrent ? <MoreVertical style={{cursor: 'pointer'}} size={16} onClick={() => { setBudgetInputValue(((row.b || monthlyBudget) / 1000000).toString()); setIsEditBudgetOpen(true); }}/> : null}
+                        {row.isCurrent ? <MoreVertical style={{cursor: 'pointer'}} size={16} onClick={() => { setBudgetInputValue(((row.b || monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }}/> : null}
                       </div>
                     </div>
                   ))}
@@ -1429,8 +1429,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <div className="widget">
                 <h3 style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '5px'}}>Dự báo cuối tháng</h3>
                 <div style={{fontSize: '1.5rem', fontWeight: '800'}}>{formatCurrency(projectedEndMonth)}</div>
-                <div style={{fontSize: '0.8rem', color: projectedEndMonth > monthlyBudget ? 'var(--color-expense)' : 'var(--color-income)', marginTop: '5px'}}>
-                  {projectedEndMonth > monthlyBudget ? '↑ Có thể vượt ngân sách dự kiến' : '↓ An toàn trong ngân sách'}
+                <div style={{fontSize: '0.8rem', color: (monthlyBudget && projectedEndMonth > monthlyBudget) ? 'var(--color-expense)' : 'var(--color-income)', marginTop: '5px'}}>
+                  {monthlyBudget === null ? '  Chưa thiết lập ngân sách' : (projectedEndMonth > monthlyBudget ? '↑ Có thể vượt ngân sách dự kiến' : '↓ An toàn trong ngân sách')}
                 </div>
               </div>
             </div>
