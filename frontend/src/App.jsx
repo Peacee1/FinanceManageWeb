@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import EmployeeDashboard from './pages/EmployeeDashboard';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -71,9 +72,11 @@ function App() {
         <Route 
           path="/" 
           element={
-            user ? 
-            <ErrorBoundary><Dashboard user={user} handleLogout={handleLogout} getPlanBadge={getPlanBadge} /></ErrorBoundary>
-            : <Navigate to="/login" />
+            user ? (
+              user.role === 'employee' 
+                ? <ErrorBoundary><EmployeeDashboard user={user} handleLogout={handleLogout} /></ErrorBoundary>
+                : <ErrorBoundary><Dashboard user={user} handleLogout={handleLogout} getPlanBadge={getPlanBadge} /></ErrorBoundary>
+            ) : <Navigate to="/login" />
           } 
         />
         <Route path="/login" element={<Login />} />
