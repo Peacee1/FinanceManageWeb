@@ -60,7 +60,10 @@ const Register = () => {
 
   return (
     <div className="auth-wrapper" style={{ 
-      background: 'linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%)',
+      backgroundImage: 'url(/login_bg.png)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
       position: 'relative',
       overflow: 'hidden',
       minHeight: '100vh',
@@ -69,19 +72,11 @@ const Register = () => {
       justifyContent: 'center',
       padding: '20px'
     }}>
-      {/* Decorative circles/clouds for the background */}
-      <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '300px', height: '300px', background: 'rgba(255,255,255,0.4)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
-      <div style={{ position: 'absolute', bottom: '-10%', right: '-5%', width: '400px', height: '400px', background: 'rgba(255,255,255,0.5)', borderRadius: '50%', filter: 'blur(50px)' }}></div>
-      <div style={{ position: 'absolute', bottom: '10%', left: '15%', width: '200px', height: '200px', background: 'rgba(124, 58, 237, 0.15)', borderRadius: '50%', filter: 'blur(40px)' }}></div>
-
-      <div className="auth-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '50px', zIndex: 1, width: '100%', maxWidth: '1000px' }}>
+      <div className="auth-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', zIndex: 1, width: '100%', maxWidth: '1200px', paddingRight: '10%' }}>
         
-        {/* Left Side: Mascot (Hidden on small screens) */}
-        <div className="auth-mascot" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-          <img src="/goal_mascot.png" alt="Mascot" style={{ width: '100%', maxWidth: '350px', filter: 'drop-shadow(0 20px 30px rgba(124,58,237,0.2))' }} />
-        </div>
+        {/* We rely on the background image for the mascot, so we only render the form here */}
 
-        {/* Right Side: Form */}
+        {/* Form Container */}
         <div className="auth-container" style={{ 
           background: 'rgba(255, 255, 255, 0.95)', 
           backdropFilter: 'blur(10px)', 

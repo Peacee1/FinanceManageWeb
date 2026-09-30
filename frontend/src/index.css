@@ -62,6 +62,7 @@ html {
   }
   .auth-content {
     padding: 10px !important;
+    justify-content: center !important;
   }
   .auth-container {
     padding: 30px 20px !important;
