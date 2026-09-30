@@ -20,6 +20,16 @@
   background-color: var(--color-bg);
 }
 
+[data-theme='dark'] {
+  --color-bg: #12101E;
+  --color-card: #1C192D;
+  --color-text: #F3F1F8;
+  --color-text-secondary: #9CA3AF;
+  --color-border: #2D2844;
+  --color-primary: #9333EA; /* Slightly brighter primary for dark mode */
+  --color-primary-hover: #A855F7;
+}
+
 * {
   box-sizing: border-box;
 }

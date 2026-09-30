@@ -7,7 +7,7 @@ import {
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift,
-  Edit2, Trash2, Menu, X
+  Edit2, Trash2, Menu, X, Sun, Moon
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -25,6 +25,12 @@ const safeJsonParse = (str, fallback) => {
 };
 
 const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   const [transactions, setTransactions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -667,7 +673,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <li className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => { setActiveTab('goals'); setIsSidebarOpen(false); }}><Target size={20}/> Mục tiêu</li>
           <li className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }}><Tags size={20}/> Danh mục</li>
           <li className="nav-item" onClick={() => { setIsProfileOpen(true); setIsSidebarOpen(false); }}><User size={20}/> Tài khoản</li>
-          <li className="nav-item" onClick={() => setIsSidebarOpen(false)}><Settings size={20}/> Cài đặt</li>
+          <li className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}><Settings size={20}/> Cài đặt</li>
         </ul>
 
         <div className="promo-card">
@@ -1910,6 +1916,59 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: '800' }}>Cài đặt hệ thống</h2>
+              <p style={{ color: 'var(--color-text-secondary)' }}>Tùy chỉnh trải nghiệm cá nhân của bạn</p>
+            </div>
+            
+            <div className="widget" style={{ padding: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Giao diện (Theme)</h3>
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <button 
+                  onClick={() => setTheme('light')}
+                  style={{ 
+                    flex: 1, 
+                    padding: '15px', 
+                    borderRadius: '12px', 
+                    border: theme === 'light' ? '2px solid var(--color-primary)' : '2px solid var(--color-border)', 
+                    background: 'var(--color-card)', 
+                    color: 'var(--color-text)', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '10px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s'
+                  }}>
+                  <Sun size={20} /> Sáng (Light)
+                </button>
+                <button 
+                  onClick={() => setTheme('dark')}
+                  style={{ 
+                    flex: 1, 
+                    padding: '15px', 
+                    borderRadius: '12px', 
+                    border: theme === 'dark' ? '2px solid var(--color-primary)' : '2px solid var(--color-border)', 
+                    background: 'var(--color-card)', 
+                    color: 'var(--color-text)', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '10px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s'
+                  }}>
+                  <Moon size={20} /> Tối (Dark)
+                </button>
               </div>
             </div>
           </div>
