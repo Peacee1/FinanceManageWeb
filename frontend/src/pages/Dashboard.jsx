@@ -115,6 +115,14 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [qaPos, setQaPos] = useState({ left: window.innerWidth - 364, top: window.innerHeight - 350 });
   const [isDraggingQA, setIsDraggingQA] = useState(false);
   const qaOffset = useRef({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isQAMobileOpen, setIsQAMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handlePointerDown = (e) => {
     if (e.target.closest('button')) return; // Ignore buttons
@@ -991,11 +999,41 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
               </div>
 
-              {/* Quick Actions */}
+              {/* Quick Actions Mobile FAB */}
+              {isMobile && !isQAMobileOpen && (
+                <button 
+                  onClick={() => setIsQAMobileOpen(true)}
+                  style={{ position: 'fixed', bottom: 20, right: 20, width: 56, height: 56, borderRadius: '28px', background: 'var(--color-primary)', color: 'white', border: 'none', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <Plus size={24} />
+                </button>
+              )}
+              
+              {isMobile && isQAMobileOpen && (
+                <div 
+                  style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 1000 }} 
+                  onClick={() => setIsQAMobileOpen(false)}
+                ></div>
+              )}
+
+              {/* Quick Actions Panel */}
               <div 
                 ref={quickActionsRef}
                 className="widget quick-actions-widget" 
-                style={{
+                style={isMobile ? {
+                  position: 'fixed',
+                  bottom: isQAMobileOpen ? 0 : -400,
+                  left: 0,
+                  width: '100%',
+                  zIndex: 1001,
+                  boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
+                  background: 'white',
+                  borderRadius: '24px 24px 0 0',
+                  transition: 'bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                  padding: '24px',
+                  boxSizing: 'border-box',
+                  display: 'block'
+                } : {
                   position: 'fixed', 
                   ...qaPos, 
                   width: '340px', 
@@ -1007,15 +1045,18 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   transition: isDraggingQA ? 'none' : 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                   touchAction: 'none' // Prevent scrolling while dragging on mobile
                 }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
+                onPointerDown={isMobile ? undefined : handlePointerDown}
+                onPointerMove={isMobile ? undefined : handlePointerMove}
+                onPointerUp={isMobile ? undefined : handlePointerUp}
+                onPointerCancel={isMobile ? undefined : handlePointerUp}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h3 className="widget-title" style={{ margin: 0, pointerEvents: 'none' }}>Thao tác nhanh</h3>
-                  <div style={{ color: 'var(--color-text-secondary)', opacity: 0.5, pointerEvents: 'none' }}>
-                    <MoreHorizontal size={20} />
+                  <div 
+                    style={{ color: 'var(--color-text-secondary)', opacity: 0.5, cursor: isMobile ? 'pointer' : 'default', pointerEvents: isMobile ? 'auto' : 'none' }}
+                    onClick={isMobile ? () => setIsQAMobileOpen(false) : undefined}
+                  >
+                    {isMobile ? <Minus size={20} /> : <MoreHorizontal size={20} />}
                   </div>
                 </div>
                 <div className="quick-actions" style={{gridTemplateColumns: '1fr 1fr', gap: '10px'}}>
