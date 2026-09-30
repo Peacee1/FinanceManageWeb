@@ -688,8 +688,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               
               {isDropdownOpen && (
                 <div className="avatar-dropdown" style={{top: 50}}>
-                  <div className="dropdown-item" onClick={() => setIsProfileOpen(true)}>👤 Hồ sơ</div>
-                  <div className="dropdown-item danger" onClick={handleLogout}>🚪 Đăng xuất</div>
+                  <div className="dropdown-item" onClick={(e) => { e.stopPropagation(); setIsProfileOpen(true); setIsDropdownOpen(false); }}>👤 Hồ sơ</div>
+                  <div className="dropdown-item danger" onClick={(e) => { e.stopPropagation(); handleLogout(); }}>🚪 Đăng xuất</div>
                 </div>
               )}
             </div>

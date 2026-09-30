@@ -50,9 +50,8 @@ function App() {
   });
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.reload();
+    localStorage.clear();
+    window.location.href = '/login';
   };
 
   const getPlanBadge = (plan) => {
