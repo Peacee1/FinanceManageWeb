@@ -766,10 +766,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div className="progress-container" style={{flex: 1, marginTop: 0}}>
                     <div className="progress-bar" style={{background: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'var(--color-primary)', width: `${Math.min((totalExpense / monthlyBudget) * 100, 100)}%`}}></div>
                   </div>
-                  <span style={{fontSize: '0.8rem', fontWeight: 'bold', color: totalExpense > monthlyBudget ? 'var(--color-expense)' : 'inherit'}}>{Math.min(Math.round((totalExpense / monthlyBudget) * 100), 100)}%</span>
+                  <span style={{fontSize: '0.8rem', fontWeight: 'bold', color: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : 'inherit'}}>{monthlyBudget ? Math.min(Math.round((totalExpense / monthlyBudget) * 100), 100) : 0}%</span>
                 </div>
                 <div style={{fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '4px'}}>
-                  Giới hạn: {monthlyBudget.toLocaleString('vi-VN')} đ / tháng
+                  Giới hạn: {monthlyBudget ? monthlyBudget.toLocaleString('vi-VN') + ' đ / tháng' : 'Chưa thiết lập'}
                 </div>
               </div>
             </div>
@@ -957,11 +957,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                   <div>
                     <div style={{fontSize: '0.85rem', color: 'var(--color-text-secondary)'}}>Đã chi / Giới hạn</div>
-                    <div style={{fontSize: '1.2rem', fontWeight: '800'}}>{totalExpense.toLocaleString('vi-VN')} đ <span style={{color: 'var(--color-text-secondary)', fontWeight: '400', fontSize: '0.9rem'}}>/ {monthlyBudget.toLocaleString('vi-VN')} đ</span></div>
+                    <div style={{fontSize: '1.2rem', fontWeight: '800'}}>{totalExpense.toLocaleString('vi-VN')} đ <span style={{color: 'var(--color-text-secondary)', fontWeight: '400', fontSize: '0.9rem'}}>/ {monthlyBudget ? monthlyBudget.toLocaleString('vi-VN') + ' đ' : 'Chưa thiết lập'}</span></div>
                   </div>
                 </div>
                 <div className="progress-container" style={{height: 10}}>
-                  <div className="progress-bar" style={{background: totalExpense > monthlyBudget ? 'var(--color-expense)' : '#7C3AED', width: `${Math.min((totalExpense / monthlyBudget) * 100, 100)}%`}}></div>
+                  <div className="progress-bar" style={{background: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : '#7C3AED', width: `${monthlyBudget ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0}%`}}></div>
                 </div>
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginTop: '5px', color: 'var(--color-text-secondary)'}}>
                   <span>Đã chi {formatCompact(totalExpense)}</span>
