@@ -357,8 +357,15 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
       setBizLoading(true);
       fetch('/api/business/mine?t=' + Date.now(), { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
         .then(r => r.json())
-        .then(d => { setBizData(d.business || false); })
-        .catch(err => { console.error("Error fetching biz data:", err); setBizData(false); })
+        .then(d => { 
+           if (!d.business) window.debugBizMsg = 'API returned: ' + JSON.stringify(d);
+           setBizData(d.business || false); 
+        })
+        .catch(err => { 
+           window.debugBizMsg = 'Network error: ' + err.message;
+           console.error("Error fetching biz data:", err); 
+           setBizData(false); 
+        })
         .finally(() => setBizLoading(false));
     }
   }, [activeTab]);
@@ -2220,6 +2227,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                     >
                       🚀 Bắt đầu ngay
                     </button>
+                    {window.debugBizMsg && <p style={{marginTop: '10px', color: 'red', fontSize: '0.8rem'}}>{window.debugBizMsg}</p>}
                   </>
                 ) : (
                   <>
