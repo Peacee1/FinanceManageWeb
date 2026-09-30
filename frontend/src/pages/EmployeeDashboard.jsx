@@ -41,7 +41,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
 
   const fetchTodayOrders = async () => {
     try {
-      const res = await axiosAuth.get('/api/transactions');
+      const res = await axiosAuth.get('/api/transactions?scope=business');
       const today = new Date().toISOString().split('T')[0];
       const todayTx = (res.data || []).filter(t => t.date?.startsWith(today) && t.type === 'INCOME');
       setTodayOrders(todayTx);
@@ -82,7 +82,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
     setSubmitting(true);
     try {
       const description = cart.map(c => `${c.product.name} x${c.quantity}`).join(', ');
-      await axiosAuth.post('/api/transactions', {
+      await axiosAuth.post('/api/transactions?scope=business', {
         type: 'INCOME',
         amount: cartTotal,
         category: 'Ban hang',
@@ -149,7 +149,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
                 >
                   {product.avatar_url ? (
-                    <img src={`/${product.avatar_url.replace(/^\//, '')}`} alt={product.name} style={{ width: '70px', height: '70px', borderRadius: '12px', objectFit: 'cover', marginBottom: '10px' }} />
+                    <img src={`/api/${product.avatar_url.replace(/^\//, '')}`} alt={product.name} style={{ width: '70px', height: '70px', borderRadius: '12px', objectFit: 'cover', marginBottom: '10px' }} />
                   ) : (
                     <div style={{ width: '70px', height: '70px', borderRadius: '12px', background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px auto', fontSize: '1.8rem' }}>🛍️</div>
                   )}

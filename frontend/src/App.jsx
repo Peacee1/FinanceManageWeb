@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import EmployeeDashboard from './pages/EmployeeDashboard';
-import BusinessDashboard from './pages/BusinessDashboard';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const EmployeeDashboard = lazy(() => import('./pages/EmployeeDashboard'));
+const BusinessDashboard = lazy(() => import('./pages/BusinessDashboard'));
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -69,6 +69,7 @@ function App() {
 
   return (
     <Router>
+      <Suspense fallback={<div role="status" style={{ padding: 24 }}>Đang tải...</div>}>
       <Routes>
         <Route 
           path="/" 
@@ -84,6 +85,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/business/:id" element={user ? <ErrorBoundary><BusinessDashboard user={user} handleLogout={handleLogout} getPlanBadge={getPlanBadge} /></ErrorBoundary> : <Navigate to="/login" />} />
       </Routes>
+      </Suspense>
     </Router>
   );
 }

@@ -75,18 +75,22 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [customBankSavingTotal, setCustomBankSavingTotal] = useState(null);
   const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
   
-  const updateSettingsAPI = async (payload) => {
+  const updateSettingsAPI = async (payload, reportFailure = false) => {
     try {
       const token = localStorage.getItem('token');
       await axios.post('/api/users/settings', payload, { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) {
       console.error('Lỗi lưu cài đặt', e);
+      if (reportFailure) throw e;
+      alert('Không thể lưu cài đặt. Vui lòng thử lại.');
     }
   };
 
   const handleSaveGoals = async () => {
-    await updateSettingsAPI({ bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal });
-    alert('Lưu cài đặt mục tiêu thành công!');
+    try {
+      await updateSettingsAPI({ bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal }, true);
+      alert('Lưu cài đặt mục tiêu thành công!');
+    } catch { alert('Không thể lưu mục tiêu. Vui lòng thử lại.'); }
   };
   const [type, setType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
@@ -256,7 +260,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('/api/transactions', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`/api/transactions?scope=business&businessId=${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setTransactions(res.data);
     } catch (error) { console.error(error); }
   };
@@ -351,6 +355,20 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
     fetchTransactions();
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const refresh = () => { if (document.visibilityState === 'visible') fetchTransactions(); };
+    document.addEventListener('visibilitychange', refresh);
+    const interval = setInterval(refresh, 30000);
+    return () => { document.removeEventListener('visibilitychange', refresh); clearInterval(interval); };
+  }, [id]);
+
+  useEffect(() => {
+    if (bizSubTab !== 'products' && bizSubTab !== 'employees') return;
+    axios.get(`/api/business/${bizSubTab}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      .then(res => bizSubTab === 'products' ? setBizProducts(res.data.products || []) : setBizEmployees(res.data.employees || []))
+      .catch(() => setBizMsg('Không thể tải dữ liệu. Vui lòng thử lại.'));
+  }, [bizSubTab]);
 
   // Fetch business data khi chuyển sang tab doanh nghiệp
   useEffect(() => {
@@ -467,7 +485,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
     if (!window.confirm('Bạn có chắc chắn muốn xoá giao dịch này?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`/api/transactions/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`/api/transactions/${id}?scope=business`, { headers: { Authorization: `Bearer ${token}` } });
       setSelectedDayInfo(prev => {
         if (!prev) return prev;
         return {
@@ -499,11 +517,11 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
     try {
       const token = localStorage.getItem('token');
       if (editTxId) {
-        await axios.put(`/api/transactions/${editTxId}`, {
+        await axios.put(`/api/transactions/${editTxId}?scope=business`, {
           type, amount: parseInt(amount), category, date, description
         }, { headers: { Authorization: `Bearer ${token}` } });
       } else {
-        await axios.post('/api/transactions', {
+        await axios.post('/api/transactions?scope=business', {
           type, amount: parseInt(amount), category, date, description
         }, { headers: { Authorization: `Bearer ${token}` } });
       }
@@ -2349,6 +2367,27 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
 
                 {bizMsg && <div style={{ background: bizMsg.startsWith('✅') ? 'rgba(52,211,153,0.1)' : 'rgba(251,113,133,0.1)', color: bizMsg.startsWith('✅') ? '#047857' : 'var(--color-expense)', padding: '10px', borderRadius: '10px', marginBottom: '15px', fontWeight: '600' }}>{bizMsg}</div>}
 
+                {bizSubTab === 'transactions' && (
+                  <div className="widget" style={{ padding: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+                      <h3>Sổ quỹ doanh nghiệp</h3>
+                      <button className="btn-primary" onClick={() => { setEditTxId(null); setType('EXPENSE'); setAmount(''); setDescription(''); setIsModalOpen(true); }}>Thêm thu / chi</button>
+                    </div>
+                    {transactions.length === 0 ? <p>Chưa có giao dịch doanh nghiệp.</p> : (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead><tr><th>Ngày</th><th>Danh mục</th><th>Nội dung</th><th>Số tiền</th></tr></thead>
+                          <tbody>{transactions.map(tx => <tr key={tx.id} style={{ borderTop: '1px solid var(--color-border)' }}>
+                            <td style={{ padding: 12 }}>{new Date(tx.date).toLocaleDateString('vi-VN')}</td>
+                            <td>{tx.category}</td><td>{tx.description}</td>
+                            <td style={{ color: tx.type === 'INCOME' ? 'var(--color-income)' : 'var(--color-expense)', whiteSpace: 'nowrap' }}>{tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}</td>
+                          </tr>)}</tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Tổng quan */}
                 {bizSubTab === 'overview' && (
                   <div>
@@ -2454,7 +2493,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                       <div style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(16,185,129,0.1))', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '14px', padding: '20px', marginBottom: '20px' }}>
                         <h4 style={{ fontWeight: '800', marginBottom: '10px', color: '#047857' }}>✅ Tài khoản nhân viên vừa tạo</h4>
                         <p style={{ fontSize: '0.9rem', marginBottom: '5px' }}>Username: <strong style={{ fontFamily: 'monospace', fontSize: '1rem' }}>{newEmpCred.username}</strong></p>
-                        <p style={{ fontSize: '0.9rem', marginBottom: '10px' }}>Mật khẩu mặc định: <strong style={{ fontFamily: 'monospace', fontSize: '1.2rem', color: 'var(--color-expense)' }}>1</strong> <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>(nhân viên phải đổi lúc đăng nhập lần đầu)</span></p>
+                        <p style={{ fontSize: '0.9rem', marginBottom: '10px' }}>Mật khẩu mặc định: <strong style={{ fontFamily: 'monospace', fontSize: '1.2rem', color: 'var(--color-expense)' }}>{newEmpCred.defaultPassword}</strong> <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>(nhân viên phải đổi lúc đăng nhập lần đầu)</span></p>
                         <button onClick={() => setNewEmpCred(null)} style={{ background: 'none', border: '1px solid rgba(52,211,153,0.5)', borderRadius: '8px', padding: '6px 14px', cursor: 'pointer', fontSize: '0.85rem', color: '#047857' }}>× Đóng</button>
                       </div>
                     )}
@@ -2483,7 +2522,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                             const data = await res.json();
                             if (!res.ok) throw new Error(data.message);
                             setBizEmployees(prev => [...prev, data.employee]);
-                            setNewEmpCred({ username: data.username, defaultPassword: '1' });
+                            setNewEmpCred({ username: data.username, defaultPassword: data.defaultPassword });
                             setEmpForm({ name: '', age: '', salary: '' }); setEmpAvatarFile(null); setEmpAvatarPreview(null);
                           } catch (err) { setBizMsg('❌ ' + err.message); }
                           finally { setBizActionLoading(false); }

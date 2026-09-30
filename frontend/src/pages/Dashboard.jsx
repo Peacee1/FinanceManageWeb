@@ -45,6 +45,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isBizCreating, setIsBizCreating] = useState(false);
   const [bizData, setBizData] = useState(null);
   const [bizLoading, setBizLoading] = useState(false);
+  const [bizSummary, setBizSummary] = useState(null);
   const [bizSubTab, setBizSubTab] = useState('overview');
   const [bizForm, setBizForm] = useState({ model: 'Quán cafe', name: '', maxEmployees: 20 });
   const [bizAvatarFile, setBizAvatarFile] = useState(null);
@@ -71,18 +72,22 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [customBankSavingTotal, setCustomBankSavingTotal] = useState(null);
   const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
   
-  const updateSettingsAPI = async (payload) => {
+  const updateSettingsAPI = async (payload, reportFailure = false) => {
     try {
       const token = localStorage.getItem('token');
       await axios.post('/api/users/settings', payload, { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) {
       console.error('Lỗi lưu cài đặt', e);
+      if (reportFailure) throw e;
+      alert('Không thể lưu cài đặt. Vui lòng thử lại.');
     }
   };
 
   const handleSaveGoals = async () => {
-    await updateSettingsAPI({ bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal });
-    alert('Lưu cài đặt mục tiêu thành công!');
+    try {
+      await updateSettingsAPI({ bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal }, true);
+      alert('Lưu cài đặt mục tiêu thành công!');
+    } catch { alert('Không thể lưu mục tiêu. Vui lòng thử lại.'); }
   };
   const [type, setType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
@@ -359,6 +364,21 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         .finally(() => setBizLoading(false));
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'business' || !bizData?.id) return;
+    let cancelled = false;
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      axios.get(`/api/transactions/summary?scope=business&businessId=${bizData.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+        .then(res => { if (!cancelled) setBizSummary(res.data); })
+        .catch(() => { if (!cancelled) setBizSummary(null); });
+    };
+    refresh();
+    document.addEventListener('visibilitychange', refresh);
+    const interval = setInterval(refresh, 30000);
+    return () => { cancelled = true; document.removeEventListener('visibilitychange', refresh); clearInterval(interval); };
+  }, [activeTab, bizData?.id]);
 
   const handleAvatarUpload = (e, target = 'profile') => {
     setCropTarget(target);
@@ -2297,11 +2317,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--color-border)', paddingTop: '15px' }}>
                     <div>
                       <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Doanh thu hôm nay</p>
-                      <p style={{ color: 'var(--color-income)', fontWeight: 'bold', fontSize: '1.1rem' }}>+ 0 ₫</p>
+                      <p style={{ color: 'var(--color-income)', fontWeight: 'bold', fontSize: '1.1rem' }}>{bizSummary ? `+ ${formatCurrency(bizSummary.today_income)}` : 'Đang tải...'}</p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Chi tiêu hôm nay</p>
-                      <p style={{ color: 'var(--color-expense)', fontWeight: 'bold', fontSize: '1.1rem' }}>- 0 ₫</p>
+                      <p style={{ color: 'var(--color-expense)', fontWeight: 'bold', fontSize: '1.1rem' }}>{bizSummary ? `- ${formatCurrency(bizSummary.today_expense)}` : 'Đang tải...'}</p>
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,9 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const { randomBytes } = require('crypto');
+const { isPositiveInteger } = require('../utils/validation');
+
+const isNonnegativeMoney = value => Number(value) === 0 && /^(0|0+)$/.test(String(value)) || isPositiveInteger(value);
 
 const PRODUCT_ENABLED_MODELS = ['Quan cafe', 'Quan net', 'Quan bi a', 'Quan an'];
 
@@ -19,7 +23,7 @@ const createBusiness = async (req, res) => {
   const ownerId = req.user.userId;
   const { model, name, maxEmployees } = req.body;
   const avatarUrl = req.file ? '/uploads/' + req.file.filename : null;
-  if (!model || !name) return res.status(400).json({ message: 'Vui long nhap day du thong tin.' });
+  if (typeof model !== 'string' || model.length > 50 || typeof name !== 'string' || !name.trim() || name.length > 100 || (maxEmployees !== undefined && (!isPositiveInteger(maxEmployees) || Number(maxEmployees) > 50))) return res.status(400).json({ message: 'Vui long nhap day du thong tin.' });
   try {
     const existing = await db.query('SELECT id FROM businesses WHERE owner_id = $1', [ownerId]);
     if (existing.rows.length > 0) return res.status(400).json({ message: 'Ban da co ho so doanh nghiep.' });
@@ -52,6 +56,7 @@ const getMyBusiness = async (req, res) => {
 const updateBusiness = async (req, res) => {
   const ownerId = req.user.userId;
   const { name, maxEmployees } = req.body;
+  if ((name !== undefined && (typeof name !== 'string' || !name.trim() || name.length > 100)) || (maxEmployees !== undefined && (!isPositiveInteger(maxEmployees) || Number(maxEmployees) > 50))) return res.status(400).json({ message: 'Thông tin doanh nghiệp không hợp lệ.' });
   try {
     const bizResult = await db.query('SELECT * FROM businesses WHERE owner_id = $1', [ownerId]);
     if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay doanh nghiep.' });
@@ -68,41 +73,27 @@ const updateBusiness = async (req, res) => {
   } catch (error) { console.error(error); res.status(500).json({ message: 'Loi server.' }); }
 };
 
-const addEmployee = async (req, res) => {
-  const ownerId = req.user.userId;
+const addEmployee = async (req, res, next) => {
   const { name, age, salary } = req.body;
-  const avatarUrl = req.file ? '/uploads/' + req.file.filename : null;
-  if (!name) return res.status(400).json({ message: 'Ten nhan vien khong duoc de trong.' });
+  if (typeof name !== 'string' || !name.trim() || name.length > 100 || (age !== undefined && (!isPositiveInteger(age) || Number(age) > 120)) || (salary !== undefined && !isNonnegativeMoney(salary))) return res.status(400).json({ message: 'Thông tin nhân viên không hợp lệ.' });
+  const defaultPassword = randomBytes(12).toString('base64url');
   try {
-    const bizResult = await db.query('SELECT * FROM businesses WHERE owner_id = $1', [ownerId]);
-    if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Chua co ho so doanh nghiep.' });
-    const biz = bizResult.rows[0];
-    const countResult = await db.query('SELECT COUNT(*) FROM employees WHERE business_id = $1', [biz.id]);
-    if (parseInt(countResult.rows[0].count) >= biz.max_employees) {
-      return res.status(400).json({ message: 'Da dat gioi han nhan vien: ' + biz.max_employees });
-    }
-    const codeResult = await db.query(
-      'SELECT COALESCE(MAX(employee_code), 0) + 1 AS next_code FROM employees WHERE business_id = $1', [biz.id]
-    );
-    const employeeCode = codeResult.rows[0].next_code;
-    const username = biz.business_code + employeeCode;
-    const defaultPasswordHash = await bcrypt.hash('1', 10);
-    const userResult = await db.query(
-      "INSERT INTO users (name, email, password_hash, plan, role, username, must_change_password) VALUES ($1, $2, $3, 'normal', 'employee', $4, true) RETURNING id",
-      [name, username + '@emp.local', defaultPasswordHash, username]
-    );
-    const employeeUserId = userResult.rows[0].id;
-    const empResult = await db.query(
-      'INSERT INTO employees (business_id, user_id, employee_code, name, age, salary, avatar_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [biz.id, employeeUserId, employeeCode, name, age || null, salary || 0, avatarUrl]
-    );
-    res.status(201).json({
-      message: 'Them nhan vien thanh cong.',
-      employee: { ...empResult.rows[0], username },
-      username,
-      defaultPassword: '1'
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
+    const result = await db.transaction(async client => {
+      // Serialize employee creation per business to enforce limits and unique codes.
+      const biz = (await client.query('SELECT * FROM businesses WHERE owner_id = $1 FOR UPDATE', [req.user.userId])).rows[0];
+      if (!biz) return { status: 404, message: 'Chưa có hồ sơ doanh nghiệp.' };
+      const count = (await client.query('SELECT COUNT(*) FROM employees WHERE business_id = $1', [biz.id])).rows[0].count;
+      if (Number(count) >= biz.max_employees) return { status: 400, message: 'Đã đạt giới hạn nhân viên.' };
+      const code = (await client.query('SELECT COALESCE(MAX(employee_code), 0) + 1 AS code FROM employees WHERE business_id = $1', [biz.id])).rows[0].code;
+      const username = biz.business_code + code;
+      const user = (await client.query("INSERT INTO users (name, email, password_hash, plan, role, username, must_change_password) VALUES ($1, $2, $3, 'normal', 'employee', $4, true) RETURNING id", [name, username + '@emp.local', passwordHash, username])).rows[0];
+      const employee = (await client.query('INSERT INTO employees (business_id, user_id, employee_code, name, age, salary, avatar_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', [biz.id, user.id, code, name, age || null, salary || 0, req.file ? '/uploads/' + req.file.filename : null])).rows[0];
+      return { employee: { ...employee, username }, username };
     });
-  } catch (error) { console.error(error); res.status(500).json({ message: 'Loi server.' }); }
+    if (result.status) return res.status(result.status).json({ message: result.message });
+    res.status(201).json({ message: 'Thêm nhân viên thành công.', ...result, defaultPassword });
+  } catch (error) { next(error); }
 };
 
 const listEmployees = async (req, res) => {
@@ -123,6 +114,7 @@ const updateEmployee = async (req, res) => {
   const ownerId = req.user.userId;
   const { id } = req.params;
   const { name, age, salary } = req.body;
+  if ((name !== undefined && (typeof name !== 'string' || !name.trim() || name.length > 100)) || (age !== undefined && (!isPositiveInteger(age) || Number(age) > 120)) || (salary !== undefined && !isNonnegativeMoney(salary))) return res.status(400).json({ message: 'Thông tin nhân viên không hợp lệ.' });
   try {
     const bizResult = await db.query('SELECT id FROM businesses WHERE owner_id = $1', [ownerId]);
     if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay doanh nghiep.' });
@@ -132,7 +124,7 @@ const updateEmployee = async (req, res) => {
     const avatarUrl = req.file ? '/uploads/' + req.file.filename : emp.avatar_url;
     const result = await db.query(
       'UPDATE employees SET name = $1, age = $2, salary = $3, avatar_url = $4 WHERE id = $5 RETURNING *',
-      [name || emp.name, age || emp.age, salary || emp.salary, avatarUrl, id]
+      [name || emp.name, age || emp.age, salary ?? emp.salary, avatarUrl, id]
     );
     if (name && emp.user_id) await db.query('UPDATE users SET name = $1 WHERE id = $2', [name, emp.user_id]);
     res.json({ message: 'Cap nhat nhan vien thanh cong.', employee: result.rows[0] });
@@ -158,7 +150,7 @@ const addProduct = async (req, res) => {
   const ownerId = req.user.userId;
   const { name, price } = req.body;
   const avatarUrl = req.file ? '/uploads/' + req.file.filename : null;
-  if (!name || !price) return res.status(400).json({ message: 'Vui long nhap du thong tin san pham.' });
+  if (typeof name !== 'string' || !name.trim() || name.length > 100 || !isPositiveInteger(price)) return res.status(400).json({ message: 'Vui long nhap du thong tin san pham.' });
   try {
     const bizResult = await db.query('SELECT * FROM businesses WHERE owner_id = $1', [ownerId]);
     if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Chua co ho so doanh nghiep.' });
@@ -194,6 +186,7 @@ const updateProduct = async (req, res) => {
   const ownerId = req.user.userId;
   const { id } = req.params;
   const { name, price } = req.body;
+  if ((name !== undefined && (typeof name !== 'string' || !name.trim() || name.length > 100)) || (price !== undefined && !isPositiveInteger(price))) return res.status(400).json({ message: 'Thông tin sản phẩm không hợp lệ.' });
   try {
     const bizResult = await db.query('SELECT id FROM businesses WHERE owner_id = $1', [ownerId]);
     if (bizResult.rows.length === 0) return res.status(404).json({ message: 'Khong tim thay doanh nghiep.' });

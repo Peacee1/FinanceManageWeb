@@ -5,3 +5,7 @@ build/
 *.pem
 *.key
 .DS_Store
+
+backend/uploads/
+.env.*
+!.env.example

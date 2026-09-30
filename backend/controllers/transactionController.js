@@ -1,113 +1,82 @@
 const db = require('../config/db');
+const { transactionError, isPositiveInteger } = require('../utils/validation');
+const { transactionScope } = require('../utils/transactionScope');
 
-// Lấy danh sách giao dịch của user
-const getTransactions = async (req, res) => {
-  const userId = req.user.userId;
-  const { month, year } = req.query; // Tùy chọn lọc theo tháng/năm
-
+const getTransactions = async (req, res, next) => {
+  const { month, year, limit, offset } = req.query;
+  if ((month !== undefined || year !== undefined) && (!isPositiveInteger(month) || Number(month) > 12 || !isPositiveInteger(year) || Number(year) < 1900 || Number(year) > 9998)) return res.status(400).json({ message: 'Tháng/năm không hợp lệ.' });
+  if ((limit !== undefined && (!isPositiveInteger(limit) || Number(limit) > 500)) || (offset !== undefined && (!/^\d+$/.test(String(offset)) || !Number.isSafeInteger(Number(offset))))) return res.status(400).json({ message: 'Phân trang không hợp lệ.' });
   try {
-    let query = `
-      SELECT t.* 
-      FROM transactions t
-      WHERE t.user_id = $1 
-         OR t.user_id IN (
-           SELECT e.user_id 
-           FROM employees e 
-           JOIN businesses b ON e.business_id = b.id 
-           WHERE b.owner_id = $1 AND e.user_id IS NOT NULL
-         )
-      ORDER BY t.date DESC
-    `;
-    let params = [userId];
-
-    if (month && year) {
-      query = `
-        SELECT t.* 
-        FROM transactions t
-        WHERE (t.user_id = $1 
-           OR t.user_id IN (
-             SELECT e.user_id 
-             FROM employees e 
-             JOIN businesses b ON e.business_id = b.id 
-             WHERE b.owner_id = $1 AND e.user_id IS NOT NULL
-           ))
-          AND EXTRACT(MONTH FROM t.date) = $2 
-          AND EXTRACT(YEAR FROM t.date) = $3 
-        ORDER BY t.date DESC
-      `;
-      params = [userId, month, year];
+    const scope = await transactionScope(req);
+    if (scope.error) return res.status(scope.error).json({ message: scope.message });
+    const params = [...scope.params];
+    let query = `SELECT t.* FROM transactions t WHERE ${scope.clause}`;
+    if (month !== undefined) {
+      params.push(`${year}-${String(month).padStart(2, '0')}-01`);
+      query += ` AND t.date >= $${params.length}::date AND t.date < ($${params.length}::date + interval '1 month')`;
     }
-
-    const result = await db.query(query, params);
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Lỗi khi lấy giao dịch:', error);
-    res.status(500).json({ message: 'Lỗi server khi lấy dữ liệu giao dịch' });
-  }
+    query += ' ORDER BY t.date DESC, t.id DESC';
+    if (limit !== undefined) { params.push(Number(limit)); query += ` LIMIT $${params.length}`; }
+    if (offset !== undefined) { params.push(Number(offset)); query += ` OFFSET $${params.length}`; }
+    res.json((await db.query(query, params)).rows);
+  } catch (error) { next(error); }
 };
 
-// Thêm giao dịch mới
-const addTransaction = async (req, res) => {
-  const userId = req.user.userId;
-  const { type, amount, category, date, description } = req.body;
-
-  if (!type || !amount || !category || !date) {
-    return res.status(400).json({ message: 'Vui lòng điền đủ thông tin giao dịch' });
-  }
-
-  if (type !== 'INCOME' && type !== 'EXPENSE') {
-    return res.status(400).json({ message: 'Loại giao dịch không hợp lệ' });
-  }
-
+const getSummary = async (req, res, next) => {
   try {
-    const result = await db.query(
-      'INSERT INTO transactions (user_id, type, amount, category, date, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [userId, type, amount, category, date, description || '']
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Lỗi khi thêm giao dịch:', error);
-    res.status(500).json({ message: 'Lỗi server khi thêm giao dịch' });
-  }
-};
-
-// Xoá giao dịch
-const deleteTransaction = async (req, res) => {
-  const userId = req.user.userId;
-  const { id } = req.params;
-
-  try {
-    const result = await db.query('DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING *', [id, userId]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền xoá' });
-    }
-    res.json({ message: 'Xoá giao dịch thành công', transaction: result.rows[0] });
-  } catch (error) {
-    console.error('Lỗi khi xoá giao dịch:', error);
-    res.status(500).json({ message: 'Lỗi server khi xoá giao dịch' });
-  }
-};
-
-// Cập nhật giao dịch
-const updateTransaction = async (req, res) => {
-  const userId = req.user.userId;
-  const { id } = req.params;
-  const { type, amount, category, date, description } = req.body;
-
-  try {
-    const result = await db.query(
-      'UPDATE transactions SET type = COALESCE($1, type), amount = COALESCE($2, amount), category = COALESCE($3, category), date = COALESCE($4, date), description = COALESCE($5, description) WHERE id = $6 AND user_id = $7 RETURNING *',
-      [type, amount, category, date, description, id, userId]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền sửa' });
-    }
+    const scope = await transactionScope(req);
+    if (scope.error) return res.status(scope.error).json({ message: scope.message });
+    const result = await db.query(`SELECT
+      COALESCE(SUM(amount) FILTER (WHERE type = 'INCOME' AND date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date), 0) AS today_income,
+      COALESCE(SUM(amount) FILTER (WHERE type = 'EXPENSE' AND date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date), 0) AS today_expense,
+      COALESCE(SUM(amount) FILTER (WHERE type = 'INCOME'), 0) AS month_income,
+      COALESCE(SUM(amount) FILTER (WHERE type = 'EXPENSE'), 0) AS month_expense
+      FROM transactions t WHERE ${scope.clause}
+      AND date >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+      AND date < (date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh') + interval '1 month')::date`, scope.params);
     res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Lỗi khi sửa giao dịch:', error);
-    res.status(500).json({ message: 'Lỗi server khi sửa giao dịch' });
-  }
+  } catch (error) { next(error); }
 };
 
-module.exports = { getTransactions, addTransaction, deleteTransaction, updateTransaction };
+const addTransaction = async (req, res, next) => {
+  const validationError = transactionError(req.body);
+  if (validationError) return res.status(400).json({ message: validationError });
+  try {
+    const scope = await transactionScope(req);
+    if (scope.error) return res.status(scope.error).json({ message: scope.message });
+    const { type, amount, category, date, description } = req.body;
+    const result = await db.query('INSERT INTO transactions (user_id, business_id, type, amount, category, date, description) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', [req.user.userId, scope.businessId, type, amount, category, date, description || '']);
+    res.status(201).json(result.rows[0]);
+  } catch (error) { next(error); }
+};
+
+const deleteTransaction = async (req, res, next) => {
+  if (!isPositiveInteger(req.params.id)) return res.status(400).json({ message: 'Mã giao dịch không hợp lệ.' });
+  try {
+    const scope = await transactionScope(req);
+    if (scope.error) return res.status(scope.error).json({ message: scope.message });
+    const params = [...scope.params, req.params.id];
+    const result = await db.query(`DELETE FROM transactions t WHERE ${scope.clause} AND t.id = $${params.length} RETURNING *`, params);
+    if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền xóa.' });
+    res.json({ message: 'Xóa giao dịch thành công.', transaction: result.rows[0] });
+  } catch (error) { next(error); }
+};
+
+const updateTransaction = async (req, res, next) => {
+  if (!isPositiveInteger(req.params.id)) return res.status(400).json({ message: 'Mã giao dịch không hợp lệ.' });
+  const validationError = transactionError(req.body, true);
+  if (validationError) return res.status(400).json({ message: validationError });
+  try {
+    const scope = await transactionScope(req);
+    if (scope.error) return res.status(scope.error).json({ message: scope.message });
+    const fields = ['type', 'amount', 'category', 'date', 'description'].filter(field => req.body[field] !== undefined);
+    if (!fields.length) return res.status(400).json({ message: 'Chưa có nội dung cập nhật.' });
+    const params = [...scope.params];
+    const updates = fields.map(field => { params.push(req.body[field]); return `${field} = $${params.length}`; });
+    params.push(req.params.id);
+    const result = await db.query(`UPDATE transactions t SET ${updates.join(', ')} WHERE ${scope.clause} AND t.id = $${params.length} RETURNING *`, params);
+    if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền sửa.' });
+    res.json(result.rows[0]);
+  } catch (error) { next(error); }
+};
+module.exports = { getTransactions, getSummary, addTransaction, deleteTransaction, updateTransaction };

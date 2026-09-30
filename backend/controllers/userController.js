@@ -60,83 +60,37 @@ const verifyPhone = async (req, res) => {
 };
 
 // Nâng cấp gói
-const upgradePlan = async (req, res) => {
-  const { targetPlan } = req.body; // 'plus' or 'ultra'
-  
+const upgradePlan = async (req, res, next) => {
+  const { targetPlan } = req.body;
+  if (!['plus', 'ultra'].includes(targetPlan)) return res.status(400).json({ message: 'Gói không hợp lệ.' });
   try {
-    // 1. Lấy thông tin user hiện tại
-    const result = await db.query('SELECT plan, coin FROM users WHERE id = $1', [req.user.userId]);
-    const user = result.rows[0];
-    
-    let cost = 0;
-    if (user.plan === 'normal' && targetPlan === 'plus') cost = 1000;
-    else if (user.plan === 'normal' && targetPlan === 'ultra') cost = 3500;
-    else if (user.plan === 'plus' && targetPlan === 'ultra') cost = 3000;
-    else {
-      return res.status(400).json({ message: 'Không thể nâng cấp theo lộ trình này.' });
-    }
-
-    if (user.coin < cost) {
-      return res.status(400).json({ message: 'Không đủ coin để nâng cấp.' });
-    }
-
-    // 2. Trừ coin và cập nhật plan
-    await db.query('UPDATE users SET plan = $1, coin = coin - $2 WHERE id = $3', [targetPlan, cost, req.user.userId]);
-    
-    res.json({ message: `Nâng cấp lên gói ${targetPlan.toUpperCase()} thành công! Đã trừ ${cost} coin.` });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
+    const result = await db.query(`UPDATE users SET plan = $1, coin = coin - CASE
+      WHEN plan = 'normal' AND $1 = 'plus' THEN 1000
+      WHEN plan = 'normal' AND $1 = 'ultra' THEN 3500 ELSE 3000 END
+      WHERE id = $2 AND ((plan = 'normal' AND $1 = 'plus' AND coin >= 1000)
+      OR (plan = 'normal' AND $1 = 'ultra' AND coin >= 3500)
+      OR (plan = 'plus' AND $1 = 'ultra' AND coin >= 3000)) RETURNING plan, coin`, [targetPlan, req.user.userId]);
+    if (!result.rows.length) return res.status(400).json({ message: 'Không đủ coin hoặc lộ trình nâng cấp không hợp lệ.' });
+    res.json({ message: 'Nâng cấp thành công.', ...result.rows[0] });
+  } catch (error) { next(error); }
 };
 
-// Điểm danh nhận coin
-const checkIn = async (req, res) => {
+const checkIn = async (req, res, next) => {
   try {
-    const result = await db.query('SELECT last_checkin_date, checkin_streak, coin FROM users WHERE id = $1', [req.user.userId]);
-    const user = result.rows[0];
-    
-    // Convert to VN timezone offset effectively
-    const today = new Date();
-    today.setHours(today.getHours() + 7);
-    const todayStr = today.toISOString().split('T')[0];
-
-    const lastCheckinDate = user.last_checkin_date ? new Date(user.last_checkin_date) : null;
-    let lastCheckinStr = null;
-    if (lastCheckinDate) {
-       lastCheckinDate.setHours(lastCheckinDate.getHours() + 7);
-       lastCheckinStr = lastCheckinDate.toISOString().split('T')[0];
-    }
-
-    if (lastCheckinStr === todayStr) {
-      return res.status(400).json({ message: 'Bạn đã điểm danh hôm nay rồi!' });
-    }
-
-    let newStreak = 1;
-    if (lastCheckinStr) {
-      const yesterday = new Date();
-      yesterday.setHours(yesterday.getHours() + 7);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-      
-      if (lastCheckinStr === yesterdayStr) {
-        newStreak = user.checkin_streak + 1;
-      }
-    }
-
-    let addedCoin = 20;
-    if (newStreak > 0 && newStreak % 30 === 0) addedCoin = 500;
-    else if (newStreak > 0 && newStreak % 7 === 0) addedCoin = 100;
-
-    const newCoin = user.coin + addedCoin;
-
-    await db.query('UPDATE users SET coin = $1, last_checkin_date = $2, checkin_streak = $3 WHERE id = $4', [newCoin, todayStr, newStreak, req.user.userId]);
-
-    res.json({ message: `Điểm danh thành công! Nhận ${addedCoin} coin.`, coin: newCoin, streak: newStreak, addedCoin });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
+    const result = await db.query(`WITH reward AS (
+      SELECT id, CASE WHEN last_checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date - 1
+        THEN checkin_streak + 1 ELSE 1 END AS streak FROM users
+      WHERE id = $1 AND (last_checkin_date IS NULL OR last_checkin_date < (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)
+      FOR UPDATE
+    ), earned AS (
+      SELECT id, streak, CASE WHEN streak % 30 = 0 THEN 500 WHEN streak % 7 = 0 THEN 100 ELSE 20 END AS added_coin FROM reward
+    ) UPDATE users u SET coin = u.coin + e.added_coin, checkin_streak = e.streak,
+      last_checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+      FROM earned e WHERE u.id = e.id RETURNING u.coin, e.streak, e.added_coin`, [req.user.userId]);
+    if (!result.rows.length) return res.status(400).json({ message: 'Bạn đã điểm danh hôm nay rồi!' });
+    const reward = result.rows[0];
+    res.json({ message: `Điểm danh thành công! Nhận ${reward.added_coin} coin.`, coin: reward.coin, streak: reward.streak, addedCoin: reward.added_coin });
+  } catch (error) { next(error); }
 };
 
 // Cập nhật avatar
@@ -167,22 +121,24 @@ const initGoal = async (req, res) => {
 };
 
 // Cập nhật danh mục
-const updateCategories = async (req, res) => {
-  const { categories, isAdding } = req.body;
+const updateCategories = async (req, res, next) => {
+  const { categories } = req.body;
+  if (!Array.isArray(categories) || categories.length > 100 || categories.some(c => !c || typeof c.name !== 'string' || !c.name.trim() || c.name.length > 100 || !['INCOME', 'EXPENSE'].includes(c.type) || !/^#[0-9a-f]{6}$/i.test(c.color))) return res.status(400).json({ message: 'Danh mục không hợp lệ.' });
+  const keys = categories.map(c => `${c.type}:${c.name.trim()}`);
+  if (new Set(keys).size !== keys.length) return res.status(400).json({ message: 'Danh mục bị trùng.' });
   try {
-    if (isAdding) {
-      const userRes = await db.query('SELECT coin FROM users WHERE id = $1', [req.user.userId]);
-      if (userRes.rows[0].coin < 100) {
-        return res.status(400).json({ message: 'Không đủ 100 coin để thêm danh mục mới' });
-      }
-      await db.query('UPDATE users SET coin = coin - 100 WHERE id = $1', [req.user.userId]);
-    }
-    await db.query('UPDATE users SET custom_categories = $1 WHERE id = $2', [JSON.stringify(categories), req.user.userId]);
-    res.json({ message: 'Cập nhật danh mục thành công' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
+    const result = await db.transaction(async client => {
+      const user = (await client.query('SELECT coin, custom_categories FROM users WHERE id = $1 FOR UPDATE', [req.user.userId])).rows[0];
+      const defaults = ['EXPENSE:Ăn uống', 'EXPENSE:Mua sắm', 'EXPENSE:Di chuyển', 'EXPENSE:Hoá đơn', 'EXPENSE:Giải trí', 'INCOME:Lương', 'INCOME:Đầu tư', 'INCOME:Khác', 'EXPENSE:Khác'];
+      const previous = new Set(user.custom_categories ? user.custom_categories.map(c => `${c.type}:${c.name.trim()}`) : defaults);
+      const cost = keys.filter(key => !previous.has(key)).length * 100;
+      if (user.coin < cost) return false;
+      await client.query('UPDATE users SET coin = coin - $1, custom_categories = $2 WHERE id = $3', [cost, JSON.stringify(categories), req.user.userId]);
+      return true;
+    });
+    if (!result) return res.status(400).json({ message: 'Không đủ coin để thêm danh mục.' });
+    res.json({ message: 'Cập nhật danh mục thành công.' });
+  } catch (error) { next(error); }
 };
 
 // Cập nhật cài đặt (budgets, goals...)

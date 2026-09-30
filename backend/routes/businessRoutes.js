@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { protect } = require('../middleware/authMiddleware');
+const { validateUpload } = require('../middleware/validateUpload');
+const { protect, ownerOnly } = require('../middleware/authMiddleware');
 const {
   createBusiness, getMyBusiness, updateBusiness,
   addEmployee, listEmployees, updateEmployee, removeEmployee,
@@ -18,27 +19,27 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) cb(null, true);
+  if (['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype) && /^\.(jpe?g|png|gif|webp)$/i.test(path.extname(file.originalname))) cb(null, true);
   else cb(new Error('Chi cho phep upload anh.'), false);
 };
 
 const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Business profile
-router.post('/create', protect, upload.single('avatar'), createBusiness);
-router.get('/mine', protect, getMyBusiness);
-router.put('/update', protect, upload.single('avatar'), updateBusiness);
+router.post('/create', protect, ownerOnly, upload.single('avatar'), validateUpload, createBusiness);
+router.get('/mine', protect, ownerOnly, getMyBusiness);
+router.put('/update', protect, ownerOnly, upload.single('avatar'), validateUpload, updateBusiness);
 
 // Employees
-router.post('/employees', protect, upload.single('avatar'), addEmployee);
-router.get('/employees', protect, listEmployees);
-router.put('/employees/:id', protect, upload.single('avatar'), updateEmployee);
-router.delete('/employees/:id', protect, removeEmployee);
+router.post('/employees', protect, ownerOnly, upload.single('avatar'), validateUpload, addEmployee);
+router.get('/employees', protect, ownerOnly, listEmployees);
+router.put('/employees/:id', protect, ownerOnly, upload.single('avatar'), validateUpload, updateEmployee);
+router.delete('/employees/:id', protect, ownerOnly, removeEmployee);
 
 // Products
-router.post('/products', protect, upload.single('avatar'), addProduct);
+router.post('/products', protect, ownerOnly, upload.single('avatar'), validateUpload, addProduct);
 router.get('/products', protect, listProducts);
-router.put('/products/:id', protect, upload.single('avatar'), updateProduct);
-router.delete('/products/:id', protect, removeProduct);
+router.put('/products/:id', protect, ownerOnly, upload.single('avatar'), validateUpload, updateProduct);
+router.delete('/products/:id', protect, ownerOnly, removeProduct);
 
 module.exports = router;

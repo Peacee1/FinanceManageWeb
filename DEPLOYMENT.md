@@ -1,0 +1,19 @@
+# Development and deployment
+
+Backend: copy `backend/.env.example` to `backend/.env`, supply local credentials and a random JWT secret, initialize PostgreSQL with `backend/database.sql`, then run `npm ci`, `npm run migrate`, and `npm start` inside `backend`.
+
+Frontend: run `npm ci` and `npm run dev` inside `frontend`. Vite proxies `/api` to the local backend.
+
+Before releasing, run `npm test --prefix backend` and `npm run build --prefix frontend`. Commit the validated changes and merge into `main`. Run `./deploy.ps1`: it pushes main, connects using the external PEM key with host verification enabled, pulls main with `--ff-only`, checks the exact commit, and invokes `remote_deploy.sh`.
+
+The existing AWS host uses `ec2-user`, `/home/ec2-user/FinanceManageWeb`, PM2 `backend-api`, Nginx, and PostgreSQL. Secrets stay in `backend/.env` and uploaded images stay in `backend/uploads`; neither belongs in Git. Never print or commit the PEM key or `.env`.
+
+Deployment creates a private database dump and a versioned frontend release, runs tracked migrations and backend tests, builds the frontend, checks Nginx configuration, restarts PM2, and checks backend health. An old weak JWT signing secret is replaced once, requiring users to log in again. Existing DB and Gemini credentials are preserved.
+
+If health fails, the previous frontend is restored automatically. Backend rollback is manual: inspect logs, check out the previous validated commit, install its dependencies, and restart PM2. Keep the stronger JWT secret. Review migration compatibility before any rollback; database dumps are recovery backups, not an automatic restore operation. Keep release directories and dumps outside the repository, monitor disk space, and remove old backups according to a retention policy.
+
+New hosts must first have a supported Node.js version (Vite requires Node 20.19+ or 22.12+), PM2, Nginx, PostgreSQL, a least-privilege application database role, a configured `.env`, and Nginx routing `/api/` to `127.0.0.1:5000` with SPA fallback. Restrict SSH by source IP, keep ports 5000/5432 private, configure HTTPS for the application's domain, and verify the SSH host fingerprint before adding it to known_hosts. `remote_setup.sh` no longer installs or reconfigures database authentication.
+
+The optional transaction `limit` (1–500) and `offset` parameters retain the existing array response. Calls without pagination keep their historical behavior until the reporting UI can use aggregate endpoints.
+
+Transactions now carry an optional business_id. Migration 002 attributes existing employee POS transactions to their business; owner transactions without an existing business marker remain personal. Personal reads exclude business transactions. Business reads require server-verified membership and employees see only their own sales. Both the business dashboard and POS explicitly request business scope. The business card uses server-side totals rather than hard-coded zero values.

@@ -32,7 +32,7 @@ const analyzeFinances = async (req, res) => {
     const txResult = await db.query(
       `SELECT type, amount, category, date
        FROM transactions
-       WHERE user_id = $1 AND date >= $2
+       WHERE user_id = $1 AND business_id IS NULL AND date >= $2
        ORDER BY date DESC`,
       [userId, thirtyDaysAgo.toISOString()]
     );
@@ -106,7 +106,7 @@ Lưu ý:
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-3.1-pro-preview' });
 
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(prompt, { timeout: 30000 });
     const analysisText = result.response.text();
 
     res.json({ analysis: analysisText });

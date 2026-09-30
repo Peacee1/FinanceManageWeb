@@ -2,23 +2,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
-const validatePassword = (pwd) => {
-  const minLength = 8;
-  const hasUpper = /[A-Z]/.test(pwd);
-  const hasLower = /[a-z]/.test(pwd);
-  const hasNumber = /[0-9]/.test(pwd);
-  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
-
-  if (pwd.length < minLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-    return false;
-  }
-  return true;
-};
+const { isPassword: validatePassword } = require('../utils/validation');
 
 const register = async (req, res) => {
   const { email, password, name } = req.body;
   
-  if (!email || !password || !name) {
+  if (typeof email !== 'string' || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof name !== 'string' || !name.trim() || name.length > 100 || typeof password !== 'string') {
     return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin.' });
   }
 
@@ -55,7 +44,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   const { email, password, loginType } = req.body;
   
-  if (!email || !password) {
+  if (typeof email !== 'string' || !email || email.length > 255 || typeof password !== 'string' || !password || Buffer.byteLength(password, 'utf8') > 72) {
     return res.status(400).json({ message: 'Vui long nhap day du thong tin.' });
   }
 
@@ -82,7 +71,7 @@ const login = async (req, res) => {
     // Embed role vào token để middleware phân biệt
     const token = jwt.sign(
       { userId: user.id, role: user.role || 'owner' }, 
-      process.env.JWT_SECRET || 'secret_key_tam_thoi', 
+      process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
@@ -105,8 +94,8 @@ const login = async (req, res) => {
 const changePassword = async (req, res) => {
   const userId = req.user.userId;
   const { newPassword } = req.body;
-  if (!newPassword || newPassword.length < 4) {
-    return res.status(400).json({ message: 'Mat khau moi phai co it nhat 4 ky tu.' });
+  if (!validatePassword(newPassword)) {
+    return res.status(400).json({ message: 'Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.' });
   }
   try {
     const hash = await bcrypt.hash(newPassword, 10);

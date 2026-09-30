@@ -56,8 +56,8 @@ const Login = () => {
       setError('Mat khau xac nhan khong khop.');
       return;
     }
-    if (newPassword.length < 4) {
-      setError('Mat khau phai co it nhat 4 ky tu.');
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      setError('Mật khẩu cần ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.');
       return;
     }
     setChangeLoading(true);
@@ -167,7 +167,7 @@ const Login = () => {
                 <label style={{ fontSize: '0.9rem', fontWeight: '700', display: 'block', marginBottom: '8px' }}>Mật khẩu mới</label>
                 <div style={{ position: 'relative' }}>
                   <Key size={20} color="var(--color-text-secondary)" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Tối thiểu 4 ký tự" required style={inputStyle} />
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Ít nhất 8 ký tự, hoa/thường, số, ký tự đặc biệt" required style={inputStyle} />
                 </div>
               </div>
               <div style={{ marginBottom: '25px' }}>
