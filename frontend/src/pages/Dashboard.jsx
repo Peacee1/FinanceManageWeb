@@ -42,6 +42,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Business Tab State
+  const [isBizCreating, setIsBizCreating] = useState(false);
   const [bizData, setBizData] = useState(null);
   const [bizLoading, setBizLoading] = useState(false);
   const [bizSubTab, setBizSubTab] = useState('overview');
