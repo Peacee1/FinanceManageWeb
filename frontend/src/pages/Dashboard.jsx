@@ -1373,7 +1373,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
               </div>
-
+            </div>
               {/* Quick budgets */}
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Ngân sách nhanh</h3>
@@ -1464,29 +1464,33 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               {/* History */}
               <div className="widget">
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px' }}>Lịch sử ngân sách</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
-                  <div>Thời gian</div>
-                  <div style={{textAlign: 'right'}}>Ngân sách</div>
-                  <div style={{textAlign: 'right'}}>Đã chi</div>
-                  <div style={{textAlign: 'right'}}>Còn lại</div>
-                  <div style={{textAlign: 'center'}}>Trạng thái</div>
-                  <div></div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {budgetHistory.map((row, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
-                      <div style={{fontWeight: '600'}}>Tháng {row.m}, {row.y}</div>
-                      <div style={{textAlign: 'right'}}>{row.b !== null ? formatCurrency(row.b) : 'Chưa có DL'}</div>
-                      <div style={{textAlign: 'right'}}>{formatCurrency(row.s)}</div>
-                      <div style={{textAlign: 'right', color: row.b !== null ? (row.b - row.s >= 0 ? 'var(--color-income)' : 'var(--color-expense)') : 'inherit'}}>{row.b !== null ? formatCurrency(Math.abs(row.b - row.s)) : '-'}</div>
-                      <div style={{display: 'flex', justifyContent: 'center'}}>
-                        <span style={{background: row.bg, color: row.c, padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', whiteSpace: 'nowrap'}}>{row.stat}</span>
-                      </div>
-                      <div style={{textAlign: 'right', color: 'var(--color-text-secondary)'}}>
-                        {row.isCurrent ? <MoreVertical style={{cursor: 'pointer'}} size={16} onClick={() => { setBudgetInputValue(((row.b || monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }}/> : null}
-                      </div>
+                <div style={{ overflowX: 'auto', paddingBottom: '10px' }}>
+                  <div style={{ minWidth: '600px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
+                      <div>Thời gian</div>
+                      <div style={{textAlign: 'right'}}>Ngân sách</div>
+                      <div style={{textAlign: 'right'}}>Đã chi</div>
+                      <div style={{textAlign: 'right'}}>Còn lại</div>
+                      <div style={{textAlign: 'center'}}>Trạng thái</div>
+                      <div></div>
                     </div>
-                  ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      {budgetHistory.map((row, i) => (
+                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1.5fr 30px', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
+                          <div style={{fontWeight: '600'}}>Tháng {row.m}, {row.y}</div>
+                          <div style={{textAlign: 'right'}}>{row.b !== null ? formatCurrency(row.b) : 'Chưa có DL'}</div>
+                          <div style={{textAlign: 'right'}}>{formatCurrency(row.s)}</div>
+                          <div style={{textAlign: 'right', color: row.b !== null ? (row.b - row.s >= 0 ? 'var(--color-income)' : 'var(--color-expense)') : 'inherit'}}>{row.b !== null ? formatCurrency(Math.abs(row.b - row.s)) : '-'}</div>
+                          <div style={{display: 'flex', justifyContent: 'center'}}>
+                            <span style={{background: row.bg, color: row.c, padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700', whiteSpace: 'nowrap'}}>{row.stat}</span>
+                          </div>
+                          <div style={{textAlign: 'right', color: 'var(--color-text-secondary)'}}>
+                            {row.isCurrent ? <MoreVertical style={{cursor: 'pointer'}} size={16} onClick={() => { setBudgetInputValue(((row.b || monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }}/> : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
