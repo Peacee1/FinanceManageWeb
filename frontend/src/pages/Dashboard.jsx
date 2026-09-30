@@ -1310,7 +1310,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 {profileData?.plan === 'normal' || !profileData?.plan ? (
                   <div style={{ position: 'relative' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', filter: 'blur(4px)', opacity: 0.5, pointerEvents: 'none' }}>
-                      <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
                         <div>
                           <div style={{ fontWeight: '700' }}>Tiết kiệm</div>
@@ -1318,20 +1318,20 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         </div>
                       </div>
                       <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ width: 40, height: 40, background: 'white', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
+                        <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
                         <div>
                           <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
                           <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
                         </div>
                       </div>
-                      <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ width: 40, height: 40, background: '#FEF3C7', color: '#D97706', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⭐</div>
                         <div>
                           <div style={{ fontWeight: '700' }}>Thoải mái</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Chi tiêu linh hoạt vẫn kiểm soát</div>
                         </div>
                       </div>
-                      <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ width: 40, height: 40, background: '#DBEAFE', color: '#2563EB', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚙️</div>
                         <div>
                           <div style={{ fontWeight: '700' }}>Tùy chỉnh</div>
@@ -1353,7 +1353,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
                       <div>
                         <div style={{ fontWeight: '700' }}>Tiết kiệm</div>
@@ -1361,20 +1361,20 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       </div>
                     </div>
                     <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ width: 40, height: 40, background: 'white', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
+                      <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
                       <div>
                         <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
                         <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
                       </div>
                     </div>
-                    <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ width: 40, height: 40, background: '#FEF3C7', color: '#D97706', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⭐</div>
                       <div>
                         <div style={{ fontWeight: '700' }}>Thoải mái</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Chi tiêu linh hoạt vẫn kiểm soát</div>
                       </div>
                     </div>
-                    <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div style={{ width: 40, height: 40, background: '#DBEAFE', color: '#2563EB', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚙️</div>
                       <div>
                         <div style={{ fontWeight: '700' }}>Tùy chỉnh</div>
@@ -1463,7 +1463,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           updateSettingsAPI({ budgetSettings: newSettings });
                         }}
                       >
-                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, left: budgetSettings.reminder ? 'auto' : 2, right: budgetSettings.reminder ? 2 : 'auto', transition: 'all 0.3s' }}></div>
+                        <div style={{ width: 18, height: 18, background: 'var(--color-card)', borderRadius: '50%', position: 'absolute', top: 2, left: budgetSettings.reminder ? 'auto' : 2, right: budgetSettings.reminder ? 2 : 'auto', transition: 'all 0.3s' }}></div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1482,7 +1482,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           updateSettingsAPI({ budgetSettings: newSettings });
                         }}
                       >
-                        <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 2, left: budgetSettings.autoCopy ? 'auto' : 2, right: budgetSettings.autoCopy ? 2 : 'auto', transition: 'all 0.3s' }}></div>
+                        <div style={{ width: 18, height: 18, background: 'var(--color-card)', borderRadius: '50%', position: 'absolute', top: 2, left: budgetSettings.autoCopy ? 'auto' : 2, right: budgetSettings.autoCopy ? 2 : 'auto', transition: 'all 0.3s' }}></div>
                       </div>
                     </div>
                   </div>
@@ -1714,7 +1714,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         {activeTab === 'goals' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
             {!isGoalInitialized ? (
-              <div style={{ maxWidth: '500px', width: '100%', boxSizing: 'border-box', marginTop: isMobile ? '20px' : '50px', background: 'white', padding: isMobile ? '20px' : '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+              <div style={{ maxWidth: '500px', width: '100%', boxSizing: 'border-box', marginTop: isMobile ? '20px' : '50px', background: 'var(--color-card)', padding: isMobile ? '20px' : '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center' }}>
                 <img src="/goal_mascot.png" alt="Goal Mascot" style={{ width: 150, marginBottom: '20px' }} />
                 <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '10px', color: 'var(--color-text)' }}>Bắt đầu tiết kiệm cho những mục tiêu to lớn nhé!</h2>
                 <p style={{ color: 'var(--color-text-secondary)', marginBottom: '30px' }}>Để gợi ý lộ trình tốt nhất, Peacee1 cần biết một vài thông tin cơ bản về bạn.</p>
@@ -1731,7 +1731,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     </div>
                     <div className="input-group">
                       <label style={{fontWeight: '600'}}>Giới tính</label>
-                      <select value={goalForm.gender} onChange={e => setGoalForm({...goalForm, gender: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', backgroundColor: 'white', boxSizing: 'border-box'}}>
+                      <select value={goalForm.gender} onChange={e => setGoalForm({...goalForm, gender: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', backgroundColor: 'var(--color-card)', boxSizing: 'border-box'}}>
                         <option value="Nam">Nam</option>
                         <option value="Nữ">Nữ</option>
                         <option value="Khác">Khác</option>
@@ -2099,7 +2099,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     {profileData.name.charAt(0)}
                   </div>
                 )}
-                <label style={{ position: 'absolute', bottom: -5, right: -5, background: 'white', padding: '6px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <label style={{ position: 'absolute', bottom: -5, right: -5, background: 'var(--color-card)', padding: '6px', borderRadius: '50%', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   📷 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} disabled={loading} />
                 </label>
               </div>
@@ -2195,22 +2195,22 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               
               {/* 3 Info Cards */}
               <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                <div style={{ flex: 1, background: 'white', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+                <div style={{ flex: 1, background: 'var(--color-card)', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
                   <div style={{ fontSize: '1.8rem' }}>🔥</div>
                   <div>
-                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#181525', lineHeight: 1 }}>{profileData.checkin_streak || 0}</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--color-text)', lineHeight: 1 }}>{profileData.checkin_streak || 0}</div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>Ngày liên tiếp</div>
                     <div style={{ fontSize: '0.65rem', color: '#7C3AED', marginTop: '2px' }}>Điểm danh mỗi ngày để duy trì chuỗi!</div>
                   </div>
                 </div>
-                <div style={{ flex: 1, background: 'white', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+                <div style={{ flex: 1, background: 'var(--color-card)', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
                   <img src="/coin_icon.png" alt="Coin" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
                   <div>
-                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: '#181525', lineHeight: 1 }}>{(profileData.coin || 0).toLocaleString('vi-VN')}</div>
+                    <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--color-text)', lineHeight: 1 }}>{(profileData.coin || 0).toLocaleString('vi-VN')}</div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>Coin hiện có</div>
                   </div>
                 </div>
-                <div style={{ flex: 1, background: 'white', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+                <div style={{ flex: 1, background: 'var(--color-card)', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
                   <div style={{ fontSize: '1.8rem' }}>🎁</div>
                   <div style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>Điểm danh đủ 7 ngày nhận thêm phần thưởng lớn!</div>
                 </div>
@@ -2253,8 +2253,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </button>
 
               {/* Bonus rewards */}
-              <div style={{ marginTop: '18px', background: 'white', borderRadius: '12px', padding: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', fontSize: '0.9rem', color: '#181525' }}>
+              <div style={{ marginTop: '18px', background: 'var(--color-card)', borderRadius: '12px', padding: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', fontSize: '0.9rem', color: 'var(--color-text)' }}>
                   🎁 Phần thưởng thêm
                 </h4>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -2349,7 +2349,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               )}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => setIsEditBudgetOpen(false)} style={{ flex: 1, padding: '12px', border: '1px solid var(--color-border)', borderRadius: '10px', background: 'white', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
+              <button onClick={() => setIsEditBudgetOpen(false)} style={{ flex: 1, padding: '12px', border: '1px solid var(--color-border)', borderRadius: '10px', background: 'var(--color-card)', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
                 Hủy
               </button>
               <button onClick={() => {
