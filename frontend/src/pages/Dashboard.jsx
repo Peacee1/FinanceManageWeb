@@ -881,7 +881,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       <button className="btn-icon" onClick={handleNextDate}><ChevronRight size={16}/></button>
                     </div>
                     <div style={{display: 'flex', background: 'var(--color-bg)', padding: '4px', borderRadius: '8px', gap: '4px'}}>
-                      <div style={{padding: '4px 12px', background: 'white', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'}}>Tháng</div>
+                      <div style={{padding: '4px 12px', background: 'var(--color-card)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', color: 'var(--color-text)'}}>Tháng</div>
                       <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Tuần</div>
                       <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Ngày</div>
                     </div>
@@ -1118,16 +1118,16 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
                 <div className="quick-actions" style={{gridTemplateColumns: '1fr 1fr', gap: '10px'}}>
-                  <button className="btn-quick" style={{background: '#ECFDF5', color: '#059669', padding: '12px 8px'}} onClick={() => {setType('INCOME'); setIsModalOpen(true);}}>
+                  <button className="btn-quick" style={{background: 'rgba(5,150,105,0.12)', color: 'var(--color-income)', padding: '12px 8px'}} onClick={() => {setType('INCOME'); setIsModalOpen(true);}}>
                     <Plus size={16}/> Thêm khoản thu
                   </button>
-                  <button className="btn-quick" style={{background: '#FFF1F2', color: '#E11D48', padding: '12px 8px'}} onClick={() => {setType('EXPENSE'); setIsModalOpen(true);}}>
+                  <button className="btn-quick" style={{background: 'rgba(225,29,72,0.1)', color: 'var(--color-expense)', padding: '12px 8px'}} onClick={() => {setType('EXPENSE'); setIsModalOpen(true);}}>
                     <Minus size={16}/> Thêm khoản chi
                   </button>
                   <button className="btn-quick" style={{background: 'rgba(124,58,237,0.1)', color: '#7C3AED', padding: '12px 8px'}}>
                     <WalletCards size={16}/> Lập ngân sách
                   </button>
-                  <button className="btn-quick" style={{background: '#EFF6FF', color: '#2563EB', padding: '12px 8px'}}>
+                  <button className="btn-quick" style={{background: 'rgba(37,99,235,0.1)', color: '#60A5FA', padding: '12px 8px'}}>
                     <FileDown size={16}/> Xuất báo cáo
                   </button>
                 </div>
