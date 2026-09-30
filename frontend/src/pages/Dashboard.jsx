@@ -352,7 +352,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   useEffect(() => {
     if (activeTab === 'business' && bizData === null) {
       setBizLoading(true);
-      fetch('/api/business/mine', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      fetch('/api/business/mine?t=' + Date.now(), { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
         .then(r => r.json())
         .then(d => { setBizData(d.business || false); })
         .catch(() => setBizData(false))
