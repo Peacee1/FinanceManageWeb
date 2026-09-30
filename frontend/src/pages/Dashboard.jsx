@@ -1250,7 +1250,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </div>
 
             {/* Top row cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div className="grid-responsive-3" style={{ gap: '20px', marginBottom: '20px' }}>
               
               {/* Card 1: Budget remaining */}
               <div className="widget" style={{ position: 'relative' }}>
@@ -1331,8 +1331,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Ngân sách theo danh mục</h3>
                   <button className="btn-primary" onClick={() => setIsAddingCategory(true)} style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px', width: 'auto' }}><Plus size={14}/> Thêm danh mục</button>
                 </div>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 20px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
+                <div style={{ overflowX: 'auto', paddingBottom: '10px' }}>
+                  <div style={{ minWidth: '600px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 20px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
                   <div>Danh mục</div>
                   <div style={{textAlign: 'right'}}>Ngân sách</div>
                   <div style={{textAlign: 'right'}}>Đã chi</div>
@@ -1369,6 +1370,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       </div>
                     )
                   })}
+                  </div>
                 </div>
               </div>
 
