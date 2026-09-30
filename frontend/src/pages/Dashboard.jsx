@@ -94,6 +94,26 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [newCategory, setNewCategory] = useState({ name: '', type: 'EXPENSE', color: '#7C3AED' });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
+  // AI Advisor State
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState('');
+
+  const handleAiAnalyze = async () => {
+    setIsAiModalOpen(true);
+    setAiLoading(true);
+    setAiAnalysis('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post('/api/ai/analyze', {}, { headers: { Authorization: `Bearer ${token}` } });
+      setAiAnalysis(res.data.analysis);
+    } catch (err) {
+      setAiAnalysis('❌ Không thể kết nối với AI lúc này. Vui lòng thử lại sau.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   // Monthly Budget State
   const [monthlyBudgets, setMonthlyBudgets] = useState({});
   const [budgetSettings, setBudgetSettings] = useState({ reminder: true, autoCopy: false });
@@ -738,6 +758,32 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
         {activeTab === 'overview' && (
           <div className="dashboard-scroll">
+          {/* AI Advisor Banner */}
+          <div onClick={handleAiAnalyze} style={{
+            margin: '0 20px 16px',
+            padding: '14px 24px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #7C3AED 0%, #F472B6 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(124,58,237,0.35)',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(124,58,237,0.45)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 20px rgba(124,58,237,0.35)'; }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ fontSize: '1.8rem' }}>🤖</div>
+              <div>
+                <div style={{ fontWeight: '800', fontSize: '1rem', color: 'white' }}>✨ Trợ lý AI phân tích tài chính</div>
+                <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)' }}>Nhận gợi ý cá nhân hóa từ Google Gemini AI dựa trên thu chi của bạn</div>
+              </div>
+            </div>
+            <div style={{ color: 'white', fontSize: '1.5rem', opacity: 0.9 }}>→</div>
+          </div>
+
           {/* Top Stat Cards */}
           <div className="cards-row">
             <div className="stat-card">
@@ -2076,6 +2122,114 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     </div>
                   ))}
                 </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Advisor Modal */}
+      {isAiModalOpen && (
+        <div className="modal-overlay" onClick={() => !aiLoading && setIsAiModalOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--color-card)',
+            borderRadius: '24px',
+            width: '90vw',
+            maxWidth: '600px',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #7C3AED 0%, #F472B6 100%)',
+              padding: '24px 28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ fontSize: '2rem' }}>🤖</div>
+                <div>
+                  <div style={{ color: 'white', fontWeight: '800', fontSize: '1.1rem' }}>Trợ lý AI Tài chính</div>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>Phân tích bởi Google Gemini</div>
+                </div>
+              </div>
+              {!aiLoading && (
+                <button onClick={() => setIsAiModalOpen(false)} style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  color: 'white',
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '1.1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>×</button>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '28px', overflowY: 'auto', flex: 1 }}>
+              {aiLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <div style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    border: '4px solid rgba(124,58,237,0.2)',
+                    borderTopColor: '#7C3AED',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 20px',
+                  }}></div>
+                  <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--color-text)', marginBottom: '8px' }}>AI đang phân tích...</div>
+                  <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Google Gemini đang xem xét dữ liệu tài chính của bạn 📊</div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(244,114,182,0.08))',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    marginBottom: '20px',
+                    border: '1px solid rgba(124,58,237,0.15)',
+                    fontSize: '0.85rem',
+                    color: 'var(--color-text-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}>
+                    <span>🔒</span>
+                    <span>Phân tích dựa trên 30 ngày gần nhất. Dữ liệu được ẩn danh và không lưu trữ.</span>
+                  </div>
+                  <div style={{
+                    lineHeight: '1.8',
+                    color: 'var(--color-text)',
+                    fontSize: '0.95rem',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    {aiAnalysis}
+                  </div>
+                  <button onClick={handleAiAnalyze} style={{
+                    marginTop: '24px',
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(90deg, #7C3AED, #F472B6)',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                  }}>
+                    🔄 Phân tích lại
+                  </button>
+                </div>
               )}
             </div>
           </div>

@@ -843,3 +843,7 @@ html {
   margin-right: 15px;
 }
 
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
