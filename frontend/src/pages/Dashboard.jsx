@@ -2261,7 +2261,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 {/* Header quán */}
                 <div className="widget" style={{ padding: '20px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'center' }}>
                   <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem' }}>
-                    {bizData.avatar_url ? <img src={bizData.avatar_url} alt="biz" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
+                    {bizData.avatar_url ? <img src={bizData.avatar_url.startsWith('http') ? bizData.avatar_url : `/api${bizData.avatar_url}`} alt="biz" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
                   </div>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ fontWeight: '800', fontSize: '1.3rem', marginBottom: '4px' }}>{bizData.name}</h3>
@@ -2380,7 +2380,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                             await fetch('/api/business/products/' + p.id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
                             setBizProducts(prev => prev.filter(x => x.id !== p.id));
                           }} style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-expense)' }}><Trash2 size={14} /></button>
-                          {p.avatar_url ? <img src={p.avatar_url} alt={p.name} style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover', marginBottom: '8px' }} /> : <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px auto', fontSize: '1.5rem' }}>🛒</div>}
+                          {p.avatar_url ? <img src={p.avatar_url.startsWith('http') ? p.avatar_url : `/api${p.avatar_url}`} alt={p.name} style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover', marginBottom: '8px' }} /> : <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px auto', fontSize: '1.5rem' }}>🛒</div>}
                           <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '4px' }}>{p.name}</div>
                           <div style={{ fontWeight: '800', color: 'var(--color-primary)', fontSize: '0.9rem' }}>{formatCurrency(p.price)}</div>
                         </div>
@@ -2448,7 +2448,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       {bizEmployees.map(emp => (
                         <div key={emp.id} className="widget" style={{ padding: '15px', display: 'flex', gap: '15px', alignItems: 'center' }}>
                           <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
-                            {emp.avatar_url ? <img src={emp.avatar_url} alt={emp.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👤'}
+                            {emp.avatar_url ? <img src={emp.avatar_url.startsWith('http') ? emp.avatar_url : `/api${emp.avatar_url}`} alt={emp.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👤'}
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: '700', marginBottom: '2px' }}>{emp.name}</div>
