@@ -1187,7 +1187,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <div className="widget">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Ngân sách theo danh mục</h3>
-                  <button className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px', width: 'auto' }}><Plus size={14}/> Thêm danh mục</button>
+                  <button className="btn-primary" onClick={() => setIsAddingCategory(true)} style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px', width: 'auto' }}><Plus size={14}/> Thêm danh mục</button>
                 </div>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 20px', gap: '10px', fontSize: '0.85rem', color: 'var(--color-text-secondary)', fontWeight: '600', paddingBottom: '10px', borderBottom: '1px solid var(--color-border)', marginBottom: '15px' }}>
@@ -1233,36 +1233,81 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               {/* Quick budgets */}
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Ngân sách nhanh</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
-                    <div>
-                      <div style={{ fontWeight: '700' }}>Tiết kiệm</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
+                
+                {profileData?.plan === 'normal' || !profileData?.plan ? (
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', filter: 'blur(4px)', opacity: 0.5, pointerEvents: 'none' }}>
+                      <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
+                        <div>
+                          <div style={{ fontWeight: '700' }}>Tiết kiệm</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
+                        </div>
+                      </div>
+                      <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ width: 40, height: 40, background: 'white', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
+                        <div>
+                          <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
+                          <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
+                        </div>
+                      </div>
+                      <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ width: 40, height: 40, background: '#FEF3C7', color: '#D97706', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⭐</div>
+                        <div>
+                          <div style={{ fontWeight: '700' }}>Thoải mái</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Chi tiêu linh hoạt vẫn kiểm soát</div>
+                        </div>
+                      </div>
+                      <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ width: 40, height: 40, background: '#DBEAFE', color: '#2563EB', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚙️</div>
+                        <div>
+                          <div style={{ fontWeight: '700' }}>Tùy chỉnh</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Tạo ngân sách theo nhu cầu</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', padding: '0 20px', zIndex: 10 }}>
+                      <div style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Crown size={28} color="#F59E0B" style={{ marginBottom: '8px' }} />
+                        <h4 style={{ margin: '0 0 5px 0', fontSize: '1rem', color: '#111827' }}>Tính năng Cao cấp</h4>
+                        <p style={{ margin: '0 0 15px 0', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Nâng cấp gói Plus hoặc Ultra để mở khoá Ngân sách nhanh</p>
+                        <button className="btn-primary" onClick={() => setIsProfileOpen(true)} style={{ padding: '8px 20px', fontSize: '0.85rem', borderRadius: '20px' }}>Nâng cấp ngay</button>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ width: 40, height: 40, background: 'white', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
-                    <div>
-                      <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
-                      <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ width: 40, height: 40, background: '#DCFCE7', color: '#16A34A', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🌱</div>
+                      <div>
+                        <div style={{ fontWeight: '700' }}>Tiết kiệm</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '20px 15px', background: '#F5F3FF', borderRadius: '16px', border: '1px solid #DDD6FE', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ width: 40, height: 40, background: 'white', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
+                      <div>
+                        <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
+                        <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ width: 40, height: 40, background: '#FEF3C7', color: '#D97706', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⭐</div>
+                      <div>
+                        <div style={{ fontWeight: '700' }}>Thoải mái</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Chi tiêu linh hoạt vẫn kiểm soát</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ width: 40, height: 40, background: '#DBEAFE', color: '#2563EB', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚙️</div>
+                      <div>
+                        <div style={{ fontWeight: '700' }}>Tùy chỉnh</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Tạo ngân sách theo nhu cầu</div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ width: 40, height: 40, background: '#FEF3C7', color: '#D97706', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⭐</div>
-                    <div>
-                      <div style={{ fontWeight: '700' }}>Thoải mái</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Chi tiêu linh hoạt vẫn kiểm soát</div>
-                    </div>
-                  </div>
-                  <div style={{ padding: '20px 15px', background: 'white', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ width: 40, height: 40, background: '#DBEAFE', color: '#2563EB', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚙️</div>
-                    <div>
-                      <div style={{ fontWeight: '700' }}>Tùy chỉnh</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Tạo ngân sách theo nhu cầu</div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
 
             </div>
