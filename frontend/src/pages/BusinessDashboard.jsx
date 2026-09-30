@@ -49,6 +49,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [bizData, setBizData] = useState(null);
   const [bizLoading, setBizLoading] = useState(false);
   const [bizSubTab, setBizSubTab] = useState('overview');
+  const [debugBizMsg, setDebugBizMsg] = useState('');
   const [bizForm, setBizForm] = useState({ model: 'Quán cafe', name: '', maxEmployees: 20 });
   const [bizAvatarFile, setBizAvatarFile] = useState(null);
   const [bizAvatarPreview, setBizAvatarPreview] = useState(null);
@@ -358,11 +359,11 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
       fetch('/api/business/mine?t=' + Date.now(), { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
         .then(r => r.json())
         .then(d => { 
-           if (!d.business) window.debugBizMsg = 'API returned: ' + JSON.stringify(d);
+           if (!d.business) setDebugBizMsg('API returned: ' + JSON.stringify(d));
            setBizData(d.business || false); 
         })
         .catch(err => { 
-           window.debugBizMsg = 'Network error: ' + err.message;
+           setDebugBizMsg('Network error: ' + err.message);
            console.error("Error fetching biz data:", err); 
            setBizData(false); 
         })
@@ -2227,7 +2228,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                     >
                       🚀 Bắt đầu ngay
                     </button>
-                    {window.debugBizMsg && <p style={{marginTop: '10px', color: 'red', fontSize: '0.8rem'}}>{window.debugBizMsg}</p>}
+                    {debugBizMsg && <p style={{marginTop: '10px', color: 'red', fontSize: '0.8rem'}}>{debugBizMsg}</p>}
                   </>
                 ) : (
                   <>
