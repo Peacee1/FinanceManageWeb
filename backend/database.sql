@@ -43,3 +43,45 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_bank_saving_total NUMERIC;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS user_goal JSONB;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS qa_pos JSONB;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS budget_settings JSONB;
+
+-- === BUSINESS FEATURE ===
+-- Thêm role và username vào users (dành cho tài khoản nhân viên)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'owner';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(50) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT false;
+
+-- Bảng hồ sơ doanh nghiệp / quán
+CREATE TABLE IF NOT EXISTS businesses (
+    id SERIAL PRIMARY KEY,
+    owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    business_code VARCHAR(20) UNIQUE NOT NULL,
+    model VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    avatar_url TEXT,
+    max_employees INTEGER DEFAULT 20,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng nhân viên
+CREATE TABLE IF NOT EXISTS employees (
+    id SERIAL PRIMARY KEY,
+    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    employee_code INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    age INTEGER,
+    salary BIGINT DEFAULT 0,
+    avatar_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(business_id, employee_code)
+);
+
+-- Bảng sản phẩm (dành cho quán cafe, net, bi a, ăn)
+CREATE TABLE IF NOT EXISTS products (
+    id SERIAL PRIMARY KEY,
+    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    price BIGINT NOT NULL DEFAULT 0,
+    avatar_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

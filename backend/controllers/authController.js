@@ -53,41 +53,69 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, loginType } = req.body;
   
   if (!email || !password) {
-    return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu.' });
+    return res.status(400).json({ message: 'Vui long nhap day du thong tin.' });
   }
 
   try {
-    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    let result;
+    if (loginType === 'employee') {
+      // Nhân viên đăng nhập bằng username
+      result = await db.query('SELECT * FROM users WHERE username = $1 AND role = $2', [email, 'employee']);
+    } else {
+      // Chủ quán đăng nhập bằng email
+      result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    }
     const user = result.rows[0];
 
     if (!user) {
-      return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng.' });
+      return res.status(401).json({ message: 'Thong tin dang nhap khong dung.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng.' });
+      return res.status(401).json({ message: 'Thong tin dang nhap khong dung.' });
     }
 
+    // Embed role vào token để middleware phân biệt
     const token = jwt.sign(
-      { userId: user.id }, 
+      { userId: user.id, role: user.role || 'owner' }, 
       process.env.JWT_SECRET || 'secret_key_tam_thoi', 
       { expiresIn: '1d' }
     );
 
-    // Trả về kèm thông tin plan
     res.json({ 
-      message: 'Đăng nhập thành công.', 
+      message: 'Dang nhap thanh cong.', 
       token, 
-      user: { id: user.id, name: user.name, email: user.email, plan: user.plan } 
+      user: { 
+        id: user.id, name: user.name, email: user.email, 
+        plan: user.plan, role: user.role || 'owner',
+        mustChangePassword: user.must_change_password || false
+      } 
     });
   } catch (error) {
-    console.error('Lỗi khi đăng nhập:', error);
-    res.status(500).json({ message: 'Lỗi server.' });
+    console.error('Loi khi dang nhap:', error);
+    res.status(500).json({ message: 'Loi server.' });
   }
 };
 
-module.exports = { register, login };
+// POST /api/auth/change-password — Nhân viên đổi mật khẩu lần đầu
+const changePassword = async (req, res) => {
+  const userId = req.user.userId;
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 4) {
+    return res.status(400).json({ message: 'Mat khau moi phai co it nhat 4 ky tu.' });
+  }
+  try {
+    const hash = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2', [hash, userId]);
+    res.json({ message: 'Doi mat khau thanh cong.' });
+  } catch (error) {
+    console.error('Loi doi mat khau:', error);
+    res.status(500).json({ message: 'Loi server.' });
+  }
+};
+
+module.exports = { register, login, changePassword };

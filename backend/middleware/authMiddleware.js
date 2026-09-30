@@ -9,17 +9,26 @@ const protect = (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_tam_thoi');
-      req.user = decoded; // { userId: ... }
+      req.user = decoded; // { userId, role }
       next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: 'Không có quyền truy cập, token không hợp lệ' });
+      res.status(401).json({ message: 'Khong co quyen truy cap, token khong hop le' });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Không có quyền truy cập, không có token' });
+    res.status(401).json({ message: 'Khong co quyen truy cap, khong co token' });
   }
 };
 
-module.exports = { protect };
+// Middleware chi cho chu quan (owner)
+const ownerOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'owner') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Chi chu quan moi co quyen thuc hien thao tac nay.' });
+  }
+};
+
+module.exports = { protect, ownerOnly };
