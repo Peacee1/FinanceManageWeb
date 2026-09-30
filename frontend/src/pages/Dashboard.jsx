@@ -1170,8 +1170,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   padding: '8px 16px', 
                   borderRadius: '8px', 
                   border: 'none',
-                  background: m === currentMonth + 1 ? '#7C3AED' : 'white',
-                  color: m === currentMonth + 1 ? 'white' : 'var(--color-text-secondary)',
+                  background: m === currentMonth + 1 ? 'var(--color-primary)' : 'var(--color-card)',
+                  color: m === currentMonth + 1 ? 'white' : 'var(--color-text)',
                   fontWeight: m === currentMonth + 1 ? 'bold' : 'normal',
                   minWidth: '60px'
                 }}>
@@ -1691,7 +1691,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Cường độ chi tiêu (30 ngày qua)</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '4px' }}>
                   {heatmapData.map((val, i) => {
-                    const intensities = ['#F3F4F6', '#D8B4FE', '#C084FC', '#A855F7', '#9333EA'];
+                    const intensities = ['var(--color-bg)', '#D8B4FE', '#C084FC', '#A855F7', '#9333EA'];
                     return (
                       <div key={i} style={{ aspectRatio: '1/1', background: intensities[val], borderRadius: '4px' }} title={`Cường độ: ${val}`}></div>
                     )
@@ -1699,7 +1699,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>
                   <span>Ít</span>
-                  <div style={{width: 10, height: 10, background: '#F3F4F6', borderRadius: '2px'}}></div>
+                  <div style={{width: 10, height: 10, background: 'var(--color-bg)', borderRadius: '2px'}}></div>
                   <div style={{width: 10, height: 10, background: '#D8B4FE', borderRadius: '2px'}}></div>
                   <div style={{width: 10, height: 10, background: '#C084FC', borderRadius: '2px'}}></div>
                   <div style={{width: 10, height: 10, background: '#A855F7', borderRadius: '2px'}}></div>
