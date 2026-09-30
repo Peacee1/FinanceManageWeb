@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { transactionError, isPositiveInteger } = require('../utils/validation');
 const { transactionScope } = require('../utils/transactionScope');
+const { vietnamDate } = require('../utils/businessDate');
 
 const getTransactions = async (req, res, next) => {
   const { month, year, limit, offset } = req.query;
@@ -45,7 +46,8 @@ const addTransaction = async (req, res, next) => {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
     const { type, amount, category, date, description } = req.body;
-    const result = await db.query('INSERT INTO transactions (user_id, business_id, type, amount, category, date, description) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', [req.user.userId, scope.businessId, type, amount, category, date, description || '']);
+    const saleDate = req.user.role === 'employee' ? vietnamDate() : date;
+    const result = await db.query('INSERT INTO transactions (user_id, business_id, type, amount, category, date, description) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', [req.user.userId, scope.businessId, type, amount, category, saleDate, description || '']);
     res.status(201).json(result.rows[0]);
   } catch (error) { next(error); }
 };

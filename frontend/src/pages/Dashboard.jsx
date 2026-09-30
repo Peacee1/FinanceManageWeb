@@ -376,7 +376,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     };
     refresh();
     document.addEventListener('visibilitychange', refresh);
-    const interval = setInterval(refresh, 30000);
+    const interval = setInterval(refresh, 5000);
     return () => { cancelled = true; document.removeEventListener('visibilitychange', refresh); clearInterval(interval); };
   }, [activeTab, bizData?.id]);
 

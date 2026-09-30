@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { vietnamDate } from '../utils/businessDate';
 import { ShoppingBag, Plus, Minus, Trash2, CheckCircle, LogOut, PawPrint, Clock } from 'lucide-react';
 
 const API_URL = '';
@@ -42,7 +43,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
   const fetchTodayOrders = async () => {
     try {
       const res = await axiosAuth.get('/api/transactions?scope=business');
-      const today = new Date().toISOString().split('T')[0];
+      const today = vietnamDate();
       const todayTx = (res.data || []).filter(t => t.date?.startsWith(today) && t.type === 'INCOME');
       setTodayOrders(todayTx);
     } catch (err) {
@@ -86,7 +87,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
         type: 'INCOME',
         amount: cartTotal,
         category: 'Ban hang',
-        date: new Date().toISOString().split('T')[0],
+        date: vietnamDate(),
         description,
       });
       setCart([]);
@@ -95,6 +96,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error('Loi thanh toan:', err);
+      setSuccessMsg('❌ ' + (err.response?.data?.message || 'Không thể lưu đơn hàng. Vui lòng thử lại.'));
     } finally {
       setSubmitting(false);
     }

@@ -359,9 +359,11 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible') fetchTransactions(); };
     document.addEventListener('visibilitychange', refresh);
-    const interval = setInterval(refresh, 30000);
+    const interval = setInterval(refresh, 5000);
     return () => { document.removeEventListener('visibilitychange', refresh); clearInterval(interval); };
   }, [id]);
+
+  useEffect(() => { fetchTransactions(); }, [bizSubTab]);
 
   useEffect(() => {
     if (bizSubTab !== 'products' && bizSubTab !== 'employees') return;

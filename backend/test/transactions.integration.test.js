@@ -23,11 +23,12 @@ test('personal and business revenue stay separate and ownership is enforced', { 
     await db.query("INSERT INTO employees(business_id, user_id, employee_code, name) VALUES ($1, $2, 1, 'Scope integration')", [businesses[0], users[1].userId]);
     const payload = amount => ({ type: 'INCOME', amount, category: 'Integration', date: new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10) });
     const personal = await invoke(addTransaction, users[0], {}, payload(10));
-    const employee = await invoke(addTransaction, users[1], { scope: 'business' }, payload(20));
+    const employee = await invoke(addTransaction, users[1], { scope: 'business' }, { ...payload(20), date: '1999-01-01' });
     await invoke(addTransaction, users[0], { scope: 'business' }, payload(30));
     await invoke(addTransaction, users[2], { scope: 'business' }, payload(40));
     assert.equal(personal.body.business_id, null);
     assert.equal(employee.body.business_id, businesses[0]);
+    assert.equal(new Date(employee.body.date).toISOString().slice(0, 10), payload(20).date);
     const personalList = await invoke(getTransactions, users[0]);
     assert.deepEqual(personalList.body.map(tx => Number(tx.amount)), [10]);
     const businessList = await invoke(getTransactions, users[0], { scope: 'business' });
