@@ -1269,9 +1269,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     
                     <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', padding: '0 20px', zIndex: 10 }}>
                       <div style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Crown size={28} color="#F59E0B" style={{ marginBottom: '8px' }} />
+                        <div style={{ background: 'linear-gradient(135deg, #F59E0B, #EA580C)', color: 'white', padding: '4px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '0.9rem', letterSpacing: '1px', marginBottom: '12px', boxShadow: '0 4px 10px rgba(245, 158, 11, 0.3)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Crown size={14} /> PRO
+                        </div>
                         <h4 style={{ margin: '0 0 5px 0', fontSize: '1rem', color: '#111827' }}>Tính năng Cao cấp</h4>
-                        <p style={{ margin: '0 0 15px 0', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Nâng cấp gói Plus hoặc Ultra để mở khoá Ngân sách nhanh</p>
+                        <p style={{ margin: '0 0 15px 0', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Nâng cấp gói Plus hoặc Ultra để mở khoá</p>
                         <button className="btn-primary" onClick={() => setIsProfileOpen(true)} style={{ padding: '8px 20px', fontSize: '0.85rem', borderRadius: '20px' }}>Nâng cấp ngay</button>
                       </div>
                     </div>
