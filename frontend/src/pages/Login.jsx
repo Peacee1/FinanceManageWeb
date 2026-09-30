@@ -26,7 +26,7 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
       // Chuyển hướng tới trang chủ
-      navigate('/');
+      window.location.href = '/';
     } catch (err) {
       setError(err.response?.data?.message || 'Có lỗi xảy ra khi đăng nhập.');
     } finally {
