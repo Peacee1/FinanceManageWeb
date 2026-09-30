@@ -355,10 +355,10 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   useEffect(() => {
     if (activeTab === 'business' && bizData === null) {
       setBizLoading(true);
-      fetch(`/api/business/${id}`, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+      fetch('/api/business/mine', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
         .then(r => r.json())
         .then(d => { setBizData(d.business || false); })
-        .catch(() => setBizData(false))
+        .catch(err => { console.error("Error fetching biz data:", err); setBizData(false); })
         .finally(() => setBizLoading(false));
     }
   }, [activeTab]);
