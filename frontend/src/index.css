@@ -764,10 +764,15 @@ body {
   }
   .header-right {
     width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
   }
   .search-bar {
     width: 100%;
+    order: -1;
+  }
+  .user-profile-header {
+    margin-left: auto;
   }
 }
 .mobile-menu-btn {
