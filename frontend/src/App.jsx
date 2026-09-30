@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
+import BusinessDashboard from './pages/BusinessDashboard';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -81,6 +82,7 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/business/:id" element={user ? <ErrorBoundary><BusinessDashboard user={user} handleLogout={handleLogout} getPlanBadge={getPlanBadge} /></ErrorBoundary> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );
