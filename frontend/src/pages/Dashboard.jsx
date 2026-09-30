@@ -895,7 +895,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <h3 className="widget-title">Lịch giao dịch</h3>
                     <div style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '4px'}}>Tháng {currentMonth + 1}, {currentYear}</div>
                   </div>
-                  <div style={{display: 'flex', gap: '10px'}}>
+                  <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
                     <div className="date-selector" style={{padding: '0.4rem 0.8rem', background: 'var(--color-bg)'}}>
                       <button className="btn-icon" onClick={handlePrevDate}><ChevronLeft size={16}/></button>
                       <span style={{fontSize: '0.8rem', cursor: 'pointer'}} onClick={handleToday}>
