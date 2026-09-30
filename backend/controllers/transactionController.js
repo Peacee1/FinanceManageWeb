@@ -1,10 +1,12 @@
 const db = require('../config/db');
-const { transactionError, isPositiveInteger } = require('../utils/validation');
+const { transactionError, isPositiveInteger, isDate } = require('../utils/validation');
 const { transactionScope } = require('../utils/transactionScope');
 const { vietnamDate } = require('../utils/businessDate');
 
 const getTransactions = async (req, res, next) => {
   const { month, year, limit, offset } = req.query;
+  const cursor = req.query.cursor ? /^([0-9]{4}-[0-9]{2}-[0-9]{2}):([0-9]+)$/.exec(req.query.cursor) : null;
+  if (req.query.cursor && (!cursor || !isDate(cursor[1]) || !isPositiveInteger(cursor[2]))) return res.status(400).json({ message: 'Con trỏ trang không hợp lệ.' });
   if ((month !== undefined || year !== undefined) && (!isPositiveInteger(month) || Number(month) > 12 || !isPositiveInteger(year) || Number(year) < 1900 || Number(year) > 9998)) return res.status(400).json({ message: 'Tháng/năm không hợp lệ.' });
   if ((limit !== undefined && (!isPositiveInteger(limit) || Number(limit) > 500)) || (offset !== undefined && (!/^\d+$/.test(String(offset)) || !Number.isSafeInteger(Number(offset))))) return res.status(400).json({ message: 'Phân trang không hợp lệ.' });
   try {
@@ -16,25 +18,45 @@ const getTransactions = async (req, res, next) => {
       params.push(`${year}-${String(month).padStart(2, '0')}-01`);
       query += ` AND t.date >= $${params.length}::date AND t.date < ($${params.length}::date + interval '1 month')`;
     }
+    if (cursor) { params.push(cursor[1], Number(cursor[2])); query += ` AND (t.date, t.id) < ($${params.length - 1}::date, $${params.length}::int)`; }
     query += ' ORDER BY t.date DESC, t.id DESC';
     if (limit !== undefined) { params.push(Number(limit)); query += ` LIMIT $${params.length}`; }
     if (offset !== undefined) { params.push(Number(offset)); query += ` OFFSET $${params.length}`; }
-    res.json((await db.query(query, params)).rows);
+    const rows = (await db.query(query, params)).rows;
+    if (limit && rows.length === Number(limit)) { const last = rows.at(-1); res.setHeader('X-Next-Cursor', `${new Date(last.date).toISOString().slice(0, 10)}:${last.id}`); }
+    res.json(rows);
   } catch (error) { next(error); }
 };
 
 const getSummary = async (req, res, next) => {
+  const { month, year } = req.query;
+  if ((month !== undefined || year !== undefined) && (!isPositiveInteger(month) || Number(month) > 12 || !isPositiveInteger(year) || Number(year) < 1900 || Number(year) > 9998)) return res.status(400).json({ message: 'Tháng/năm không hợp lệ.' });
   try {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
-    const result = await db.query(`SELECT
+    const params = [...scope.params];
+    params.push(month ? `${year}-${String(month).padStart(2, '0')}-01` : null);
+    const period = `$${params.length}::date`;
+    let result;
+    if (scope.businessId !== null) {
+      result = await db.query(`SELECT
+        COALESCE(SUM(income) FILTER (WHERE date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date), 0) AS today_income,
+        COALESCE(SUM(expense) FILTER (WHERE date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date), 0) AS today_expense,
+        COALESCE(SUM(income), 0) AS month_income,
+        COALESCE(SUM(expense), 0) AS month_expense
+        FROM business_daily_totals t WHERE ${scope.clause}
+        AND date >= COALESCE(${period}, date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)
+        AND date < (COALESCE(${period}, date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) + interval '1 month')::date`, params);
+    } else {
+      result = await db.query(`SELECT
       COALESCE(SUM(amount) FILTER (WHERE type = 'INCOME' AND date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date), 0) AS today_income,
       COALESCE(SUM(amount) FILTER (WHERE type = 'EXPENSE' AND date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date), 0) AS today_expense,
       COALESCE(SUM(amount) FILTER (WHERE type = 'INCOME'), 0) AS month_income,
       COALESCE(SUM(amount) FILTER (WHERE type = 'EXPENSE'), 0) AS month_expense
       FROM transactions t WHERE ${scope.clause}
-      AND date >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
-      AND date < (date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh') + interval '1 month')::date`, scope.params);
+      AND date >= COALESCE(${period}, date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)
+      AND date < (COALESCE(${period}, date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) + interval '1 month')::date`, params);
+    }
     res.json(result.rows[0]);
   } catch (error) { next(error); }
 };

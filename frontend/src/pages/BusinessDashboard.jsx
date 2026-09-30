@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Cropper from 'react-easy-crop';
 import Inventory from '../features/inventory/Inventory';
+import BusinessLedger from '../features/business/BusinessLedger';
 import { 
   LayoutDashboard, CalendarRange, CircleDollarSign, WalletCards, 
   PieChart as PieChartIcon, Target, Tags, User, Settings, 
@@ -36,6 +37,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   }, [theme]);
 
   const [transactions, setTransactions] = useState([]);
+  const [businessSummary, setBusinessSummary] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -261,7 +263,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   const fetchTransactions = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`/api/transactions?scope=business&businessId=${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`/api/transactions?scope=business&businessId=${id}&limit=100`, { headers: { Authorization: `Bearer ${token}` } });
       setTransactions(res.data);
     } catch (error) { console.error(error); }
   };
@@ -358,11 +360,20 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   }, []);
 
   useEffect(() => {
-    const refresh = () => { if (document.visibilityState === 'visible') fetchTransactions(); };
+    let active = true;
+    const refresh = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const response = await axios.get('/api/transactions/summary', { params: { scope: 'business', businessId: id, month: currentMonth + 1, year: currentYear }, headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+        if (active) setBusinessSummary(response.data);
+      } catch (error) { console.error('Không thể cập nhật doanh thu', error); }
+    };
+    setBusinessSummary(null);
+    refresh();
     document.addEventListener('visibilitychange', refresh);
-    const interval = setInterval(refresh, 5000);
-    return () => { document.removeEventListener('visibilitychange', refresh); clearInterval(interval); };
-  }, [id]);
+    const timer = setInterval(refresh, 5000);
+    return () => { active = false; clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
+  }, [id, currentMonth, currentYear]);
 
   useEffect(() => { fetchTransactions(); }, [bizSubTab]);
 
@@ -580,8 +591,8 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
     setCurrentDate(new Date());
   };
   
-  const totalIncome = currentMonthTx.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
-  const totalExpense = currentMonthTx.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
+  const totalIncome = businessSummary ? Number(businessSummary.month_income) : currentMonthTx.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseInt(t.amount), 0);
+  const totalExpense = businessSummary ? Number(businessSummary.month_expense) : currentMonthTx.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseInt(t.amount), 0);
   const balance = totalIncome - totalExpense;
 
   const generateCalendar = () => {
@@ -2374,26 +2385,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
 
                 {bizSubTab === 'inventory' && <Inventory user={user} businessId={Number(id)} />}
 
-                {bizSubTab === 'transactions' && (
-                  <div className="widget" style={{ padding: 20 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
-                      <h3>Sổ quỹ doanh nghiệp</h3>
-                      <button className="btn-primary" onClick={() => { setEditTxId(null); setType('EXPENSE'); setAmount(''); setDescription(''); setIsModalOpen(true); }}>Thêm thu / chi</button>
-                    </div>
-                    {transactions.length === 0 ? <p>Chưa có giao dịch doanh nghiệp.</p> : (
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                          <thead><tr><th>Ngày</th><th>Danh mục</th><th>Nội dung</th><th>Hình thức</th><th>Số tiền</th></tr></thead>
-                          <tbody>{transactions.map(tx => <tr key={tx.id} style={{ borderTop: '1px solid var(--color-border)' }}>
-                            <td style={{ padding: 12 }}>{new Date(tx.date).toLocaleDateString('vi-VN')}</td>
-                            <td>{tx.category}</td><td>{tx.description}</td><td>{tx.payment_method === 'CASH' ? 'Tiền mặt' : tx.payment_method === 'TRANSFER' ? 'Chuyển khoản' : 'Chưa ghi nhận'}</td>
-                            <td style={{ color: tx.type === 'INCOME' ? 'var(--color-income)' : 'var(--color-expense)', whiteSpace: 'nowrap' }}>{tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}</td>
-                          </tr>)}</tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {bizSubTab === 'transactions' && <BusinessLedger businessId={Number(id)} onAdd={() => { setEditTxId(null); setType('EXPENSE'); setAmount(''); setDescription(''); setIsModalOpen(true); }} />}
 
                 {/* Tổng quan */}
                 {bizSubTab === 'overview' && (

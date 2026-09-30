@@ -19,6 +19,7 @@ const transactionRoutes = require('./routes/transactionRoutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const businessRoutes = require('./routes/businessRoutes');
+const { operations, metrics, stop: stopMetrics } = require('./middleware/operations');
 
 const app = express();
 
@@ -27,12 +28,14 @@ app.disable('x-powered-by');
 app.set('trust proxy', 'loopback');
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'same-origin' } }));
 const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').filter(Boolean);
-app.use(cors({ origin(origin, callback) { callback(null, !origin || allowedOrigins.includes(origin)); } }));
+app.use(cors({ exposedHeaders: ['X-Next-Cursor'], origin(origin, callback) { callback(null, !origin || allowedOrigins.includes(origin)); } }));
 app.use((req, res, next) => {
   req.requestId = randomUUID();
   res.setHeader('X-Request-ID', req.requestId);
   next();
 });
+app.get('/internal/metrics', metrics);
+app.use('/api', operations);
 app.use(express.json({ limit: '100kb' }));
 const limiter = (limit, windowMs) => rateLimit({ limit, windowMs, standardHeaders: 'draft-8', legacyHeaders: false, message: { message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.' } });
 app.use('/api', (req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
@@ -59,8 +62,8 @@ app.get('/api/health', async (req, res) => {
 app.use((error, req, res, next) => {
   console.error('Request failed', { requestId: req.requestId, code: error.code || error.type || 'INTERNAL' });
   if (res.headersSent) return next(error);
-  const status = error.type === 'entity.too.large' ? 413 : error instanceof SyntaxError || error.code?.startsWith('LIMIT_') ? 400 : 500;
-  res.status(status).json({ message: status === 500 ? 'Lỗi server.' : 'Dữ liệu gửi lên không hợp lệ.', requestId: req.requestId });
+  const status = error.code === 'DB_OVERLOADED' || error.code === '53300' || error.code === '57014' ? 503 : error.type === 'entity.too.large' ? 413 : error instanceof SyntaxError || error.code?.startsWith('LIMIT_') ? 400 : 500;
+  res.status(status).json({ message: status === 503 ? 'Server đang bận. Vui lòng thử lại.' : status === 500 ? 'Lỗi server.' : 'Dữ liệu gửi lên không hợp lệ.', requestId: req.requestId });
 });
 
 // Khởi chạy server
@@ -69,7 +72,11 @@ const server = app.listen(PORT, process.env.HOST || '127.0.0.1', () => {
   console.log(`🚀 Server Backend đang chạy tại http://localhost:${PORT}`);
 });
 
+server.requestTimeout = 15000;
+server.headersTimeout = 10000;
+server.keepAliveTimeout = 5000;
 const shutdown = () => {
+  stopMetrics();
   const timeout = setTimeout(() => process.exit(1), 10000).unref();
   server.close(async () => { await db.close(); clearTimeout(timeout); process.exit(0); });
 };

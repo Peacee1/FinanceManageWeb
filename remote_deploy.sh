@@ -22,6 +22,7 @@ if (!current || current.length < 32 || ['bi_mat_tren_server', 'secret_key_tam_th
 ${setting}
 `;
 }
+if (!/^INTERNAL_METRICS_TOKEN=.+$/m.test(env)) env += `\nINTERNAL_METRICS_TOKEN=${randomBytes(32).toString('hex')}\n`;
 for (const [key, value] of Object.entries({ NODE_ENV: 'production', HOST: '127.0.0.1' })) {
   env = new RegExp(`^${key}=.*$`, 'm').test(env) ? env.replace(new RegExp(`^${key}=.*$`, 'm'), `${key}=${value}`) : `${env.trimEnd()}
 ${key}=${value}

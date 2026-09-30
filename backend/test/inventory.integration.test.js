@@ -75,6 +75,8 @@ test('inventory permissions, stock corrections, atomic checkout and retry protec
     assert.equal((await call(users[0], 'DELETE', `/products/${product}`)).status, 409);
     const totals = (await db.query('SELECT count(*) AS count,sum(amount) AS amount FROM transactions WHERE business_id = $1', [businesses[0]])).rows[0];
     assert.equal(Number(totals.count), 2); assert.equal(Number(totals.amount), 8000);
+    const daily = (await db.query('SELECT SUM(income) AS income FROM business_daily_totals WHERE business_id = $1', [businesses[0]])).rows[0];
+    assert.equal(Number(daily.income), 8000);
     const employeeId = (await db.query('SELECT id FROM employees WHERE user_id = $1', [users[1]])).rows[0].id;
     assert.equal((await call(users[0], 'DELETE', `/employees/${employeeId}`)).status, 200);
     assert.equal((await call(users[1], 'GET', '/inventory')).status, 401);

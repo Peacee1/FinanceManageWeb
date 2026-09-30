@@ -4,7 +4,7 @@ const { randomUUID } = require('crypto');
 const db = require('../config/db');
 const { addTransaction, getTransactions, getSummary, deleteTransaction } = require('../controllers/transactionController');
 after(() => db.close());
-function response() { return { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } }; }
+function response() { return { statusCode: 200, headers: {}, setHeader(name, value) { this.headers[name] = value; }, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } }; }
 test('personal and business revenue stay separate and ownership is enforced', { skip: process.env.RUN_DB_TESTS !== '1' }, async () => {
   const suffix = randomUUID().slice(0, 12);
   const users = []; const businesses = [];
@@ -33,6 +33,13 @@ test('personal and business revenue stay separate and ownership is enforced', { 
     assert.deepEqual(personalList.body.map(tx => Number(tx.amount)), [10]);
     const businessList = await invoke(getTransactions, users[0], { scope: 'business' });
     assert.deepEqual(businessList.body.map(tx => Number(tx.amount)).sort(), [20, 30]);
+    const firstPage = await invoke(getTransactions, users[0], { scope: 'business', limit: '1' });
+    assert.equal(firstPage.body.length, 1);
+    const secondPage = await invoke(getTransactions, users[0], { scope: 'business', limit: '1', cursor: firstPage.headers['X-Next-Cursor'] });
+    assert.equal(secondPage.body.length, 1);
+    assert.notEqual(firstPage.body[0].id, secondPage.body[0].id);
+    const oldSummary = await invoke(getSummary, users[0], { scope: 'business', month: '1', year: '1999' });
+    assert.equal(Number(oldSummary.body.month_income), 0);
     const employeeList = await invoke(getTransactions, users[1], { scope: 'business' });
     assert.deepEqual(employeeList.body.map(tx => Number(tx.amount)), [20]);
     const summary = await invoke(getSummary, users[0], { scope: 'business' });
