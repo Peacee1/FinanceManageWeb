@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     
     let userProfile = result.rows[0];
