@@ -7,7 +7,7 @@ import {
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift,
-  Edit2, Trash2, Menu, X, Coins
+  Edit2, Trash2, Menu, X
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -2250,7 +2250,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
               </div>
               <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', marginTop: '25px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                Lưu danh mục <span style={{display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem'}}><Coins size={14}/> -100</span>
+                Lưu danh mục <span style={{display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem'}}><img src="/coin_icon.png" alt="Coin" style={{width: 16, height: 16}} /> -100</span>
               </button>
             </form>
           </div>
