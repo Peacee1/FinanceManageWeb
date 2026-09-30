@@ -1039,7 +1039,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   width: '100%',
                   zIndex: 1001,
                   boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-                  background: 'white',
+                  background: 'var(--color-card)',
                   borderRadius: '24px 24px 0 0',
                   transition: 'bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                   padding: '24px',
@@ -1052,7 +1052,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   zIndex: 1000, 
                   boxShadow: isDraggingQA ? '0 20px 40px rgba(0,0,0,0.2)' : '0 12px 36px rgba(0,0,0,0.12)', 
                   border: '1px solid rgba(124,58,237,0.1)', 
-                  background: 'white',
+                  background: 'var(--color-card)',
                   cursor: isDraggingQA ? 'grabbing' : 'grab',
                   transition: isDraggingQA ? 'none' : 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                   touchAction: 'none' // Prevent scrolling while dragging on mobile
