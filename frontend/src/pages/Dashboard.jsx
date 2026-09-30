@@ -794,9 +794,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     {isPro ? '✨ Trợ lý AI Tài chính' : '🔒 Trợ lý AI Tài chính'}
                   </div>
                   <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)' }}>
-                    {isPro
-                      ? 'Nhận gợi ý cá nhân hóa từ Google Gemini AI'
-                      : 'Tính năng dành riêng cho tài khoản Pro. Bấm để nâng cấp!'}
+                    {isPro ? 'Nhận gợi ý cá nhân hóa từ Peacee1 AI' : 'Tính năng dành riêng cho tài khoản Pro. Bấm để nâng cấp!'}
                   </div>
                   {!isPro && (
                     <div style={{ marginTop: '8px', display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', color: 'white', fontWeight: '700' }}>
@@ -2179,7 +2177,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <img src="/cat_ai_mascot.png" alt="AI Cat" style={{ width: 56, height: 56, objectFit: 'contain' }} />
                 <div>
                   <div style={{ color: 'white', fontWeight: '800', fontSize: '1.1rem' }}>Trợ lý AI Tài chính</div>
-                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>Phân tích bởi Google Gemini ✨</div>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>Peacee1 AI đang phân tích ✨</div>
                 </div>
               </div>
               {!aiLoading && (
@@ -2213,7 +2211,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     margin: '0 auto 20px',
                   }}></div>
                   <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--color-text)', marginBottom: '8px' }}>AI đang phân tích...</div>
-                  <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Google Gemini đang xem xét dữ liệu tài chính của bạn 📊</div>
+                  <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>Peacee1 AI đang xem xét dữ liệu tài chính của bạn 📊</div>
                 </div>
               ) : (
                 <div>
@@ -2230,7 +2228,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     gap: '8px',
                   }}>
                     <span>🔒</span>
-                    <span>Phân tích dựa trên 30 ngày gần nhất. Dữ liệu được ẩn danh và không lưu trữ.</span>
+                    <span>Phân tích dựa trên 30 ngày gần nhất. Dữ liệu được bảo mật bởi Peacee1.</span>
                   </div>
                   <div style={{
                     lineHeight: '1.8',
