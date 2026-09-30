@@ -40,7 +40,26 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [businessModel, setBusinessModel] = useState('Quán cafe');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+
+  // Business Tab State
+  const [bizData, setBizData] = useState(null);
+  const [bizLoading, setBizLoading] = useState(false);
+  const [bizSubTab, setBizSubTab] = useState('overview');
+  const [bizForm, setBizForm] = useState({ model: 'Quán cafe', name: '', maxEmployees: 20 });
+  const [bizAvatarFile, setBizAvatarFile] = useState(null);
+  const [bizAvatarPreview, setBizAvatarPreview] = useState(null);
+  const [bizEmployees, setBizEmployees] = useState([]);
+  const [bizProducts, setBizProducts] = useState([]);
+  const [bizActionLoading, setBizActionLoading] = useState(false);
+  const [bizMsg, setBizMsg] = useState('');
+  const [empForm, setEmpForm] = useState({ name: '', age: '', salary: '' });
+  const [empAvatarFile, setEmpAvatarFile] = useState(null);
+  const [empAvatarPreview, setEmpAvatarPreview] = useState(null);
+  const [newEmpCred, setNewEmpCred] = useState(null);
+  const [prodForm, setProdForm] = useState({ name: '', price: '' });
+  const [prodAvatarFile, setProdAvatarFile] = useState(null);
+  const [prodAvatarPreview, setProdAvatarPreview] = useState(null);
+
   // Goals State
   const [isGoalInitialized, setIsGoalInitialized] = useState(false);
   const [goalForm, setGoalForm] = useState({ salary: '15000000', age: '25', gender: 'Nam' });
@@ -326,6 +345,18 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     fetchTransactions();
     fetchProfile();
   }, []);
+
+  // Fetch business data khi chuyển sang tab doanh nghiệp
+  useEffect(() => {
+    if (activeTab === 'business' && bizData === null) {
+      setBizLoading(true);
+      fetch('/api/business/mine', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
+        .then(r => r.json())
+        .then(d => { setBizData(d.business || false); })
+        .catch(() => setBizData(false))
+        .finally(() => setBizLoading(false));
+    }
+  }, [activeTab]);
 
   const handleAvatarUpload = (e) => {
     const file = e.target.files[0];
@@ -2110,136 +2141,337 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
         {activeTab === 'business' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
-            <div style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                  <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Doanh nghiệp</h2>
-                  <span style={{ background: '#DBEAFE', color: '#1D4ED8', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>Beta</span>
-                </div>
-                <p style={{ color: 'var(--color-text-secondary)' }}>Bộ công cụ quản lý dòng tiền và tối ưu thuế dành cho Freelancer, Chủ Shop, Doanh nghiệp nhỏ</p>
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Doanh nghi\u1ec7p</h2>
+                <span style={{ background: '#DBEAFE', color: '#1D4ED8', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>Beta</span>
               </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <label style={{ fontWeight: '600' }}>Mô hình kinh doanh:</label>
-                <select 
-                  value={businessModel}
-                  onChange={(e) => setBusinessModel(e.target.value)}
-                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-card)', fontWeight: '600', color: 'var(--color-text)' }}
+              <p style={{ color: 'var(--color-text-secondary)' }}>H\u1ed3 s\u01a1 qu\u00e1n, s\u1ea3n ph\u1ea9m, nh\u00e2n vi\u00ean v\u00e0 ph\u00e2n t\u00edch d\u00f2ng ti\u1ec1n</p>
+            </div>
+
+            {bizLoading && (
+              <div style={{ textAlign: 'center', padding: '60px', color: 'var(--color-text-secondary)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '10px' }}>\u23F3</div>
+                <p>\u0110ang t\u1ea3i...</p>
+              </div>
+            )}
+
+            {/* Ch\u01b0a t\u1ea1o qu\u00e1n */}
+            {!bizLoading && bizData === false && (
+              <div className="widget" style={{ maxWidth: '540px', margin: '0 auto', padding: '40px 30px', textAlign: 'center' }}>
+                {!isBizCreating ? (
+                  <>
+                    <img src="/biz_cat.png" alt="Business Cat" style={{ width: '180px', height: '180px', objectFit: 'contain', margin: '0 auto 20px auto' }} />
+                    <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px' }}>B\u1eaft \u0111\u1ea7u kh\u1edfi t\u1ea1o doanh nghi\u1ec7p c\u1ee7a ri\u00eang m\u00ecnh n\u00e0o!</h3>
+                    <p style={{ color: 'var(--color-text-secondary)', marginBottom: '25px', lineHeight: '1.6' }}>Thi\u1ebft l\u1eadp th\u00f4ng tin qu\u00e1n/doanh nghi\u1ec7p c\u1ee7a b\u1ea1n \u0111\u1ec3 tr\u1ea3i nghi\u1ec7m b\u1ed9 c\u00f4ng c\u1ee5 qu\u1ea3n l\u00fd chuy\u00ean nghi\u1ec7p.</p>
+                    <button 
+                      onClick={() => setIsBizCreating(true)}
+                      style={{ padding: '14px 30px', background: 'linear-gradient(90deg, #7C3AED, #9333EA)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', fontSize: '1.05rem', boxShadow: '0 8px 20px rgba(124,58,237,0.3)', transition: 'all 0.3s' }}
+                    >
+                      🚀 B\u1eaft \u0111\u1ea7u ngay
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                      <button onClick={() => setIsBizCreating(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}><ArrowLeft size={16}/> Quay l\u1ea1i</button>
+                    </div>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(124,58,237,0.15), rgba(244,114,182,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto', fontSize: '2.5rem' }}>🏪</div>
+                    <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px' }}>T\u1ea1o H\u1ed3 s\u01a1 Doanh nghi\u1ec7p</h3>
+                    <p style={{ color: 'var(--color-text-secondary)', marginBottom: '25px', lineHeight: '1.6' }}>Thi\u1ebft l\u1eadp th\u00f4ng tin qu\u00e1n c\u1ee7a b\u1ea1n. H\u1ec7 th\u1ed1ng s\u1ebd t\u1ef1 t\u1ea1o m\u00e3 \u0111\u1ecbnh danh duy nh\u1ea5t.</p>
+
+                    {bizMsg && <div style={{ background: bizMsg.startsWith('\u2705') ? 'rgba(52,211,153,0.1)' : 'rgba(251,113,133,0.1)', color: bizMsg.startsWith('\u2705') ? '#047857' : 'var(--color-expense)', padding: '10px', borderRadius: '10px', marginBottom: '15px', fontWeight: '600' }}>{bizMsg}</div>}
+
+
+                {/* Avatar upload */}
+                <div style={{ marginBottom: '20px' }}>
+                  <div
+                    style={{ width: '100px', height: '100px', borderRadius: '50%', border: '2px dashed var(--color-border)', background: bizAvatarPreview ? 'none' : 'var(--color-bg)', cursor: 'pointer', margin: '0 auto 10px auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => document.getElementById('biz-avatar-input').click()}
+                  >
+                    {bizAvatarPreview ? <img src={bizAvatarPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '2rem' }}>📷</span>}
+                  </div>
+                  <input id="biz-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                    const file = e.target.files[0];
+                    if (file) { setBizAvatarFile(file); setBizAvatarPreview(URL.createObjectURL(file)); }
+                  }} />
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Nh\u1ea5p \u0111\u1ec3 t\u1ea3i \u1ea3nh qu\u00e1n</p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
+                  <div>
+                    <label style={{ fontWeight: '600', fontSize: '0.9rem', display: 'block', marginBottom: '6px' }}>M\u00f4 h\u00ecnh kinh doanh *</label>
+                    <select value={bizForm.model} onChange={e => {
+                      const m = e.target.value;
+                      const isMed = m.includes('v\u1eeba');
+                      setBizForm(f => ({ ...f, model: m, maxEmployees: isMed ? 50 : 20 }));
+                    }} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)', fontWeight: '600' }}>
+                      <option>Qu\u00e1n cafe</option>
+                      <option>Qu\u00e1n net</option>
+                      <option>Qu\u00e1n bi a</option>
+                      <option>Qu\u00e1n \u0103n</option>
+                      <option>Doanh nghi\u1ec7p nh\u1ecf (10-20 nh\u00e2n s\u1ef1)</option>
+                      <option>Doanh nghi\u1ec7p v\u1eeba (20-100 nh\u00e2n s\u1ef1)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: '600', fontSize: '0.9rem', display: 'block', marginBottom: '6px' }}>T\u00ean qu\u00e1n / doanh nghi\u1ec7p *</label>
+                    <input value={bizForm.name} onChange={e => setBizForm(f => ({ ...f, name: e.target.value }))} placeholder="VD: Cafe S\u01b0\u01a1ng S\u1edbm" style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: '600', fontSize: '0.9rem', display: 'block', marginBottom: '6px' }}>S\u1ed1 nh\u00e2n vi\u00ean t\u1ed1i \u0111a (t\u1ed1i \u0111a {bizForm.model.includes('v\u1eeba') ? 50 : 20})</label>
+                    <input type="number" value={bizForm.maxEmployees} min={1} max={bizForm.model.includes('v\u1eeba') ? 50 : 20}
+                      onChange={e => setBizForm(f => ({ ...f, maxEmployees: e.target.value }))}
+                      style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!bizForm.name.trim()) { setBizMsg('\u26a0\ufe0f Vui l\u00f2ng nh\u1eadp t\u00ean qu\u00e1n.'); return; }
+                    setBizActionLoading(true); setBizMsg('');
+                    try {
+                      const fd = new FormData();
+                      fd.append('model', bizForm.model);
+                      fd.append('name', bizForm.name);
+                      fd.append('maxEmployees', bizForm.maxEmployees);
+                      if (bizAvatarFile) fd.append('avatar', bizAvatarFile);
+                      const res = await fetch('/api/business/create', { method: 'POST', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }, body: fd });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.message);
+                      setBizData(data.business);
+                      setBizMsg('\u2705 T\u1ea1o qu\u00e1n th\u00e0nh c\u00f4ng! M\u00e3 qu\u00e1n: ' + data.business.business_code);
+                    } catch (err) { setBizMsg('\u274C ' + err.message); }
+                    finally { setBizActionLoading(false); }
+                  }}
+                  disabled={bizActionLoading}
+                  style={{ width: '100%', marginTop: '20px', padding: '14px', background: 'linear-gradient(90deg, #7C3AED, #9333EA)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', fontSize: '1rem', boxShadow: '0 8px 20px rgba(124,58,237,0.3)' }}
                 >
-                  <option value="Quán cafe">Quán cafe</option>
-                  <option value="Quán net">Quán net</option>
-                  <option value="Quán bi a">Quán bi a</option>
-                  <option value="Quán ăn">Quán ăn</option>
-                  <option value="Doanh nghiệp nhỏ (10-20 nhân sự)">Doanh nghiệp nhỏ (10-20 nhân sự)</option>
-                  <option value="Doanh nghiệp vừa (20-100 nhân sự)">Doanh nghiệp vừa (20-100 nhân sự)</option>
-                </select>
+                  {bizActionLoading ? '\u0110ang t\u1ea1o...' : '🏪 T\u1ea1o H\u1ed3 s\u01a1 Qu\u00e1n'}
+                </button>
+                  </>
+                )}
               </div>
-            </div>
+            )}
 
-            <div className="grid-responsive-3" style={{ gap: '20px', marginBottom: '20px' }}>
-              <div className="widget" style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <div className="stat-icon" style={{background: 'rgba(52, 211, 153, 0.1)'}}><Building2 color="#34D399" size={24}/></div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--color-income)', fontWeight: 'bold', background: 'rgba(52,211,153,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Tháng này</span>
-                </div>
-                <div className="stat-title">Doanh thu thuần</div>
-                <h3 className="stat-amount" style={{fontSize: '1.6rem'}}>{formatCurrency(totalIncome)}</h3>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>Đã trừ hoàn trả và giảm giá</div>
-              </div>
-              <div className="widget" style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <div className="stat-icon" style={{background: 'rgba(251, 113, 133, 0.1)'}}><Zap color="#FB7185" size={24}/></div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--color-expense)', fontWeight: 'bold', background: 'rgba(251,113,133,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Tháng này</span>
-                </div>
-                <div className="stat-title">Chi phí vận hành (OPEX)</div>
-                <h3 className="stat-amount" style={{fontSize: '1.6rem', color: 'var(--color-expense)'}}>{formatCurrency(totalExpense)}</h3>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>Bao gồm: Lương, Mặt bằng, Marketing</div>
-              </div>
-              <div className="widget" style={{ padding: '20px', background: 'linear-gradient(135deg, rgba(52,211,153,0.1), rgba(16,185,129,0.2))', border: '1px solid rgba(52,211,153,0.3)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <div className="stat-icon" style={{background: 'var(--color-card)'}}><FileDown color="#10B981" size={24}/></div>
-                </div>
-                <div className="stat-title" style={{ color: '#047857', fontWeight: 'bold' }}>Lợi nhuận gộp</div>
-                <h3 className="stat-amount" style={{fontSize: '1.8rem', color: '#047857'}}>{formatCurrency(totalIncome - totalExpense)}</h3>
-                <div style={{ fontSize: '0.85rem', color: '#047857', marginTop: '10px', fontWeight: '600' }}>Biên lợi nhuận: {totalIncome > 0 ? Math.round(((totalIncome - totalExpense) / totalIncome) * 100) : 0}%</div>
-              </div>
-            </div>
-
-            <div className="grid-responsive-2-1" style={{ gap: '20px', marginBottom: '20px' }}>
-              <div className="widget">
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px' }}>Phân tích Dòng tiền (Cash Flow)</h3>
-                <div style={{ height: 300 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorIn" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#34D399" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#34D399" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="colorOut" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#FB7185" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#FB7185" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                      <XAxis dataKey="date" tick={{fontSize: 12, fill: '#716B7A'}} axisLine={false} tickLine={false} />
-                      <YAxis tickFormatter={formatCompact} tick={{fontSize: 12, fill: '#716B7A'}} axisLine={false} tickLine={false} />
-                      <RechartsTooltip 
-                        contentStyle={{background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: '12px'}}
-                        formatter={(value) => formatCurrency(value)}
-                      />
-                      <Area type="monotone" dataKey="income" name="Dòng tiền vào" stroke="#34D399" strokeWidth={3} fillOpacity={1} fill="url(#colorIn)" />
-                      <Area type="monotone" dataKey="expense" name="Dòng tiền ra" stroke="#FB7185" strokeWidth={3} fillOpacity={1} fill="url(#colorOut)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div className="widget" style={{ padding: '20px' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Ước tính Thuế TNDN / TNCN</h3>
-                  <div style={{ background: 'var(--color-bg)', padding: '15px', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Lợi nhuận tạm tính</span>
-                      <span style={{ fontWeight: '600' }}>{formatCurrency(totalIncome - totalExpense)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', borderBottom: '1px dashed var(--color-border)', paddingBottom: '10px' }}>
-                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Tỷ lệ thuế (ước tính)</span>
-                      <span style={{ fontWeight: '600' }}>1.5% - 10%</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: '700', color: '#F59E0B' }}>Dự phòng Thuế</span>
-                      <span style={{ fontWeight: '700', color: '#F59E0B' }}>~ {formatCurrency(Math.max(0, (totalIncome - totalExpense) * 0.05))}</span>
+            {/* \u0110\u00e3 c\u00f3 qu\u00e1n */}
+            {!bizLoading && bizData && (
+              <div>
+                {/* Header qu\u00e1n */}
+                <div className="widget" style={{ padding: '20px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                  <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem' }}>
+                    {bizData.avatar_url ? <img src={bizData.avatar_url} alt="biz" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🏪'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontWeight: '800', fontSize: '1.3rem', marginBottom: '4px' }}>{bizData.name}</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      <span style={{ background: 'rgba(124,58,237,0.1)', color: 'var(--color-primary)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' }}>{bizData.model}</span>
+                      <span style={{ background: 'rgba(52,211,153,0.1)', color: '#047857', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700', fontFamily: 'monospace' }}>🔑 {bizData.business_code}</span>
+                      <span style={{ background: 'var(--color-bg)', color: 'var(--color-text-secondary)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>T\u1ed1i \u0111a {bizData.max_employees} NV</span>
                     </div>
                   </div>
-                  <button style={{ width: '100%', marginTop: '15px', padding: '10px', background: 'transparent', border: '1px dashed var(--color-primary)', color: 'var(--color-primary)', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Chi tiết hồ sơ Thuế</button>
                 </div>
 
-                <div className="widget" style={{ padding: '20px' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Quản lý Hóa đơn & Chứng từ</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}>
-                      <Plus size={18} /> Tạo Hóa đơn mới (Invoice)
+                {/* Sub tabs */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', background: 'var(--color-bg)', borderRadius: '14px', padding: '5px' }}>
+                  {['overview', 'products', 'employees'].map(tab => (
+                    <button key={tab} onClick={() => {
+                      setBizSubTab(tab);
+                      if (tab === 'employees' && bizEmployees.length === 0) {
+                        fetch('/api/business/employees', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }).then(r => r.json()).then(d => setBizEmployees(d.employees || []));
+                      }
+                      if (tab === 'products' && bizProducts.length === 0) {
+                        fetch('/api/business/products', { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } }).then(r => r.json()).then(d => setBizProducts(d.products || []));
+                      }
+                    }}
+                      style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: bizSubTab === tab ? '700' : '500', background: bizSubTab === tab ? 'white' : 'transparent', color: bizSubTab === tab ? 'var(--color-primary)' : 'var(--color-text-secondary)', boxShadow: bizSubTab === tab ? '0 2px 8px rgba(124,58,237,0.15)' : 'none', transition: 'all 0.2s' }}
+                    >
+                      {tab === 'overview' ? '📊 T\u1ed5ng quan' : tab === 'products' ? '🛍\uFE0F S\u1ea3n ph\u1ea9m' : '👥 Nh\u00e2n vi\u00ean'}
                     </button>
-                    <button style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}>
-                      <FileDown size={18} /> Xuất dữ liệu kế toán (Excel)
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            </div>
-            
-            {(!profileData?.plan || profileData?.plan === 'normal') && (
-              <div className="widget" style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', border: 'none', textAlign: 'center', padding: '40px 20px' }}>
-                <Crown size={40} color="#FBBF24" style={{ margin: '0 auto 15px auto' }} />
-                <h2 style={{ color: 'white', marginBottom: '10px' }}>Mở khóa Bộ công cụ Doanh nghiệp Toàn diện</h2>
-                <p style={{ color: '#A5B4FC', maxWidth: '600px', margin: '0 auto 20px auto', lineHeight: '1.6' }}>Nâng cấp lên gói Ultra để trải nghiệm Báo cáo đa tiền tệ, Theo dõi công nợ khách hàng (Accounts Receivable), Quản lý kho, và Đồng bộ dữ liệu hóa đơn điện tử.</p>
-                <button className="btn-primary" onClick={() => setIsProfileOpen(true)} style={{ padding: '12px 30px', fontSize: '1.1rem', borderRadius: '30px' }}>Nâng cấp Ultra ngay</button>
+
+                {bizMsg && <div style={{ background: bizMsg.startsWith('\u2705') ? 'rgba(52,211,153,0.1)' : 'rgba(251,113,133,0.1)', color: bizMsg.startsWith('\u2705') ? '#047857' : 'var(--color-expense)', padding: '10px', borderRadius: '10px', marginBottom: '15px', fontWeight: '600' }}>{bizMsg}</div>}
+
+                {/* T\u1ed5ng quan */}
+                {bizSubTab === 'overview' && (
+                  <div>
+                    <div className="grid-responsive-3" style={{ gap: '15px', marginBottom: '20px' }}>
+                      <div className="widget" style={{ padding: '20px' }}>
+                        <div className="stat-title">Doanh thu th\u00e1ng</div>
+                        <h3 className="stat-amount" style={{ color: 'var(--color-income)' }}>{formatCurrency(totalIncome)}</h3>
+                      </div>
+                      <div className="widget" style={{ padding: '20px' }}>
+                        <div className="stat-title">Chi ph\u00ed (OPEX)</div>
+                        <h3 className="stat-amount" style={{ color: 'var(--color-expense)' }}>{formatCurrency(totalExpense)}</h3>
+                      </div>
+                      <div className="widget" style={{ padding: '20px', background: 'linear-gradient(135deg, rgba(52,211,153,0.1), rgba(16,185,129,0.2))' }}>
+                        <div className="stat-title" style={{ color: '#047857' }}>L\u1ee3i nhu\u1eadn g\u1ed9p</div>
+                        <h3 className="stat-amount" style={{ color: '#047857' }}>{formatCurrency(totalIncome - totalExpense)}</h3>
+                        <div style={{ fontSize: '0.8rem', color: '#047857', marginTop: '5px' }}>Bi\u00ean: {totalIncome > 0 ? Math.round(((totalIncome - totalExpense) / totalIncome) * 100) : 0}%</div>
+                      </div>
+                    </div>
+                    <div className="widget">
+                      <h3 style={{ fontWeight: '700', marginBottom: '15px' }}>Ph\u00e2n t\u00edch D\u00f2ng ti\u1ec1n</h3>
+                      <div style={{ height: 260 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="bizIn" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#34D399" stopOpacity={0.3}/><stop offset="95%" stopColor="#34D399" stopOpacity={0}/></linearGradient>
+                              <linearGradient id="bizOut" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#FB7185" stopOpacity={0.3}/><stop offset="95%" stopColor="#FB7185" stopOpacity={0}/></linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#716B7A' }} axisLine={false} tickLine={false} />
+                            <YAxis tickFormatter={formatCompact} tick={{ fontSize: 11, fill: '#716B7A' }} axisLine={false} tickLine={false} />
+                            <RechartsTooltip contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: '12px' }} formatter={(v) => formatCurrency(v)} />
+                            <Area type="monotone" dataKey="income" name="Thu" stroke="#34D399" strokeWidth={2} fillOpacity={1} fill="url(#bizIn)" />
+                            <Area type="monotone" dataKey="expense" name="Chi" stroke="#FB7185" strokeWidth={2} fillOpacity={1} fill="url(#bizOut)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* S\u1ea3n ph\u1ea9m */}
+                {bizSubTab === 'products' && [
+                  'Qu\u00e1n cafe', 'Qu\u00e1n net', 'Qu\u00e1n bi a', 'Qu\u00e1n \u0103n'
+                ].includes(bizData.model) && (
+                  <div>
+                    <div className="widget" style={{ padding: '20px', marginBottom: '20px' }}>
+                      <h3 style={{ fontWeight: '700', marginBottom: '15px' }}>Th\u00eam s\u1ea3n ph\u1ea9m m\u1edbi</h3>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ width: '56px', height: '56px', borderRadius: '12px', border: '2px dashed var(--color-border)', cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onClick={() => document.getElementById('prod-avatar-input').click()}>
+                          {prodAvatarPreview ? <img src={prodAvatarPreview} alt="p" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span>📷</span>}
+                        </div>
+                        <input id="prod-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                          const f = e.target.files[0];
+                          if (f) { setProdAvatarFile(f); setProdAvatarPreview(URL.createObjectURL(f)); }
+                        }} />
+                        <input value={prodForm.name} onChange={e => setProdForm(f => ({ ...f, name: e.target.value }))} placeholder="T\u00ean s\u1ea3n ph\u1ea9m" style={{ flex: 2, minWidth: '120px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
+                        <input type="number" value={prodForm.price} onChange={e => setProdForm(f => ({ ...f, price: e.target.value }))} placeholder="Gi\u00e1 (VND)" style={{ flex: 1, minWidth: '100px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
+                        <button onClick={async () => {
+                          if (!prodForm.name || !prodForm.price) { setBizMsg('\u26a0\ufe0f Nh\u1eadp t\u00ean v\u00e0 gi\u00e1 s\u1ea3n ph\u1ea9m.'); return; }
+                          setBizActionLoading(true); setBizMsg('');
+                          try {
+                            const fd = new FormData();
+                            fd.append('name', prodForm.name);
+                            fd.append('price', prodForm.price);
+                            if (prodAvatarFile) fd.append('avatar', prodAvatarFile);
+                            const res = await fetch('/api/business/products', { method: 'POST', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }, body: fd });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.message);
+                            setBizProducts(prev => [...prev, data.product]);
+                            setProdForm({ name: '', price: '' }); setProdAvatarFile(null); setProdAvatarPreview(null);
+                            setBizMsg('\u2705 Th\u00eam s\u1ea3n ph\u1ea9m th\u00e0nh c\u00f4ng!');
+                          } catch (err) { setBizMsg('\u274C ' + err.message); }
+                          finally { setBizActionLoading(false); }
+                        }} disabled={bizActionLoading} style={{ padding: '12px 20px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          {bizActionLoading ? '...' : '+ Th\u00eam'}
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '15px' }}>
+                      {bizProducts.map(p => (
+                        <div key={p.id} className="widget" style={{ padding: '15px', textAlign: 'center', position: 'relative' }}>
+                          <button onClick={async () => {
+                            if (!window.confirm('X\u00f3a s\u1ea3n ph\u1ea9m?')) return;
+                            await fetch('/api/business/products/' + p.id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+                            setBizProducts(prev => prev.filter(x => x.id !== p.id));
+                          }} style={{ position: 'absolute', top: '8px', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-expense)' }}><Trash2 size={14} /></button>
+                          {p.avatar_url ? <img src={p.avatar_url} alt={p.name} style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover', marginBottom: '8px' }} /> : <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px auto', fontSize: '1.5rem' }}>🛒</div>}
+                          <div style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '4px' }}>{p.name}</div>
+                          <div style={{ fontWeight: '800', color: 'var(--color-primary)', fontSize: '0.9rem' }}>{formatCurrency(p.price)}</div>
+                        </div>
+                      ))}
+                      {bizProducts.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '30px', color: 'var(--color-text-secondary)' }}>Ch\u01b0a c\u00f3 s\u1ea3n ph\u1ea9m n\u00e0o</div>}
+                    </div>
+                  </div>
+                )}
+                {bizSubTab === 'products' && !['Qu\u00e1n cafe', 'Qu\u00e1n net', 'Qu\u00e1n bi a', 'Qu\u00e1n \u0103n'].includes(bizData.model) && (
+                  <div className="widget" style={{ textAlign: 'center', padding: '40px' }}>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>M\u00f4 h\u00ecnh Doanh nghi\u1ec7p kh\u00f4ng s\u1eed d\u1ee5ng danh s\u00e1ch s\u1ea3n ph\u1ea9m.</p>
+                  </div>
+                )}
+
+                {/* Nh\u00e2n vi\u00ean */}
+                {bizSubTab === 'employees' && (
+                  <div>
+                    {newEmpCred && (
+                      <div style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(16,185,129,0.1))', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '14px', padding: '20px', marginBottom: '20px' }}>
+                        <h4 style={{ fontWeight: '800', marginBottom: '10px', color: '#047857' }}>\u2705 T\u00e0i kho\u1ea3n nh\u00e2n vi\u00ean v\u1eeba t\u1ea1o</h4>
+                        <p style={{ fontSize: '0.9rem', marginBottom: '5px' }}>Username: <strong style={{ fontFamily: 'monospace', fontSize: '1rem' }}>{newEmpCred.username}</strong></p>
+                        <p style={{ fontSize: '0.9rem', marginBottom: '10px' }}>M\u1eadt kh\u1ea9u m\u1eb7c \u0111\u1ecbnh: <strong style={{ fontFamily: 'monospace', fontSize: '1.2rem', color: 'var(--color-expense)' }}>1</strong> <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>(nh\u00e2n vi\u00ean ph\u1ea3i \u0111\u1ed5i l\u00fac \u0111\u0103ng nh\u1eadp l\u1ea7n \u0111\u1ea7u)</span></p>
+                        <button onClick={() => setNewEmpCred(null)} style={{ background: 'none', border: '1px solid rgba(52,211,153,0.5)', borderRadius: '8px', padding: '6px 14px', cursor: 'pointer', fontSize: '0.85rem', color: '#047857' }}>\u00d7 \u0110\u00f3ng</button>
+                      </div>
+                    )}
+
+                    <div className="widget" style={{ padding: '20px', marginBottom: '20px' }}>
+                      <h3 style={{ fontWeight: '700', marginBottom: '15px' }}>Th\u00eam nh\u00e2n vi\u00ean ({bizEmployees.length}/{bizData.max_employees})</h3>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ width: '56px', height: '56px', borderRadius: '50%', border: '2px dashed var(--color-border)', cursor: 'pointer', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onClick={() => document.getElementById('emp-avatar-input').click()}>
+                          {empAvatarPreview ? <img src={empAvatarPreview} alt="e" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '1.4rem' }}>👤</span>}
+                        </div>
+                        <input id="emp-avatar-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                          const f = e.target.files[0];
+                          if (f) { setEmpAvatarFile(f); setEmpAvatarPreview(URL.createObjectURL(f)); }
+                        }} />
+                        <input value={empForm.name} onChange={e => setEmpForm(f => ({ ...f, name: e.target.value }))} placeholder="T\u00ean nh\u00e2n vi\u00ean *" style={{ flex: 2, minWidth: '120px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
+                        <input type="number" value={empForm.age} onChange={e => setEmpForm(f => ({ ...f, age: e.target.value }))} placeholder="Tu\u1ed5i" style={{ width: '80px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
+                        <input type="number" value={empForm.salary} onChange={e => setEmpForm(f => ({ ...f, salary: e.target.value }))} placeholder="L\u01b0\u01a1ng (VND)" style={{ flex: 1, minWidth: '100px', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)' }} />
+                        <button onClick={async () => {
+                          if (!empForm.name.trim()) { setBizMsg('\u26a0\ufe0f Nh\u1eadp t\u00ean nh\u00e2n vi\u00ean.'); return; }
+                          if (bizEmployees.length >= bizData.max_employees) { setBizMsg('\u274C \u0110\u00e3 \u0111\u1ee7 gi\u1edbi h\u1ea1n nh\u00e2n vi\u00ean.'); return; }
+                          setBizActionLoading(true); setBizMsg('');
+                          try {
+                            const fd = new FormData();
+                            fd.append('name', empForm.name);
+                            if (empForm.age) fd.append('age', empForm.age);
+                            if (empForm.salary) fd.append('salary', empForm.salary);
+                            if (empAvatarFile) fd.append('avatar', empAvatarFile);
+                            const res = await fetch('/api/business/employees', { method: 'POST', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }, body: fd });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.message);
+                            setBizEmployees(prev => [...prev, data.employee]);
+                            setNewEmpCred({ username: data.username, defaultPassword: '1' });
+                            setEmpForm({ name: '', age: '', salary: '' }); setEmpAvatarFile(null); setEmpAvatarPreview(null);
+                          } catch (err) { setBizMsg('\u274C ' + err.message); }
+                          finally { setBizActionLoading(false); }
+                        }} disabled={bizActionLoading} style={{ padding: '12px 20px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          {bizActionLoading ? '...' : '+ Th\u00eam NV'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {bizEmployees.map(emp => (
+                        <div key={emp.id} className="widget" style={{ padding: '15px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                          <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
+                            {emp.avatar_url ? <img src={emp.avatar_url} alt={emp.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👤'}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: '700', marginBottom: '2px' }}>{emp.name}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                              {emp.age && <span>🎂 {emp.age} tu\u1ed5i</span>}
+                              {emp.salary && <span>💰 {formatCurrency(emp.salary)}</span>}
+                              <span style={{ fontFamily: 'monospace', background: 'var(--color-bg)', padding: '1px 6px', borderRadius: '6px' }}>#{emp.employee_code} | {emp.username || (bizData.business_code + emp.employee_code)}</span>
+                            </div>
+                          </div>
+                          <button onClick={async () => {
+                            if (!window.confirm('X\u00f3a nh\u00e2n vi\u00ean ' + emp.name + '?')) return;
+                            await fetch('/api/business/employees/' + emp.id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+                            setBizEmployees(prev => prev.filter(x => x.id !== emp.id));
+                          }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-expense)' }}><Trash2 size={18} /></button>
+                        </div>
+                      ))}
+                      {bizEmployees.length === 0 && <div style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-secondary)' }}>Ch\u01b0a c\u00f3 nh\u00e2n vi\u00ean n\u00e0o</div>}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
-
         {activeTab === 'settings' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
             <div style={{ marginBottom: '20px' }}>
