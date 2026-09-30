@@ -25,7 +25,9 @@ const safeJsonParse = (str, fallback) => {
   }
 };
 
-const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
+const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
