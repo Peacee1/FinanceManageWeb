@@ -6,11 +6,35 @@ const getTransactions = async (req, res) => {
   const { month, year } = req.query; // Tùy chọn lọc theo tháng/năm
 
   try {
-    let query = 'SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC';
+    let query = `
+      SELECT t.* 
+      FROM transactions t
+      WHERE t.user_id = $1 
+         OR t.user_id IN (
+           SELECT e.user_id 
+           FROM employees e 
+           JOIN businesses b ON e.business_id = b.id 
+           WHERE b.owner_id = $1 AND e.user_id IS NOT NULL
+         )
+      ORDER BY t.date DESC
+    `;
     let params = [userId];
 
     if (month && year) {
-      query = `SELECT * FROM transactions WHERE user_id = $1 AND EXTRACT(MONTH FROM date) = $2 AND EXTRACT(YEAR FROM date) = $3 ORDER BY date DESC`;
+      query = `
+        SELECT t.* 
+        FROM transactions t
+        WHERE (t.user_id = $1 
+           OR t.user_id IN (
+             SELECT e.user_id 
+             FROM employees e 
+             JOIN businesses b ON e.business_id = b.id 
+             WHERE b.owner_id = $1 AND e.user_id IS NOT NULL
+           ))
+          AND EXTRACT(MONTH FROM t.date) = $2 
+          AND EXTRACT(YEAR FROM t.date) = $3 
+        ORDER BY t.date DESC
+      `;
       params = [userId, month, year];
     }
 
