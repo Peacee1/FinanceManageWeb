@@ -38,6 +38,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [businessModel, setBusinessModel] = useState('Quán cafe');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Goals State
@@ -666,6 +667,17 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     if (plan === 'plus') return <div className="pro-badge">⭐ Plus</div>;
     return <div className="pro-badge" style={{background: '#F3F4F6', color: '#4B5563', borderColor: '#E5E7EB'}}>Normal</div>;
   };
+  const chartData = [];
+  for (let i = 1; i <= new Date(currentYear, currentMonth + 1, 0).getDate(); i+= 5) {
+    const incTx = currentMonthTx.filter(t => t.type === 'INCOME' && new Date(t.date).getDate() >= i && new Date(t.date).getDate() < i+5);
+    const expTx = currentMonthTx.filter(t => t.type === 'EXPENSE' && new Date(t.date).getDate() >= i && new Date(t.date).getDate() < i+5);
+    chartData.push({ 
+      date: `${i}/${currentMonth + 1}`, 
+      income: incTx.reduce((sum, t) => sum + parseInt(t.amount), 0),
+      expense: expTx.reduce((sum, t) => sum + parseInt(t.amount), 0)
+    });
+  }
+
 
   return (
     <div className="layout">
@@ -2098,12 +2110,30 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
         {activeTab === 'business' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Doanh nghiệp</h2>
-                <span style={{ background: '#DBEAFE', color: '#1D4ED8', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>Beta</span>
+            <div style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                  <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Doanh nghiệp</h2>
+                  <span style={{ background: '#DBEAFE', color: '#1D4ED8', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>Beta</span>
+                </div>
+                <p style={{ color: 'var(--color-text-secondary)' }}>Bộ công cụ quản lý dòng tiền và tối ưu thuế dành cho Freelancer, Chủ Shop, Doanh nghiệp nhỏ</p>
               </div>
-              <p style={{ color: 'var(--color-text-secondary)' }}>Bộ công cụ quản lý dòng tiền và tối ưu thuế dành cho Freelancer, Chủ Shop, Doanh nghiệp nhỏ</p>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{ fontWeight: '600' }}>Mô hình kinh doanh:</label>
+                <select 
+                  value={businessModel}
+                  onChange={(e) => setBusinessModel(e.target.value)}
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-card)', fontWeight: '600', color: 'var(--color-text)' }}
+                >
+                  <option value="Quán cafe">Quán cafe</option>
+                  <option value="Quán net">Quán net</option>
+                  <option value="Quán bi a">Quán bi a</option>
+                  <option value="Quán ăn">Quán ăn</option>
+                  <option value="Doanh nghiệp nhỏ (10-20 nhân sự)">Doanh nghiệp nhỏ (10-20 nhân sự)</option>
+                  <option value="Doanh nghiệp vừa (20-100 nhân sự)">Doanh nghiệp vừa (20-100 nhân sự)</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid-responsive-3" style={{ gap: '20px', marginBottom: '20px' }}>
