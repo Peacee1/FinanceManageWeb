@@ -267,6 +267,20 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     }
   };
 
+  const handleDeleteCategory = async (catToDelete) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xoá danh mục "${catToDelete.name}"?`)) return;
+    
+    const updatedCategories = (profileData.custom_categories || []).filter(c => !(c.name === catToDelete.name && c.type === catToDelete.type));
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/users/update-categories', { categories: updatedCategories }, { headers: { Authorization: `Bearer ${token}` } });
+      setProfileData({ ...profileData, custom_categories: updatedCategories });
+    } catch (error) {
+      alert('Lỗi xoá danh mục');
+    }
+  };
+
   useEffect(() => {
     fetchTransactions();
     fetchProfile();
@@ -1817,6 +1831,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: cat.color }}></div>
                         <span style={{ fontWeight: '600' }}>{cat.name}</span>
                       </div>
+                      <button 
+                        onClick={() => handleDeleteCategory(cat)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-expense)', padding: '5px' }}
+                        title="Xoá danh mục"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1832,6 +1853,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: cat.color }}></div>
                         <span style={{ fontWeight: '600' }}>{cat.name}</span>
                       </div>
+                      <button 
+                        onClick={() => handleDeleteCategory(cat)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-expense)', padding: '5px' }}
+                        title="Xoá danh mục"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
