@@ -7,7 +7,7 @@ import {
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift,
-  Edit2, Trash2, Menu, X, Sun, Moon
+  Edit2, Trash2, Menu, X, Sun, Moon, Palette, Briefcase, Building2, Zap, Smartphone, Sliders
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -693,6 +693,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <li className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => { setActiveTab('goals'); setIsSidebarOpen(false); }}><Target size={20}/> Mục tiêu</li>
           <li className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }}><Tags size={20}/> Danh mục</li>
           <li className="nav-item" onClick={() => { setIsProfileOpen(true); setIsSidebarOpen(false); }}><User size={20}/> Tài khoản</li>
+          <li className={`nav-item ${activeTab === 'personalization' ? 'active' : ''}`} onClick={() => { setActiveTab('personalization'); setIsSidebarOpen(false); }}><Palette size={20}/> Cá nhân hóa</li>
+          <li className={`nav-item ${activeTab === 'business' ? 'active' : ''}`} onClick={() => { setActiveTab('business'); setIsSidebarOpen(false); }}><Building2 size={20}/> Doanh nghiệp</li>
           <li className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}><Settings size={20}/> Cài đặt</li>
         </ul>
 
@@ -1993,6 +1995,218 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'personalization' && (
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Cá nhân hóa</h2>
+              <p style={{ color: 'var(--color-text-secondary)' }}>Tùy chỉnh giao diện và trải nghiệm của ứng dụng theo ý thích</p>
+            </div>
+            
+            <div className="grid-responsive-2-1" style={{ gap: '20px' }}>
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Palette size={20} color="var(--color-primary)"/> Giao diện & Màu sắc</h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <label style={{ fontWeight: '600', display: 'block', marginBottom: '10px' }}>Chế độ hiển thị</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                      <div style={{ border: '2px solid var(--color-primary)', background: 'var(--color-bg)', padding: '15px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer' }}>
+                        <Moon size={24} style={{ margin: '0 auto 10px auto' }} color="var(--color-primary)" />
+                        <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Tối (Mặc định)</span>
+                      </div>
+                      <div style={{ border: '1px solid var(--color-border)', background: '#F8FAFC', padding: '15px', borderRadius: '12px', textAlign: 'center', cursor: 'not-allowed', opacity: 0.5 }}>
+                        <Sun size={24} style={{ margin: '0 auto 10px auto', color: '#1E293B' }} />
+                        <span style={{ fontWeight: '600', fontSize: '0.9rem', color: '#1E293B' }}>Sáng</span>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '5px' }}>Sắp ra mắt</div>
+                      </div>
+                      <div style={{ border: '1px solid var(--color-border)', background: 'var(--color-bg)', padding: '15px', borderRadius: '12px', textAlign: 'center', cursor: 'not-allowed', opacity: 0.5 }}>
+                        <Smartphone size={24} style={{ margin: '0 auto 10px auto', color: 'var(--color-text-secondary)' }} />
+                        <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Hệ thống</span>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '5px' }}>Sắp ra mắt</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontWeight: '600', display: 'block', marginBottom: '10px' }}>Màu chủ đạo (Accent Color)</label>
+                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#7C3AED', border: '3px solid white', outline: '2px solid #7C3AED', cursor: 'pointer' }}></div>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#F472B6', cursor: 'pointer', opacity: 0.7 }}></div>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#34D399', cursor: 'pointer', opacity: 0.7 }}></div>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#3B82F6', cursor: 'pointer', opacity: 0.7 }}></div>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#F59E0B', cursor: 'pointer', opacity: 0.7 }}></div>
+                    </div>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>* Tính năng đổi màu tùy chỉnh yêu cầu gói Plus trở lên.</p>
+                  </div>
+                  
+                  <div>
+                    <label style={{ fontWeight: '600', display: 'block', marginBottom: '10px' }}>Bố cục bảng điều khiển (Dashboard)</label>
+                    <div className="input-group">
+                      <select style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', outline: 'none' }}>
+                        <option>Mặc định (Tổng quan - Biểu đồ - Thu chi)</option>
+                        <option>Ưu tiên Lịch sử giao dịch</option>
+                        <option>Ưu tiên Biểu đồ phân tích</option>
+                        <option>Chỉ hiển thị cơ bản</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="widget">
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><Sliders size={20} color="var(--color-primary)"/> Tùy chỉnh thông báo</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: '600' }}>Nhắc nhở nhập liệu</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Gửi thông báo vào lúc 20:00 hằng ngày</div>
+                      </div>
+                      <input type="checkbox" defaultChecked style={{ width: 20, height: 20, accentColor: 'var(--color-primary)' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: '600' }}>Cảnh báo ngân sách</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Khi chi tiêu vượt quá 80% ngân sách</div>
+                      </div>
+                      <input type="checkbox" defaultChecked style={{ width: 20, height: 20, accentColor: 'var(--color-primary)' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: '600' }}>Báo cáo tuần/tháng</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Gửi email tóm tắt vào cuối kỳ</div>
+                      </div>
+                      <input type="checkbox" defaultChecked style={{ width: 20, height: 20, accentColor: 'var(--color-primary)' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="widget" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', border: '1px solid rgba(124,58,237,0.3)' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '10px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Crown size={20} /> Widget tùy chỉnh</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '15px', lineHeight: '1.5' }}>
+                    Người dùng Plus và Ultra có thể kéo thả, sắp xếp lại các widget và chọn ra những chỉ số quan trọng nhất hiển thị trên Dashboard.
+                  </p>
+                  <button className="btn-primary" onClick={() => setIsProfileOpen(true)} style={{ width: '100%', padding: '10px', borderRadius: '12px', fontSize: '0.9rem' }}>Nâng cấp để mở khóa</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'business' && (
+          <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Doanh nghiệp</h2>
+                <span style={{ background: '#DBEAFE', color: '#1D4ED8', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>Beta</span>
+              </div>
+              <p style={{ color: 'var(--color-text-secondary)' }}>Bộ công cụ quản lý dòng tiền và tối ưu thuế dành cho Freelancer, Chủ Shop, Doanh nghiệp nhỏ</p>
+            </div>
+
+            <div className="grid-responsive-3" style={{ gap: '20px', marginBottom: '20px' }}>
+              <div className="widget" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div className="stat-icon" style={{background: 'rgba(52, 211, 153, 0.1)'}}><Building2 color="#34D399" size={24}/></div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-income)', fontWeight: 'bold', background: 'rgba(52,211,153,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Tháng này</span>
+                </div>
+                <div className="stat-title">Doanh thu thuần</div>
+                <h3 className="stat-amount" style={{fontSize: '1.6rem'}}>{formatCurrency(totalIncome)}</h3>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>Đã trừ hoàn trả và giảm giá</div>
+              </div>
+              <div className="widget" style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div className="stat-icon" style={{background: 'rgba(251, 113, 133, 0.1)'}}><Zap color="#FB7185" size={24}/></div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-expense)', fontWeight: 'bold', background: 'rgba(251,113,133,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Tháng này</span>
+                </div>
+                <div className="stat-title">Chi phí vận hành (OPEX)</div>
+                <h3 className="stat-amount" style={{fontSize: '1.6rem', color: 'var(--color-expense)'}}>{formatCurrency(totalExpense)}</h3>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>Bao gồm: Lương, Mặt bằng, Marketing</div>
+              </div>
+              <div className="widget" style={{ padding: '20px', background: 'linear-gradient(135deg, rgba(52,211,153,0.1), rgba(16,185,129,0.2))', border: '1px solid rgba(52,211,153,0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div className="stat-icon" style={{background: 'var(--color-card)'}}><FileDown color="#10B981" size={24}/></div>
+                </div>
+                <div className="stat-title" style={{ color: '#047857', fontWeight: 'bold' }}>Lợi nhuận gộp</div>
+                <h3 className="stat-amount" style={{fontSize: '1.8rem', color: '#047857'}}>{formatCurrency(totalIncome - totalExpense)}</h3>
+                <div style={{ fontSize: '0.85rem', color: '#047857', marginTop: '10px', fontWeight: '600' }}>Biên lợi nhuận: {totalIncome > 0 ? Math.round(((totalIncome - totalExpense) / totalIncome) * 100) : 0}%</div>
+              </div>
+            </div>
+
+            <div className="grid-responsive-2-1" style={{ gap: '20px', marginBottom: '20px' }}>
+              <div className="widget">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px' }}>Phân tích Dòng tiền (Cash Flow)</h3>
+                <div style={{ height: 300 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorIn" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#34D399" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#34D399" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorOut" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#FB7185" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#FB7185" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                      <XAxis dataKey="date" tick={{fontSize: 12, fill: '#716B7A'}} axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={formatCompact} tick={{fontSize: 12, fill: '#716B7A'}} axisLine={false} tickLine={false} />
+                      <RechartsTooltip 
+                        contentStyle={{background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: '12px'}}
+                        formatter={(value) => formatCurrency(value)}
+                      />
+                      <Area type="monotone" dataKey="income" name="Dòng tiền vào" stroke="#34D399" strokeWidth={3} fillOpacity={1} fill="url(#colorIn)" />
+                      <Area type="monotone" dataKey="expense" name="Dòng tiền ra" stroke="#FB7185" strokeWidth={3} fillOpacity={1} fill="url(#colorOut)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="widget" style={{ padding: '20px' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Ước tính Thuế TNDN / TNCN</h3>
+                  <div style={{ background: 'var(--color-bg)', padding: '15px', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Lợi nhuận tạm tính</span>
+                      <span style={{ fontWeight: '600' }}>{formatCurrency(totalIncome - totalExpense)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', borderBottom: '1px dashed var(--color-border)', paddingBottom: '10px' }}>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>Tỷ lệ thuế (ước tính)</span>
+                      <span style={{ fontWeight: '600' }}>1.5% - 10%</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontWeight: '700', color: '#F59E0B' }}>Dự phòng Thuế</span>
+                      <span style={{ fontWeight: '700', color: '#F59E0B' }}>~ {formatCurrency(Math.max(0, (totalIncome - totalExpense) * 0.05))}</span>
+                    </div>
+                  </div>
+                  <button style={{ width: '100%', marginTop: '15px', padding: '10px', background: 'transparent', border: '1px dashed var(--color-primary)', color: 'var(--color-primary)', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Chi tiết hồ sơ Thuế</button>
+                </div>
+
+                <div className="widget" style={{ padding: '20px' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Quản lý Hóa đơn & Chứng từ</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}>
+                      <Plus size={18} /> Tạo Hóa đơn mới (Invoice)
+                    </button>
+                    <button style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}>
+                      <FileDown size={18} /> Xuất dữ liệu kế toán (Excel)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {(!profileData?.plan || profileData?.plan === 'normal') && (
+              <div className="widget" style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', border: 'none', textAlign: 'center', padding: '40px 20px' }}>
+                <Crown size={40} color="#FBBF24" style={{ margin: '0 auto 15px auto' }} />
+                <h2 style={{ color: 'white', marginBottom: '10px' }}>Mở khóa Bộ công cụ Doanh nghiệp Toàn diện</h2>
+                <p style={{ color: '#A5B4FC', maxWidth: '600px', margin: '0 auto 20px auto', lineHeight: '1.6' }}>Nâng cấp lên gói Ultra để trải nghiệm Báo cáo đa tiền tệ, Theo dõi công nợ khách hàng (Accounts Receivable), Quản lý kho, và Đồng bộ dữ liệu hóa đơn điện tử.</p>
+                <button className="btn-primary" onClick={() => setIsProfileOpen(true)} style={{ padding: '12px 30px', fontSize: '1.1rem', borderRadius: '30px' }}>Nâng cấp Ultra ngay</button>
+              </div>
+            )}
           </div>
         )}
 
