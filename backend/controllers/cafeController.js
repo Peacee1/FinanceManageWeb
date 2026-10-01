@@ -3,10 +3,10 @@ const { randomUUID } = require('crypto');
 const { vietnamDate } = require('../utils/businessDate');
 const { calculateTableFee } = require('../utils/tableBilling');
 const { transactionScope } = require('../utils/transactionScope');
-const { isPositiveInteger } = require('../utils/validation');
+const { isPositiveInteger, isDate } = require('../utils/validation');
 const failure = (status, message) => Object.assign(new Error(message), { status });
 const isCafe = model => typeof model === 'string' && model.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() === 'quan cafe';
-const columns = 'id, name, is_occupied, version, updated_at, surcharge_enabled, hourly_rate, billing_unit, current_session_id';
+const columns = 'id, name, is_occupied, version, updated_at, surcharge_enabled, hourly_rate, billing_unit, current_session_id, occupied_since';
 const validVersion = version => Number.isSafeInteger(version) && version >= 0 && version < 2147483647;
 const validBilling = body => (body.surchargeEnabled === undefined || typeof body.surchargeEnabled === 'boolean') && (body.hourlyRate === undefined || (isPositiveInteger(body.hourlyRate) && Number(body.hourlyRate) <= 1000000000)) && (body.billingUnit === undefined || ['MINUTE', 'HOUR'].includes(body.billingUnit));
 
@@ -132,4 +132,19 @@ async function payTable(req, res, next) {
     res.json(result);
   } catch (error) { respondError(error, res, next); }
 }
-module.exports = { getContext, listTables, createTable, setOccupancy, editTable, quoteTable, payTable };
+async function tableHistory(req,res,next) {
+  const day = req.query.date || vietnamDate();
+  if (!isPositiveInteger(req.params.id) || !isDate(day) || (req.query.cursor && !isPositiveInteger(req.query.cursor))) return res.status(400).json({ message: 'Ngày hoặc bàn không hợp lệ.' });
+  try {
+    const business = await context(req,true);
+    const table = (await db.query(`SELECT ${columns} FROM cafe_tables WHERE id=$1 AND business_id=$2 AND deleted_at IS NULL`,[req.params.id,business.id])).rows[0];
+    if (!table) throw failure(404,'Không tìm thấy bàn trong quán.');
+    const rows = (await db.query(`SELECT id,started_at,closed_at,start_estimated FROM cafe_occupancy_history WHERE business_id=$1 AND table_id=$2
+      AND started_at < (($3::date+1)::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh')
+      AND (closed_at IS NULL OR closed_at > ($3::date::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh'))
+      AND ($4::bigint IS NULL OR id<$4) ORDER BY id DESC LIMIT 51`,[business.id,table.id,day,req.query.cursor || null])).rows;
+    const history = rows.slice(0,50);
+    res.json({ table,date:day,history,nextCursor:rows.length>50 ? history.at(-1).id : null });
+  } catch (error) { respondError(error,res,next); }
+}
+module.exports = { getContext, listTables, createTable, setOccupancy, editTable, quoteTable, payTable, tableHistory };

@@ -1,9 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import './CafeOverview.css';
+import TableHistory from './TableHistory';
 
 export const isCafeModel = model => typeof model === 'string' && model.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() === 'quan cafe';
 const money = amount => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+const elapsedTime = (startedAt,now) => {
+  const seconds=Math.max(0,Math.floor((now-new Date(startedAt).getTime())/1000));
+  return `${String(Math.floor(seconds/3600)).padStart(2,'0')}:${String(Math.floor(seconds/60)%60).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
+};
 function BillingFields({ value, onChange, disabled, prefix }) {
   return <div className="cafe-billing-fields">
     <label><input type="checkbox" checked={value.surchargeEnabled} disabled={disabled} onChange={event => onChange({ ...value, surchargeEnabled: event.target.checked })} /> Phụ thu theo giờ</label>
@@ -25,6 +30,9 @@ export default function CafeOverview({ user, businessId }) {
   const [billing, setBilling] = useState({ surchargeEnabled: false, hourlyRate: 5000, billingUnit: 'HOUR' });
   const [quote, setQuote] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [selectedTable,setSelectedTable] = useState(null);
+  const [now,setNow] = useState(Date.now());
+  useEffect(() => { const timer=setInterval(() => { if (!document.hidden) setNow(Date.now()); },1000); return () => clearInterval(timer); },[]);
   const requestSequence = useRef(0);
   const busy = useRef(false);
   const owner = user?.role === 'owner';
@@ -97,8 +105,9 @@ export default function CafeOverview({ user, businessId }) {
     <p className="cafe-hint">Trạng thái được dùng chung cho chủ quán và nhân viên. Tự cập nhật mỗi 15 giây khi mở tab này.</p>
     {user?.role === 'employee' && <p className="cafe-hint">Khoản phụ thu đã thu tiền xuất hiện trong mục Gửi thu / chi. Doanh thu chỉ được tính sau khi khoản thu được duyệt.</p>}
     {loading ? <p role="status">Đang tải bàn…</p> : tables.length === 0 ? <p>{owner ? 'Chưa có bàn. Nhập tên bàn để bắt đầu.' : 'Chủ quán chưa tạo bàn.'}</p> : <div className="cafe-grid">
-      {tables.map(table => <article key={table.id} className={`cafe-table ${table.is_occupied ? 'occupied' : ''}`}>
-        <h3>{table.name}</h3><p className="cafe-status">{table.is_occupied ? '● Có khách' : '○ Còn trống'}</p>
+      {tables.map(table => <article key={table.id} className={`cafe-table ${table.is_occupied ? 'occupied' : ''}`} onClick={event => { if (!event.target.closest('button,input,select,form,label,a')) setSelectedTable(table.id); }}>
+        <h3><button type="button" className="cafe-detail-button" onClick={() => setSelectedTable(table.id)} aria-label={`Xem trạng thái và lịch sử ${table.name}`}>{table.name}</button></h3><p className="cafe-status">{table.is_occupied ? '● Có khách' : '○ Còn trống'}</p>
+        {table.current_session_id && table.occupied_since && <p className="cafe-elapsed">Đã mở: <strong>{elapsedTime(table.occupied_since,now)}</strong></p>}
         <p>{table.surcharge_enabled ? `${money(table.hourly_rate)}/giờ · ${table.billing_unit === 'HOUR' ? 'Làm tròn theo giờ' : 'Theo phút'}` : 'Không phụ thu'}{table.current_session_id && <><br />Phiên hiện tại phải thanh toán trước khi đóng.</>}</p>
         {owner && (editing?.id === table.id ? <form className="cafe-create" onSubmit={event => { event.preventDefault(); mutate(table.id, () => axios.put(`/api/business/tables/${table.id}`, { ...editing }, config())); }}>
           <label htmlFor={`table-name-${table.id}`}>Tên bàn<input id={`table-name-${table.id}`} value={editing.name} required maxLength={50} disabled={pending !== null} onChange={event => setEditing({ ...editing, name: event.target.value })} /></label>
@@ -113,5 +122,6 @@ export default function CafeOverview({ user, businessId }) {
         <button className="btn-primary" disabled={pending !== null} aria-label={`${table.name}: ${table.current_session_id ? 'thanh toán và đóng bàn' : table.is_occupied ? 'đánh dấu còn trống' : 'đánh dấu có khách'}`} onClick={() => table.current_session_id ? fetchQuote(table) : mutate(table.id, () => axios.patch(`/api/business/tables/${table.id}/occupancy`, { isOccupied: !table.is_occupied, version: table.version }, config()))}>{pending === table.id ? 'Đang lưu…' : table.current_session_id ? 'Thanh toán và đóng bàn' : table.is_occupied ? 'Đánh dấu còn trống' : 'Đánh dấu có khách'}</button>
       </article>)}
     </div>}
+    {selectedTable && <TableHistory tableId={selectedTable} businessId={businessId} onClose={() => setSelectedTable(null)} />}
   </section>;
 }
