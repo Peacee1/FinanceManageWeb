@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Mail, Lock, PawPrint, ArrowRight, User, Building2, Key } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, PawPrint, ArrowRight, User, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -108,7 +108,7 @@ const Login = () => {
               <PawPrint size={32} color="var(--color-primary)" />
             </div>
             <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--color-text)', margin: '0 0 8px 0' }}>
-              {mustChangePassword ? 'Đặt mật khẩu mới' : 'Peacee1 - Đăng Nhập'}
+              {mustChangePassword ? 'Đặt mật khẩu mới' : (loginType === 'employee' ? 'Đăng nhập nhân viên' : 'Peacee1 - Đăng Nhập')}
             </h2>
             <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', margin: 0 }}>
               {mustChangePassword 
@@ -116,40 +116,6 @@ const Login = () => {
                 : 'Quản lý chi tiêu thông minh • Cùng bạn xây dựng cuộc sống tốt hơn'}
             </p>
           </div>
-
-          {/* Tab chọn loại đăng nhập */}
-          {!mustChangePassword && (
-            <div style={{ display: 'flex', background: 'var(--color-bg)', borderRadius: '14px', padding: '5px', marginBottom: '25px', gap: '5px' }}>
-              <button
-                type="button"
-                onClick={() => { setLoginType('owner'); setIdentifier(''); setError(''); }}
-                style={{
-                  flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                  background: loginType === 'owner' ? 'white' : 'transparent',
-                  color: loginType === 'owner' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  fontWeight: loginType === 'owner' ? '700' : '500',
-                  boxShadow: loginType === 'owner' ? '0 2px 8px rgba(124,58,237,0.15)' : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s'
-                }}
-              >
-                <User size={16} /> Chủ quán
-              </button>
-              <button
-                type="button"
-                onClick={() => { setLoginType('employee'); setIdentifier(''); setError(''); }}
-                style={{
-                  flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                  background: loginType === 'employee' ? 'white' : 'transparent',
-                  color: loginType === 'employee' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  fontWeight: loginType === 'employee' ? '700' : '500',
-                  boxShadow: loginType === 'employee' ? '0 2px 8px rgba(124,58,237,0.15)' : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s'
-                }}
-              >
-                <Building2 size={16} /> Nhân viên
-              </button>
-            </div>
-          )}
 
           {error && (
             <div style={{ background: 'rgba(251, 113, 133, 0.1)', color: 'var(--color-expense)', padding: '10px', borderRadius: '10px', marginBottom: '20px', textAlign: 'center', fontWeight: '500' }}>
@@ -246,6 +212,11 @@ const Login = () => {
                 <Link to="/register" style={{ color: 'var(--color-primary)', fontWeight: '700', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   Đăng ký ngay <ArrowRight size={16} />
                 </Link>
+              </div>
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <button type="button" disabled={loading} onClick={() => { setLoginType(loginType === 'employee' ? 'owner' : 'employee'); setIdentifier(''); setPassword(''); setShowPassword(false); setError(''); }} style={{ background: 'none', border: 'none', padding: '8px', color: 'var(--color-primary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}>
+                  {loginType === 'employee' ? 'Quay lại đăng nhập bình thường' : 'Đăng nhập với tư cách nhân viên'}
+                </button>
               </div>
             </>
           )}
