@@ -1,3 +1,6 @@
+import { personalPalettes, themedAsset } from '../features/personalization/personalTheme';
+import '../features/personalization/personalTheme.css';
+import PersonalWalletSummary from '../features/transactions/PersonalWalletSummary';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Cropper from 'react-easy-crop';
@@ -27,8 +30,11 @@ const safeJsonParse = (str, fallback) => {
 const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    const preference = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => document.documentElement.setAttribute('data-theme', theme === 'system' ? (preference.matches ? 'dark' : 'light') : theme);
+    apply(); localStorage.setItem('theme', theme);
+    if (theme === 'system') preference.addEventListener('change', apply);
+    return () => preference.removeEventListener('change', apply);
   }, [theme]);
 
   const [transactions, setTransactions] = useState([]);
@@ -36,7 +42,28 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [personalPaymentMethod, setPersonalPaymentMethod] = useState('');
+  const [walletSettingBusy, setWalletSettingBusy] = useState(false);
+  const [walletSettingError, setWalletSettingError] = useState('');
   const [profileData, setProfileData] = useState(null);
+  const [accentBusy, setAccentBusy] = useState(false);
+  const [accentError, setAccentError] = useState('');
+  const personalAccent = profileData?.personal_accent || 'purple';
+  const mascotAsset = name => themedAsset(name, personalAccent);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-personal-accent', personalAccent);
+    return () => document.documentElement.removeAttribute('data-personal-accent');
+  }, [personalAccent]);
+  const changeAccent = async accent => {
+    if (accentBusy || !profileData) return;
+    setAccentBusy(true); setAccentError('');
+    try {
+      await axios.post('/api/users/settings', { personalAccent: accent }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      setProfileData(current => ({ ...current, personal_accent: accent }));
+    } catch (error) { setAccentError(error.response?.data?.message || 'Không thể lưu màu giao diện.'); }
+    finally { setAccentBusy(false); }
+  };
+
   const [activeTab, setActiveTab] = useState('overview');
   const [businessModel, setBusinessModel] = useState('Quán cafe');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -118,7 +145,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [isCheckinOpen, setIsCheckinOpen] = useState(false);
 
   // Category State
-  const [newCategory, setNewCategory] = useState({ name: '', type: 'EXPENSE', color: '#7C3AED' });
+  const [newCategory, setNewCategory] = useState({ name: '', type: 'EXPENSE', color: 'var(--color-primary-ink)' });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   // AI Advisor State
@@ -327,7 +354,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       const token = localStorage.getItem('token');
       await axios.post('/api/users/update-categories', { categories: updatedCategories, isAdding: true }, { headers: { Authorization: `Bearer ${token}` } });
       setProfileData({ ...profileData, custom_categories: updatedCategories, coin: profileData.coin - 100 });
-      setNewCategory({ name: '', type: 'EXPENSE', color: '#7C3AED' });
+      setNewCategory({ name: '', type: 'EXPENSE', color: 'var(--color-primary-ink)' });
       setIsAddingCategory(false);
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi thêm danh mục');
@@ -498,6 +525,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     setAmount(t.amount.toString());
     setDate(new Date(t.date).toISOString().substring(0, 10));
     setDescription(t.description || '');
+    setPersonalPaymentMethod(t.payment_method || '');
     setIsModalOpen(true);
     setSelectedDayInfo(null);
   };
@@ -509,20 +537,21 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       const token = localStorage.getItem('token');
       if (editTxId) {
         await axios.put(`/api/transactions/${editTxId}`, {
-          type, amount: parseInt(amount), category, date, description
+          type, amount: parseInt(amount), category, date, description, ...((profileData?.separate_personal_wallets || (editTxId && personalPaymentMethod)) ? { paymentMethod: personalPaymentMethod } : {})
         }, { headers: { Authorization: `Bearer ${token}` } });
       } else {
         await axios.post('/api/transactions', {
-          type, amount: parseInt(amount), category, date, description
+          type, amount: parseInt(amount), category, date, description, ...((profileData?.separate_personal_wallets || (editTxId && personalPaymentMethod)) ? { paymentMethod: personalPaymentMethod } : {})
         }, { headers: { Authorization: `Bearer ${token}` } });
       }
       setIsModalOpen(false);
       setAmount('');
       setDescription('');
+      setPersonalPaymentMethod('');
       setEditTxId(null);
       fetchTransactions();
     } catch (error) {
-      alert('Có lỗi xảy ra khi lưu giao dịch!');
+      alert(error.response?.data?.message || 'Có lỗi xảy ra khi lưu giao dịch!');
     } finally { setLoading(false); }
   };
 
@@ -616,7 +645,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   const getCategoryColor = (cat) => {
     const colors = { 'Shopping': '#FB7185', 'Ăn uống': '#FBBF24', 'Di chuyển': '#60A5FA', 'Giải trí': '#A78BFA', 'Khác': '#9CA3AF' };
-    return colors[cat] || '#7C3AED';
+    return colors[cat] || 'var(--color-primary)';
   };
 
   const expensesByCategory = currentMonthTx.filter(t => t.type === 'EXPENSE').reduce((acc, t) => {
@@ -682,7 +711,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     let bg = '#F3F4F6';
     if (b !== null) {
       stat = i === 0 ? 'Đang diễn ra' : (spent > b ? 'Vượt ngân sách' : 'Hoàn thành');
-      c = i === 0 ? '#7C3AED' : (spent > b ? '#E11D48' : '#16A34A');
+      c = i === 0 ? 'var(--color-primary)' : (spent > b ? '#E11D48' : '#16A34A');
       bg = i === 0 ? '#F5F3FF' : (spent > b ? '#FFE4E6' : '#DCFCE7');
     }
     
@@ -766,7 +795,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   });
 
   const renderSidebarBadge = (plan) => {
-    if (plan === 'ultra') return <div className="pro-badge" style={{background: '#EDE9FE', color: '#7C3AED', borderColor: '#DDD6FE'}}>💎 Ultra</div>;
+    if (plan === 'ultra') return <div className="pro-badge" style={{background: '#EDE9FE', color: 'var(--color-primary-ink)', borderColor: '#DDD6FE'}}>💎 Ultra</div>;
     if (plan === 'plus') return <div className="pro-badge">⭐ Plus</div>;
     return <div className="pro-badge" style={{background: '#F3F4F6', color: '#4B5563', borderColor: '#E5E7EB'}}>Normal</div>;
   };
@@ -791,7 +820,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-text" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-            <img src="/wallet_logo.png" alt="Logo" style={{height: '32px'}} />
+            <img src={mascotAsset('wallet_logo')} alt="Logo" style={{height: '32px'}} />
             Peacee1
           </div>
           {renderSidebarBadge(user.plan)}
@@ -799,7 +828,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         
         <ul className="nav-menu">
           <li className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => { setActiveTab('overview'); setIsSidebarOpen(false); }}><LayoutDashboard size={20}/> Tổng quan</li>
-          <li className="nav-item" onClick={() => { setIsCheckinOpen(true); setIsSidebarOpen(false); }} style={{ background: 'linear-gradient(90deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', color: '#7C3AED', fontWeight: 'bold', borderLeft: '4px solid #7C3AED' }}>
+          <li className="nav-item" onClick={() => { setIsCheckinOpen(true); setIsSidebarOpen(false); }} style={{ background: 'linear-gradient(90deg, rgba(var(--color-primary-rgb), 0.1), rgba(244,114,182,0.1))', color: 'var(--color-primary-ink)', fontWeight: 'bold', borderLeft: '4px solid var(--color-primary)' }}>
             <Gift size={20} color="#F472B6" /> Điểm danh nhận quà
           </li>
           <li className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => { setActiveTab('transactions'); setIsSidebarOpen(false); }}><CircleDollarSign size={20}/> Thu chi</li>
@@ -814,7 +843,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         </ul>
 
         <div className="promo-card">
-          <img src="/cat_mascot.png" alt="Cat" className="promo-img" style={{width: 80}}/>
+          <img src={mascotAsset('cat_mascot')} alt="Cat" className="promo-img" style={{width: 80}}/>
           <h4 style={{fontSize: '1rem'}}>Cùng kiểm soát chi tiêu tốt hơn!</h4>
           <p>Nâng cấp để mở khóa thêm nhiều tính năng</p>
           <button className="btn-promo" onClick={() => setIsProfileOpen(true)}>Nâng cấp Pro</button>
@@ -858,7 +887,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               {avatarSrc ? (
                 <img src={avatarSrc} alt="Avatar" style={{width: 32, height: 32, borderRadius: '50%', objectFit: 'cover'}}/>
               ) : (
-                <div style={{width: 32, height: 32, borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{user.name.charAt(0)}</div>
+                <div style={{width: 32, height: 32, borderRadius: '50%', background: 'var(--color-primary)', color: 'var(--color-on-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{user.name.charAt(0)}</div>
               )}
               <span>{user.name.split(' ')[user.name.split(' ').length - 1]}</span>
               <ChevronRight size={16} style={{transform: 'rotate(90deg)'}}/>
@@ -875,6 +904,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
         {activeTab === 'overview' && (
           <div className="dashboard-scroll">
+            {profileData?.separate_personal_wallets && <PersonalWalletSummary transactions={currentMonthTx} formatCurrency={formatCurrency} />}
           {/* AI Advisor Banner */}
           {(() => {
             const isPro = user.plan === 'plus' || user.plan === 'ultra';
@@ -886,13 +916,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   padding: '0',
                   borderRadius: '20px',
                   background: isPro
-                    ? 'linear-gradient(135deg, #7C3AED 0%, #F472B6 100%)'
+                    ? 'linear-gradient(135deg, var(--color-primary) 0%, #F472B6 100%)'
                     : 'linear-gradient(135deg, #4B5563 0%, #374151 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   cursor: 'pointer',
-                  boxShadow: isPro ? '0 4px 20px rgba(124,58,237,0.35)' : '0 4px 12px rgba(0,0,0,0.2)',
+                  boxShadow: isPro ? '0 4px 20px rgba(var(--color-primary-rgb), 0.35)' : '0 4px 12px rgba(0,0,0,0.2)',
                   transition: 'transform 0.2s, box-shadow 0.2s',
                   overflow: 'hidden',
                   minHeight: '90px',
@@ -902,7 +932,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               >
                 {/* Cat mascot */}
                 <img
-                  src="/cat_ai_mascot.png"
+                  src={mascotAsset('cat_ai_mascot')}
                   alt="AI Cat"
                   style={{ width: 90, height: 90, objectFit: 'contain', flexShrink: 0, marginLeft: '8px' }}
                 />
@@ -928,8 +958,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div className="cards-row">
             <div className="stat-card">
               <div className="stat-header">
-                <div className="stat-icon" style={{background: 'rgba(124, 58, 237, 0.1)'}}>
-                  <WalletCards color="var(--color-primary)" size={24}/>
+                <div className="stat-icon" style={{background: 'rgba(var(--color-primary-rgb), 0.1)'}}>
+                  <WalletCards color="var(--color-primary-ink)" size={24}/>
                 </div>
                 <div className="stat-badge" style={{background: 'rgba(251, 113, 133, 0.1)', color: 'var(--color-expense)'}}>
                   ↘ 100%
@@ -979,7 +1009,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <div className="stat-icon" style={{background: 'rgba(245, 158, 11, 0.1)'}}>
                   <Target color="#F59E0B" size={24}/>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', zIndex: 2 }}>
+                <button onClick={(e) => { e.stopPropagation(); setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ position: 'absolute', top: '12px', right: '12px', background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', color: 'var(--color-primary-ink)', fontWeight: '600', cursor: 'pointer', zIndex: 2 }}>
                   ✏️ Sửa
                 </button>
               </div>
@@ -1038,7 +1068,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.isToday ? 'today' : ''} ${isSelectedDate ? 'active' : ''}`} 
                          onClick={() => !day.muted && setSelectedDayInfo(day)}
                          style={{ position: 'relative', cursor: day.muted ? 'not-allowed' : 'pointer', border: isSelectedDate ? '2px solid var(--color-primary)' : '' }}>
-                      <div className="cal-date" style={{background: isSelectedDate ? 'var(--color-primary)' : '', color: isSelectedDate ? 'white' : ''}}>{day.date}</div>
+                      <div className="cal-date" style={{background: isSelectedDate ? 'var(--color-primary)' : '', color: isSelectedDate ? 'var(--color-on-primary)' : ''}}>{day.date}</div>
                       {(() => {
                         const allTxs = [...day.incomes, ...day.expenses];
                         return (
@@ -1049,7 +1079,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                               </div>
                             ))}
                             {allTxs.length > 4 && (
-                              <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.7rem', fontWeight: '700', color: 'var(--color-primary)', background: '#F3E8FF', padding: '2px 5px', borderRadius: '8px' }}>
+                              <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.7rem', fontWeight: '700', color: 'var(--color-primary-ink)', background: '#F3E8FF', padding: '2px 5px', borderRadius: '8px' }}>
                                 +{allTxs.length - 4}
                               </div>
                             )}
@@ -1077,7 +1107,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         </div>
                         <div className="tx-info">
                           <h5>{t.category}</h5>
-                          <p>{t.description || (t.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu')}</p>
+                          <p>{t.description || (t.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu')}</p>{profileData?.separate_personal_wallets && <small>{t.payment_method === 'CASH' ? 'Tiền mặt' : t.payment_method === 'TRANSFER' ? 'Tiền tài khoản' : 'Chưa phân loại'}</small>}
                         </div>
                       </div>
                       <div style={{display: 'flex', alignItems: 'center', gap: '40px'}}>
@@ -1173,7 +1203,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <div className="widget">
                 <div className="widget-header">
                   <h3 className="widget-title">Giới hạn chi tiêu tháng</h3>
-                  <button onClick={() => { setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '4px 10px', fontSize: '0.78rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <button onClick={() => { setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '4px 10px', fontSize: '0.78rem', color: 'var(--color-primary-ink)', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     ✏️ Sửa
                   </button>
                 </div>
@@ -1187,7 +1217,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
                 <div className="progress-container" style={{height: 10}}>
-                  <div className="progress-bar" style={{background: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : '#7C3AED', width: `${monthlyBudget ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0}%`}}></div>
+                  <div className="progress-bar" style={{background: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : 'var(--color-primary)', width: `${monthlyBudget ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0}%`}}></div>
                 </div>
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginTop: '5px', color: 'var(--color-text-secondary)'}}>
                   <span>Đã chi {formatCompact(totalExpense)}</span>
@@ -1201,7 +1231,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               {isMobile && !isQAMobileOpen && (
                 <button 
                   onClick={() => setIsQAMobileOpen(true)}
-                  style={{ position: 'fixed', bottom: 20, right: 20, width: 56, height: 56, borderRadius: '28px', background: 'var(--color-primary)', color: 'white', border: 'none', boxShadow: '0 4px 12px rgba(124,58,237,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  style={{ position: 'fixed', bottom: 20, right: 20, width: 56, height: 56, borderRadius: '28px', background: 'var(--color-primary)', color: 'var(--color-on-primary)', border: 'none', boxShadow: '0 4px 12px rgba(var(--color-primary-rgb), 0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 >
                   <Plus size={24} />
                 </button>
@@ -1237,7 +1267,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   width: '340px', 
                   zIndex: 1000, 
                   boxShadow: isDraggingQA ? '0 20px 40px rgba(0,0,0,0.2)' : '0 12px 36px rgba(0,0,0,0.12)', 
-                  border: '1px solid rgba(124,58,237,0.1)', 
+                  border: '1px solid rgba(var(--color-primary-rgb), 0.1)',
                   background: 'var(--color-card)',
                   cursor: isDraggingQA ? 'grabbing' : 'grab',
                   transition: isDraggingQA ? 'none' : 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
@@ -1258,13 +1288,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
                 <div className="quick-actions grid-responsive-1-1" style={{gap: '10px'}}>
-                  <button className="btn-quick" style={{background: 'rgba(5,150,105,0.12)', color: 'var(--color-income)', padding: '12px 8px'}} onClick={() => {setType('INCOME'); setIsModalOpen(true);}}>
+                  <button className="btn-quick" style={{background: 'rgba(5,150,105,0.12)', color: 'var(--color-income)', padding: '12px 8px'}} onClick={() => {setType('INCOME'); setPersonalPaymentMethod(''); setIsModalOpen(true);}}>
                     <Plus size={16}/> Thêm khoản thu
                   </button>
-                  <button className="btn-quick" style={{background: 'rgba(225,29,72,0.1)', color: 'var(--color-expense)', padding: '12px 8px'}} onClick={() => {setType('EXPENSE'); setIsModalOpen(true);}}>
+                  <button className="btn-quick" style={{background: 'rgba(225,29,72,0.1)', color: 'var(--color-expense)', padding: '12px 8px'}} onClick={() => {setType('EXPENSE'); setPersonalPaymentMethod(''); setIsModalOpen(true);}}>
                     <Minus size={16}/> Thêm khoản chi
                   </button>
-                  <button className="btn-quick" style={{background: 'rgba(124,58,237,0.1)', color: '#7C3AED', padding: '12px 8px'}}>
+                  <button className="btn-quick" style={{background: 'rgba(var(--color-primary-rgb), 0.1)', color: 'var(--color-primary-ink)', padding: '12px 8px'}}>
                     <WalletCards size={16}/> Lập ngân sách
                   </button>
                   <button className="btn-quick" style={{background: 'rgba(37,99,235,0.1)', color: '#60A5FA', padding: '12px 8px'}}>
@@ -1283,7 +1313,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             <div className="widget" style={{ padding: '30px', borderRadius: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <h2 style={{ fontSize: '1.4rem', fontWeight: '800' }}>Lịch sử thu chi</h2>
-                <button className="btn-primary" onClick={() => setIsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', width: 'auto' }}>
+                <button className="btn-primary" onClick={() => { setPersonalPaymentMethod(''); setIsModalOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', width: 'auto' }}>
                   <Plus size={18} /> Thêm giao dịch
                 </button>
               </div>
@@ -1304,6 +1334,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           <div style={{ fontWeight: '700', fontSize: '1rem', color: 'var(--color-text)', marginBottom: '4px' }}>{t.category}</div>
                           <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>{new Date(t.date).toLocaleDateString('vi-VN')}</span>
+                            {profileData?.separate_personal_wallets && <small>{t.payment_method === 'CASH' ? 'Tiền mặt' : t.payment_method === 'TRANSFER' ? 'Tiền tài khoản' : 'Chưa phân loại'}</small>}
                             {t.description && (
                               <>
                                 <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-text-secondary)' }}></span>
@@ -1375,7 +1406,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div className="stat-icon" style={{background: 'rgba(245, 158, 11, 0.1)'}}>
                     <Target color="#F59E0B" size={24}/>
                   </div>
-                  <button onClick={() => { setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '4px 12px', fontSize: '0.8rem', color: '#7C3AED', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <button onClick={() => { setBudgetInputValue(((monthlyBudget || 10000000) / 1000000).toString()); setIsEditBudgetOpen(true); }} style={{ background: 'none', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '4px 12px', fontSize: '0.8rem', color: 'var(--color-primary-ink)', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     ✏️ Sửa
                   </button>
                 </div>
@@ -1385,7 +1416,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 </h3>
                 <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px'}}>
                   <div className="progress-container" style={{flex: 1, marginTop: 0, height: 8}}>
-                    <div className="progress-bar" style={{background: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : '#7C3AED', width: `${monthlyBudget ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0}%`}}></div>
+                    <div className="progress-bar" style={{background: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : 'var(--color-primary)', width: `${monthlyBudget ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0}%`}}></div>
                   </div>
                   <span style={{fontSize: '0.9rem', fontWeight: 'bold', color: (monthlyBudget && totalExpense > monthlyBudget) ? 'var(--color-expense)' : 'inherit'}}>{monthlyBudget ? Math.min(Math.round((totalExpense / monthlyBudget) * 100), 100) : 0}%</span>
                 </div>
@@ -1432,9 +1463,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
               {/* Card 3: Promo */}
               <div className="widget" style={{ background: 'linear-gradient(135deg, var(--promo-bg-1) 0%, var(--promo-bg-2) 100%)', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '30px' }}>
-                <img src="/cat_budget_mascot.png" alt="Mascot" style={{ width: 100, marginBottom: '15px' }} />
+                <img src={mascotAsset('cat_budget_mascot')} alt="Mascot" style={{ width: 100, marginBottom: '15px' }} />
                 <h3 style={{ fontSize: '1rem', color: '#4C1D95', marginBottom: '8px' }}>Bạn còn <span style={{fontSize: '1.2rem', fontWeight: '800'}}>{monthlyBudget ? formatCurrency(Math.max(monthlyBudget - totalExpense, 0)) : '---'}</span></h3>
-                <p style={{ fontSize: '0.85rem', color: '#6D28D9' }}>trong ngân sách tháng này. Cố lên nhé! 💪</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-primary-hover)' }}>trong ngân sách tháng này. Cố lên nhé! 💪</p>
               </div>
 
             </div>
@@ -1505,11 +1536,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
                         </div>
                       </div>
-                      <div style={{ padding: '20px 15px', background: 'rgba(124,58,237,0.1)', borderRadius: '16px', border: '1px solid rgba(124,58,237,0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
+                      <div style={{ padding: '20px 15px', background: 'rgba(var(--color-primary-rgb), 0.1)', borderRadius: '16px', border: '1px solid rgba(var(--color-primary-rgb), 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: 'var(--color-primary-ink)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
                         <div>
-                          <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
-                          <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
+                          <div style={{ fontWeight: '700', color: 'var(--color-primary-hover)' }}>Cân bằng</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-ink)' }}>Chi tiêu hợp lý và tiết kiệm</div>
                         </div>
                       </div>
                       <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1548,11 +1579,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Ưu tiên tiết kiệm 50% thu nhập</div>
                       </div>
                     </div>
-                    <div style={{ padding: '20px 15px', background: 'rgba(124,58,237,0.1)', borderRadius: '16px', border: '1px solid rgba(124,58,237,0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: '#7C3AED', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
+                    <div style={{ padding: '20px 15px', background: 'rgba(var(--color-primary-rgb), 0.1)', borderRadius: '16px', border: '1px solid rgba(var(--color-primary-rgb), 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ width: 40, height: 40, background: 'var(--color-card)', color: 'var(--color-primary-ink)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚖️</div>
                       <div>
-                        <div style={{ fontWeight: '700', color: '#6D28D9' }}>Cân bằng</div>
-                        <div style={{ fontSize: '0.75rem', color: '#7C3AED' }}>Chi tiêu hợp lý và tiết kiệm</div>
+                        <div style={{ fontWeight: '700', color: 'var(--color-primary-hover)' }}>Cân bằng</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-primary-ink)' }}>Chi tiêu hợp lý và tiết kiệm</div>
                       </div>
                     </div>
                     <div style={{ padding: '20px 15px', background: 'var(--color-card)', borderRadius: '16px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1626,13 +1657,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#716B7A'}} tickFormatter={v => v + 'M'}/>
                         <RechartsTooltip />
                         <Line type="stepAfter" dataKey="budget" stroke="#C4B5FD" strokeWidth={2} dot={false} />
-                        <Line type="monotone" dataKey="spent" stroke="#7C3AED" strokeWidth={3} dot={{r: 3, fill: '#7C3AED'}} />
+                        <Line type="monotone" dataKey="spent" stroke="var(--color-primary)" strokeWidth={3} dot={{r: 3, fill: 'var(--color-primary)'}} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '10px', fontSize: '0.8rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{width: 12, height: 12, background: '#C4B5FD', borderRadius: '3px'}}></div> Ngân sách</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{width: 12, height: 12, background: '#7C3AED', borderRadius: '3px'}}></div> Đã chi</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{width: 12, height: 12, background: 'var(--color-primary)', borderRadius: '3px'}}></div> Đã chi</div>
                   </div>
                 </div>
 
@@ -1648,7 +1679,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         </div>
                       </div>
                       <div 
-                        style={{ width: 40, height: 22, background: budgetSettings.reminder ? '#7C3AED' : '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer', transition: 'background 0.3s' }}
+                        style={{ width: 40, height: 22, background: budgetSettings.reminder ? 'var(--color-primary)' : '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer', transition: 'background 0.3s' }}
                         onClick={() => {
                           const newSettings = { ...budgetSettings, reminder: !budgetSettings.reminder };
                           setBudgetSettings(newSettings);
@@ -1667,7 +1698,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                         </div>
                       </div>
                       <div 
-                        style={{ width: 40, height: 22, background: budgetSettings.autoCopy ? '#7C3AED' : '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer', transition: 'background 0.3s' }}
+                        style={{ width: 40, height: 22, background: budgetSettings.autoCopy ? 'var(--color-primary)' : '#E5E7EB', borderRadius: '11px', position: 'relative', cursor: 'pointer', transition: 'background 0.3s' }}
                         onClick={() => {
                           const newSettings = { ...budgetSettings, autoCopy: !budgetSettings.autoCopy };
                           setBudgetSettings(newSettings);
@@ -1727,7 +1758,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                       <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} />
                       <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#716B7A'}} tickFormatter={v => v + 'k'}/>
                       <RechartsTooltip />
-                      <Line type="monotone" dataKey="amount" stroke="#7C3AED" strokeWidth={3} dot={{r: 4, fill: '#7C3AED'}} />
+                      <Line type="monotone" dataKey="amount" stroke="var(--color-primary)" strokeWidth={3} dot={{r: 4, fill: 'var(--color-primary)'}} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -1883,7 +1914,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Cường độ chi tiêu (30 ngày qua)</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '4px' }}>
                   {heatmapData.map((val, i) => {
-                    const intensities = ['var(--color-bg)', '#D8B4FE', '#C084FC', '#A855F7', '#9333EA'];
+                    const intensities = ['var(--color-bg)', '#D8B4FE', '#C084FC', '#A855F7', 'var(--color-primary-hover)'];
                     return (
                       <div key={i} style={{ aspectRatio: '1/1', background: intensities[val], borderRadius: '4px' }} title={`Cường độ: ${val}`}></div>
                     )
@@ -1895,7 +1926,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div style={{width: 10, height: 10, background: '#D8B4FE', borderRadius: '2px'}}></div>
                   <div style={{width: 10, height: 10, background: '#C084FC', borderRadius: '2px'}}></div>
                   <div style={{width: 10, height: 10, background: '#A855F7', borderRadius: '2px'}}></div>
-                  <div style={{width: 10, height: 10, background: '#9333EA', borderRadius: '2px'}}></div>
+                  <div style={{width: 10, height: 10, background: 'var(--color-primary-hover)', borderRadius: '2px'}}></div>
                   <span>Nhiều</span>
                 </div>
               </div>
@@ -1907,7 +1938,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
             {!isGoalInitialized ? (
               <div style={{ maxWidth: '500px', width: '100%', boxSizing: 'border-box', marginTop: isMobile ? '20px' : '50px', background: 'var(--color-card)', padding: isMobile ? '20px' : '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center' }}>
-                <img src="/goal_mascot.png" alt="Goal Mascot" style={{ width: 150, marginBottom: '20px' }} />
+                <img src={mascotAsset('goal_mascot')} alt="Goal Mascot" style={{ width: 150, marginBottom: '20px' }} />
                 <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '10px', color: 'var(--color-text)' }}>Bắt đầu tiết kiệm cho những mục tiêu to lớn nhé!</h2>
                 <p style={{ color: 'var(--color-text-secondary)', marginBottom: '30px' }}>Để gợi ý lộ trình tốt nhất, Peacee1 cần biết một vài thông tin cơ bản về bạn.</p>
                 
@@ -1934,7 +1965,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
                 <button 
                   onClick={saveGoalInit} 
-                  style={{ width: '100%', padding: '15px', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}
+                  style={{ width: '100%', padding: '15px', background: 'var(--color-primary)', color: 'var(--color-on-primary)', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(var(--color-primary-rgb), 0.3)' }}
                 >
                   Bắt đầu lập mục tiêu
                 </button>
@@ -1946,7 +1977,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Mục tiêu của bạn</h2>
                     <p style={{ color: 'var(--color-text-secondary)' }}>Theo dõi và quản lý các khoản tiết kiệm.</p>
                   </div>
-                  <div style={{ background: 'var(--color-primary)', color: 'white', padding: '15px 25px', borderRadius: '16px', boxShadow: '0 8px 20px rgba(124,58,237,0.3)' }}>
+                  <div style={{ background: 'var(--color-primary)', color: 'var(--color-on-primary)', padding: '15px 25px', borderRadius: '16px', boxShadow: '0 8px 20px rgba(var(--color-primary-rgb), 0.3)' }}>
                     <div style={{ fontSize: '0.85rem', opacity: 0.9, marginBottom: '5px' }}>Tổng tiền đang tiết kiệm</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>
                       {formatCurrency(
@@ -2006,7 +2037,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     <input type="text" 
                            value={(customBankSavingTotal !== null ? customBankSavingTotal : Math.round(bankSaving.amount * (1 + (bankSaving.rate / 100) * (bankSaving.months / 12)))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} 
                            onChange={(e) => setCustomBankSavingTotal(parseInt(e.target.value.replace(/\./g, '')) || 0)} 
-                           style={{padding: '8px', borderRadius: '8px', border: '1px solid var(--color-primary)', width: '150px', fontWeight: 'bold', color: 'var(--color-primary)'}} />
+                           style={{padding: '8px', borderRadius: '8px', border: '1px solid var(--color-primary)', width: '150px', fontWeight: 'bold', color: 'var(--color-primary-ink)'}} />
                     <span>VNĐ</span>
                   </div>
                 </div>
@@ -2034,17 +2065,17 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                   <div style={{ marginTop: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '8px' }}>
-                      <span style={{fontWeight: '600', color: 'var(--color-primary)'}}>Tiến độ hoàn thành</span>
+                      <span style={{fontWeight: '600', color: 'var(--color-primary-ink)'}}>Tiến độ hoàn thành</span>
                       <span style={{fontWeight: '700'}}>{Math.min(Math.round((userGoal.currentSaved / userGoal.targetAmount) * 100) || 0, 100)}%</span>
                     </div>
                     <div style={{ height: 12, background: 'var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
-                      <div style={{ width: `${Math.min((userGoal.currentSaved / userGoal.targetAmount) * 100 || 0, 100)}%`, height: '100%', background: 'linear-gradient(90deg, #F472B6, #7C3AED)', borderRadius: '6px' }}></div>
+                      <div style={{ width: `${Math.min((userGoal.currentSaved / userGoal.targetAmount) * 100 || 0, 100)}%`, height: '100%', background: 'linear-gradient(90deg, #F472B6, var(--color-primary))', borderRadius: '6px' }}></div>
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                  <button onClick={handleSaveGoals} className="btn-primary" style={{ padding: '12px 30px', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(124,58,237,0.3)' }}>
+                  <button onClick={handleSaveGoals} className="btn-primary" style={{ padding: '12px 30px', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', background: 'linear-gradient(90deg, var(--color-primary), #F472B6)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(var(--color-primary-rgb), 0.3)' }}>
                     Lưu các thay đổi
                   </button>
                 </div>
@@ -2059,7 +2090,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <h2 style={{ fontSize: '1.4rem', fontWeight: '800' }}>Quản lý Danh mục</h2>
               <button 
                 onClick={() => setIsAddingCategory(true)}
-                style={{ padding: '10px 20px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ padding: '10px 20px', background: 'linear-gradient(90deg, var(--color-primary), #F472B6)', color: 'white', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
                 + Thêm danh mục
               </button>
@@ -2122,41 +2153,26 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             
             <div className="grid-responsive-2-1" style={{ gap: '20px' }}>
               <div className="widget">
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Palette size={20} color="var(--color-primary)"/> Giao diện & Màu sắc</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Palette size={20} color="var(--color-primary-ink)"/> Giao diện & Màu sắc</h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   <div>
-                    <label style={{ fontWeight: '600', display: 'block', marginBottom: '10px' }}>Chế độ hiển thị</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                      <div style={{ border: '2px solid var(--color-primary)', background: 'var(--color-bg)', padding: '15px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer' }}>
-                        <Moon size={24} style={{ margin: '0 auto 10px auto' }} color="var(--color-primary)" />
-                        <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Tối (Mặc định)</span>
-                      </div>
-                      <div style={{ border: '1px solid var(--color-border)', background: '#F8FAFC', padding: '15px', borderRadius: '12px', textAlign: 'center', cursor: 'not-allowed', opacity: 0.5 }}>
-                        <Sun size={24} style={{ margin: '0 auto 10px auto', color: '#1E293B' }} />
-                        <span style={{ fontWeight: '600', fontSize: '0.9rem', color: '#1E293B' }}>Sáng</span>
-                        <div style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '5px' }}>Sắp ra mắt</div>
-                      </div>
-                      <div style={{ border: '1px solid var(--color-border)', background: 'var(--color-bg)', padding: '15px', borderRadius: '12px', textAlign: 'center', cursor: 'not-allowed', opacity: 0.5 }}>
-                        <Smartphone size={24} style={{ margin: '0 auto 10px auto', color: 'var(--color-text-secondary)' }} />
-                        <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>Hệ thống</span>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '5px' }}>Sắp ra mắt</div>
-                      </div>
+                    <label style={{ fontWeight: 600, display: 'block', marginBottom: 10 }}>Chế độ hiển thị</label>
+                    <div className="personal-display-options">
+                      {[['light','Sáng',Sun],['dark','Tối',Moon],['system','Hệ thống',Smartphone]].map(([value,label,Icon]) => <button type="button" key={value} aria-pressed={theme === value} onClick={() => setTheme(value)}><Icon size={24} /><span>{label}</span></button>)}
                     </div>
                   </div>
-
                   <div>
-                    <label style={{ fontWeight: '600', display: 'block', marginBottom: '10px' }}>Màu chủ đạo (Accent Color)</label>
-                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#7C3AED', border: '3px solid white', outline: '2px solid #7C3AED', cursor: 'pointer' }}></div>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#F472B6', cursor: 'pointer', opacity: 0.7 }}></div>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#34D399', cursor: 'pointer', opacity: 0.7 }}></div>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#3B82F6', cursor: 'pointer', opacity: 0.7 }}></div>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#F59E0B', cursor: 'pointer', opacity: 0.7 }}></div>
+                    <label style={{ fontWeight: 600, display: 'block', marginBottom: 10 }}>Màu chủ đạo</label>
+                    <div className="personal-color-options" role="group" aria-label="Chọn màu giao diện">
+                      {personalPalettes.map(palette => <button key={palette.id} type="button" aria-pressed={personalAccent === palette.id} disabled={accentBusy || !profileData} onClick={() => changeAccent(palette.id)} className="personal-color-option">
+                        <span style={{ background: palette.color }} /><strong>{palette.name}</strong>{personalAccent === palette.id && <small>Đang chọn</small>}
+                      </button>)}
                     </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>* Tính năng đổi màu tùy chỉnh yêu cầu gói Plus trở lên.</p>
+                    <p style={{ marginTop: 12 }}>Đổi màu giao diện và bộ hình mèo. Lựa chọn được lưu theo tài khoản.</p>
+                    {accentError && <p role="alert">{accentError}</p>}
+                    <img src={mascotAsset('cat_mascot')} alt={`Mèo Peacee1 · ${personalPalettes.find(palette => palette.id === personalAccent)?.name}`} width="160" height="160" style={{ objectFit: 'contain', marginTop: 12 }} />
                   </div>
-                  
                   <div>
                     <label style={{ fontWeight: '600', display: 'block', marginBottom: '10px' }}>Bố cục bảng điều khiển (Dashboard)</label>
                     <div className="input-group">
@@ -2173,7 +2189,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div className="widget">
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><Sliders size={20} color="var(--color-primary)"/> Tùy chỉnh thông báo</h3>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><Sliders size={20} color="var(--color-primary-ink)"/> Tùy chỉnh thông báo</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
@@ -2199,8 +2215,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   </div>
                 </div>
 
-                <div className="widget" style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(244,114,182,0.1))', border: '1px solid rgba(124,58,237,0.3)' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '10px', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Crown size={20} /> Widget tùy chỉnh</h3>
+                <div className="widget" style={{ background: 'linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.1), rgba(244,114,182,0.1))', border: '1px solid rgba(var(--color-primary-rgb), 0.3)' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '10px', color: 'var(--color-primary-ink)', display: 'flex', alignItems: 'center', gap: '6px' }}><Crown size={20} /> Widget tùy chỉnh</h3>
                   <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '15px', lineHeight: '1.5' }}>
                     Người dùng Plus và Ultra có thể kéo thả, sắp xếp lại các widget và chọn ra những chỉ số quan trọng nhất hiển thị trên Dashboard.
                   </p>
@@ -2232,12 +2248,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <div className="widget" style={{ maxWidth: '540px', margin: '0 auto', padding: '40px 30px', textAlign: 'center' }}>
                 {!isBizCreating ? (
                   <>
-                    <img src="/biz_cat.png" alt="Business Cat" style={{ width: '180px', height: '180px', objectFit: 'contain', margin: '0 auto 20px auto' }} />
+                    <img src={mascotAsset('biz_cat')} alt="Business Cat" style={{ width: '180px', height: '180px', objectFit: 'contain', margin: '0 auto 20px auto' }} />
                     <h3 style={{ fontSize: '1.4rem', fontWeight: '800', marginBottom: '8px' }}>Bắt đầu khởi tạo doanh nghiệp của riêng mình nào!</h3>
                     <p style={{ color: 'var(--color-text-secondary)', marginBottom: '25px', lineHeight: '1.6' }}>Thiết lập thông tin quán/doanh nghiệp của bạn để trải nghiệm bộ công cụ quản lý chuyên nghiệp.</p>
                     <button 
                       onClick={() => setIsBizCreating(true)}
-                      style={{ background: 'linear-gradient(45deg, #7C3AED, #F472B6)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '30px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.4)' }}
+                      style={{ background: 'linear-gradient(45deg, var(--color-primary), #F472B6)', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '30px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(var(--color-primary-rgb), 0.4)' }}
                     >
                       + Bắt đầu
                     </button>
@@ -2282,7 +2298,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                           <label style={{ fontWeight: '600', fontSize: '0.9rem', display: 'block', marginBottom: '6px' }}>Tên quán/doanh nghiệp *</label>
                           <input type="text" value={bizForm.name} onChange={e => setBizForm(f => ({ ...f, name: e.target.value }))} placeholder="Nhập tên..." style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', outline: 'none', background: 'var(--color-bg)', color: 'var(--color-text)' }} />
                         </div>
-                        <button onClick={handleCreateBiz} disabled={bizActionLoading} style={{ background: '#7C3AED', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: 'bold', fontSize: '1rem', cursor: bizActionLoading ? 'not-allowed' : 'pointer', marginTop: '10px', opacity: bizActionLoading ? 0.7 : 1 }}>
+                        <button onClick={handleCreateBiz} disabled={bizActionLoading} style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: 'bold', fontSize: '1rem', cursor: bizActionLoading ? 'not-allowed' : 'pointer', marginTop: '10px', opacity: bizActionLoading ? 0.7 : 1 }}>
                           {bizActionLoading ? 'Đang xử lý...' : 'Khởi tạo ngay'}
                         </button>
                       </div>
@@ -2306,7 +2322,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <img src={bizData.avatar_url ? `/api${bizData.avatar_url}` : '/default_avatar.png'} alt="avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #7C3AED' }} />
+                    <img src={bizData.avatar_url ? `/api${bizData.avatar_url}` : '/default_avatar.png'} alt="avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }} />
                     <div>
                       <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{bizData.name}</h3>
                       <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginTop: '4px' }}>
@@ -2338,6 +2354,20 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <p style={{ color: 'var(--color-text-secondary)' }}>Tùy chỉnh trải nghiệm cá nhân của bạn</p>
             </div>
             
+            <div className="widget" style={{ padding: 20, marginBottom: 20 }}>
+              <h3>Quản lý tiền cá nhân</h3>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}><input type="checkbox" checked={Boolean(profileData?.separate_personal_wallets)} disabled={walletSettingBusy || !profileData} onChange={async event => {
+                const enabled = event.target.checked;
+                setWalletSettingBusy(true); setWalletSettingError('');
+                try {
+                  await axios.post('/api/users/settings', { separatePersonalWallets: enabled }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                  setProfileData(current => ({ ...current, separate_personal_wallets: enabled }));
+                } catch (error) { setWalletSettingError(error.response?.data?.message || 'Không thể lưu tuỳ chọn.'); }
+                finally { setWalletSettingBusy(false); }
+              }} />Phân biệt tiền tài khoản và tiền mặt</label>
+              <p>Khi bật, mỗi khoản thu chi cần chọn nguồn tiền. Giao dịch cũ chưa chọn nguồn được giữ ở mục “Chưa phân loại”; bạn có thể sửa để phân loại. Tắt tuỳ chọn vẫn giữ nguồn tiền đã lưu.</p>
+              {walletSettingError && <p role="alert">{walletSettingError}</p>}
+            </div>
             <div className="widget" style={{ padding: '20px' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Giao diện (Theme)</h3>
               <div style={{ display: 'flex', gap: '15px' }}>
@@ -2411,6 +2441,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   ))}
                 </select>
               </div>
+              {profileData?.separate_personal_wallets && <div className="input-group">
+                <label htmlFor="personal-payment-method">Nguồn tiền</label>
+                <select id="personal-payment-method" required value={personalPaymentMethod} onChange={event => setPersonalPaymentMethod(event.target.value)} style={{ padding: '0.75rem', width: '100%', borderRadius: 8, border: '1px solid var(--color-border)' }}>
+                  <option value="">Chọn nguồn tiền</option><option value="CASH">Tiền mặt</option><option value="TRANSFER">Tiền tài khoản</option>
+                </select>
+              </div>}
               <div className="input-group">
                 <label>Số tiền (VNĐ)</label>
                 <input type="text" value={amount ? amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={e => setAmount(e.target.value.replace(/\./g, ''))} required placeholder="50.000" />
@@ -2508,14 +2544,14 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           }}>
             {/* Modal Header */}
             <div style={{
-              background: 'linear-gradient(135deg, #7C3AED 0%, #F472B6 100%)',
+              background: 'linear-gradient(135deg, var(--color-primary) 0%, #F472B6 100%)',
               padding: '24px 28px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <img src="/cat_ai_mascot.png" alt="AI Cat" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                <img src={mascotAsset('cat_ai_mascot')} alt="AI Cat" style={{ width: 56, height: 56, objectFit: 'contain' }} />
                 <div>
                   <div style={{ color: 'white', fontWeight: '800', fontSize: '1.1rem' }}>Trợ lý AI Tài chính</div>
                   <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>Peacee1 AI đang phân tích ✨</div>
@@ -2546,8 +2582,8 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     width: 60,
                     height: 60,
                     borderRadius: '50%',
-                    border: '4px solid rgba(124,58,237,0.2)',
-                    borderTopColor: '#7C3AED',
+                    border: '4px solid rgba(var(--color-primary-rgb), 0.2)',
+                    borderTopColor: 'var(--color-primary)',
                     animation: 'spin 1s linear infinite',
                     margin: '0 auto 20px',
                   }}></div>
@@ -2557,11 +2593,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               ) : (
                 <div>
                   <div style={{
-                    background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(244,114,182,0.08))',
+                    background: 'linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.08), rgba(244,114,182,0.08))',
                     borderRadius: '12px',
                     padding: '16px',
                     marginBottom: '20px',
-                    border: '1px solid rgba(124,58,237,0.15)',
+                    border: '1px solid rgba(var(--color-primary-rgb), 0.15)',
                     fontSize: '0.85rem',
                     color: 'var(--color-text-secondary)',
                     display: 'flex',
@@ -2584,7 +2620,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                     width: '100%',
                     padding: '12px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(90deg, #7C3AED, #F472B6)',
+                    background: 'linear-gradient(90deg, var(--color-primary), #F472B6)',
                     color: 'white',
                     border: 'none',
                     fontWeight: '700',
@@ -2613,7 +2649,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                 {avatarSrc ? (
                   <img src={avatarSrc} alt="Avatar" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '3px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}/>
                 ) : (
-                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold', border: '3px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-primary)', color: 'var(--color-on-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold', border: '3px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
                     {profileData.name.charAt(0)}
                   </div>
                 )}
@@ -2671,7 +2707,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <p style={{fontSize: '0.8rem', color: 'var(--color-text-secondary)', margin: '0 0 10px'}}>
                     {profileData.plan === 'normal' ? '3500' : '3000'} Coins
                   </p>
-                  <button className="upgrade-btn" onClick={() => handleUpgrade('ultra')} style={{width: '100%', padding: '8px', borderRadius: '8px', background: 'var(--color-primary)', color: 'white', border: 'none', cursor: 'pointer'}}>Nâng cấp</button>
+                  <button className="upgrade-btn" onClick={() => handleUpgrade('ultra')} style={{width: '100%', padding: '8px', borderRadius: '8px', background: 'var(--color-primary)', color: 'var(--color-on-primary)', border: 'none', cursor: 'pointer'}}>Nâng cấp</button>
                 </div>
               )}
             </div>
@@ -2703,9 +2739,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div className="modal-content checkin-modal" style={{ padding: 0, overflow: 'hidden', maxWidth: '750px', width: '90vw', background: 'var(--color-bg)' }}>
             
             {/* Banner Section */}
-            <div style={{ position: 'relative', background: '#7C3AED' }}>
+            <div style={{ position: 'relative', background: 'var(--color-primary)' }}>
               <button onClick={() => setIsCheckinOpen(false)} style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%', width: 30, height: 30, fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-              <img src="/checkin_banner.png" alt="Banner Điểm Danh" style={{ width: '100%', display: 'block', borderRadius: '0' }} />
+              <img src={mascotAsset('checkin_banner')} alt="Banner Điểm Danh" style={{ width: '100%', display: 'block', borderRadius: '0' }} />
             </div>
 
             {/* Content Section */}
@@ -2718,7 +2754,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <div>
                     <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--color-text)', lineHeight: 1 }}>{profileData.checkin_streak || 0}</div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>Ngày liên tiếp</div>
-                    <div style={{ fontSize: '0.65rem', color: '#7C3AED', marginTop: '2px' }}>Điểm danh mỗi ngày để duy trì chuỗi!</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--color-primary-ink)', marginTop: '2px' }}>Điểm danh mỗi ngày để duy trì chuỗi!</div>
                   </div>
                 </div>
                 <div style={{ flex: 1, background: 'var(--color-card)', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
@@ -2743,12 +2779,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   return (
                     <div key={day} style={{ 
                       flex: 1, 
-                      background: isClaimed ? 'rgba(124,58,237,0.1)' : 'var(--color-card)',
-                      border: isClaimed ? '2px solid #7C3AED' : '1px solid #E9E5F3',
+                      background: isClaimed ? 'rgba(var(--color-primary-rgb), 0.1)' : 'var(--color-card)',
+                      border: isClaimed ? '2px solid var(--color-primary)' : '1px solid #E9E5F3',
                       borderRadius: '10px', padding: '10px 4px', textAlign: 'center',
                       boxShadow: '0 2px 5px rgba(0,0,0,0.04)',
                     }}>
-                      <div style={{ fontSize: '0.7rem', fontWeight: '600', color: isClaimed ? '#7C3AED' : 'var(--color-text-secondary)', marginBottom: '6px' }}>Ngày {day}</div>
+                      <div style={{ fontSize: '0.7rem', fontWeight: '600', color: isClaimed ? 'var(--color-primary)' : 'var(--color-text-secondary)', marginBottom: '6px' }}>Ngày {day}</div>
                       <div style={{ marginBottom: '6px', display: 'flex', justifyContent: 'center', height: '28px', alignItems: 'center' }}>
                         {isClaimed
                           ? <span style={{ fontSize: '1.4rem' }}>✅</span>
@@ -2766,7 +2802,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               </div>
 
               {/* Checkin button */}
-              <button className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleCheckin} disabled={loading}>
+              <button className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.05rem', borderRadius: '30px', fontWeight: 'bold', background: 'linear-gradient(90deg, var(--color-primary), #F472B6)', border: 'none', boxShadow: '0 4px 15px rgba(var(--color-primary-rgb), 0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleCheckin} disabled={loading}>
                 {loading ? 'Đang xử lý...' : <><img src="/coin_icon.png" alt="Coin" style={{ width: '22px', height: '22px', objectFit: 'contain' }} /> Điểm danh hôm nay (+20 coin)</>}
               </button>
 
@@ -2826,7 +2862,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   <span style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', fontFamily: 'monospace', background: 'var(--color-background)', padding: '8px 12px', borderRadius: '8px' }}>{newCategory.color}</span>
                 </div>
               </div>
-              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', marginTop: '25px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', background: 'linear-gradient(90deg, var(--color-primary), #F472B6)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', marginTop: '25px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(var(--color-primary-rgb), 0.3)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                 Lưu danh mục <span style={{display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '6px', fontSize: '0.85rem'}}><img src="/coin_icon.png" alt="Coin" style={{width: 16, height: 16}} /> -100</span>
               </button>
             </form>
@@ -2855,13 +2891,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   min="0"
                   step="0.5"
                   style={{ flex: 1, padding: '12px 16px', border: '2px solid var(--color-border)', borderRadius: '10px', fontSize: '1rem', outline: 'none', transition: 'border-color 0.2s' }}
-                  onFocus={(e) => e.target.style.borderColor = '#7C3AED'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
                 />
                 <span style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>triệu đ</span>
               </div>
               {budgetInputValue && (
-                <div style={{ marginTop: '8px', fontSize: '0.82rem', color: '#7C3AED', fontWeight: '500' }}>
+                <div style={{ marginTop: '8px', fontSize: '0.82rem', color: 'var(--color-primary-ink)', fontWeight: '500' }}>
                   = {(parseFloat(budgetInputValue) * 1000000).toLocaleString('vi-VN')} đ / tháng
                 </div>
               )}
@@ -2880,7 +2916,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                   });
                   setIsEditBudgetOpen(false);
                 }
-              }} style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '10px', background: 'linear-gradient(90deg, #7C3AED, #F472B6)', color: 'white', cursor: 'pointer', fontWeight: '700', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+              }} style={{ flex: 1, padding: '12px', border: 'none', borderRadius: '10px', background: 'linear-gradient(90deg, var(--color-primary), #F472B6)', color: 'white', cursor: 'pointer', fontWeight: '700', boxShadow: '0 4px 12px rgba(var(--color-primary-rgb), 0.3)' }}>
                 Lưu
               </button>
             </div>

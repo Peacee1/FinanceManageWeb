@@ -82,6 +82,10 @@ const addTransaction = async (req, res, next) => {
   try {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
+    if (scope.businessId === null) {
+      const settings = (await db.query('SELECT separate_personal_wallets FROM users WHERE id=$1', [req.user.userId])).rows[0];
+      if (settings?.separate_personal_wallets && !['CASH','TRANSFER'].includes(req.body.paymentMethod)) return res.status(400).json({ message: 'Vui lòng chọn tiền mặt hoặc tiền tài khoản.' });
+    }
     const { type, amount, category, date, description } = req.body;
     const saleDate = req.user.role === 'employee' ? vietnamDate() : date;
     let imageHash = null;
@@ -127,15 +131,20 @@ const deleteTransaction = async (req, res, next) => {
 const updateTransaction = async (req, res, next) => {
   if (req.user.role === 'employee') return res.status(403).json({ message: 'Nhân viên không được sửa khoản thu chi đã gửi.' });
   if (!isPositiveInteger(req.params.id)) return res.status(400).json({ message: 'Mã giao dịch không hợp lệ.' });
+  if (req.body.paymentMethod !== undefined && !['CASH','TRANSFER'].includes(req.body.paymentMethod)) return res.status(400).json({ message: 'Nguồn tiền không hợp lệ.' });
   const validationError = transactionError(req.body, true);
   if (validationError) return res.status(400).json({ message: validationError });
   try {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
-    const fields = ['type', 'amount', 'category', 'date', 'description'].filter(field => req.body[field] !== undefined);
+    if (scope.businessId === null) {
+      const current = (await db.query('SELECT t.payment_method,u.separate_personal_wallets FROM transactions t JOIN users u ON u.id=t.user_id WHERE t.id=$1 AND t.user_id=$2 AND t.business_id IS NULL', [req.params.id,req.user.userId])).rows[0];
+      if (current?.separate_personal_wallets && !['CASH','TRANSFER'].includes(req.body.paymentMethod ?? current.payment_method)) return res.status(400).json({ message: 'Vui lòng chọn tiền mặt hoặc tiền tài khoản cho giao dịch này.' });
+    }
+    const fields = ['type', 'amount', 'category', 'date', 'description', ...(scope.businessId === null ? ['paymentMethod'] : [])].filter(field => req.body[field] !== undefined);
     if (!fields.length) return res.status(400).json({ message: 'Chưa có nội dung cập nhật.' });
     const params = [...scope.params];
-    const updates = fields.map(field => { params.push(req.body[field]); return `${field} = $${params.length}`; });
+    const updates = fields.map(field => { params.push(req.body[field]); return `${field === 'paymentMethod' ? 'payment_method' : field} = $${params.length}`; });
     params.push(req.params.id);
     const result = await db.query(`UPDATE transactions t SET ${updates.join(', ')} WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.bank_payment_status='MANUAL' AND t.id = $${params.length} RETURNING *`, params);
     if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền sửa.' });

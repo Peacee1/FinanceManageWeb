@@ -2,7 +2,8 @@ const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { randomUUID } = require('crypto');
 const db = require('../config/db');
-const { addTransaction, getTransactions, getSummary, deleteTransaction } = require('../controllers/transactionController');
+const { addTransaction, getTransactions, getSummary, deleteTransaction, updateTransaction } = require('../controllers/transactionController');
+const { updateSettings, getProfile } = require('../controllers/userController');
 after(() => db.close());
 function response() { return { statusCode: 200, headers: {}, setHeader(name, value) { this.headers[name] = value; }, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } }; }
 test('personal and business revenue stay separate and ownership is enforced', { skip: process.env.RUN_DB_TESTS !== '1' }, async () => {
@@ -51,6 +52,32 @@ test('personal and business revenue stay separate and ownership is enforced', { 
     assert.equal(wrongScope.statusCode, 404);
     const unrelated = await invoke(deleteTransaction, users[2], { scope: 'business' }, {}, { id: employee.body.id });
     assert.equal(unrelated.statusCode, 404);
+    assert.equal((await invoke(getProfile, users[0])).body.personal_accent, 'purple');
+    assert.equal((await invoke(updateSettings, users[0], {}, { personalAccent: 'invalid' })).statusCode, 400);
+    assert.equal((await invoke(updateSettings, users[0], {}, { personalAccent: 'pink' })).statusCode, 200);
+    assert.equal((await invoke(getProfile, users[0])).body.personal_accent, 'pink');
+    assert.equal((await invoke(getProfile, users[2])).body.personal_accent, 'purple');
+    assert.equal((await invoke(updateSettings, users[1], {}, { personalAccent: 'blue' })).statusCode, 403);
+    assert.equal((await invoke(getProfile, users[0])).body.separate_personal_wallets, false);
+    assert.equal((await invoke(updateSettings, users[0], {}, { separatePersonalWallets: 'true' })).statusCode, 400);
+    assert.equal((await invoke(updateSettings, users[1], {}, { separatePersonalWallets: true })).statusCode, 403);
+    assert.equal((await invoke(updateSettings, users[0], {}, { separatePersonalWallets: true, userId: users[2].userId })).statusCode, 200);
+    assert.equal((await invoke(getProfile, users[0])).body.separate_personal_wallets, true);
+    assert.equal((await invoke(getProfile, users[2])).body.separate_personal_wallets, false);
+    assert.equal((await invoke(addTransaction, users[0], {}, payload(100))).statusCode, 400);
+    assert.equal((await invoke(addTransaction, users[0], {}, { ...payload(100), paymentMethod: 'INVALID' })).statusCode, 400);
+    const cash = await invoke(addTransaction, users[0], {}, { ...payload(100), paymentMethod: 'CASH' });
+    const bank = await invoke(addTransaction, users[0], {}, { ...payload(200), paymentMethod: 'TRANSFER' });
+    assert.equal(cash.body.payment_method, 'CASH'); assert.equal(bank.body.payment_method, 'TRANSFER');
+    assert.equal(bank.body.bank_payment_status, 'MANUAL'); assert.equal(bank.body.bankPayment, null);
+    assert.equal((await invoke(updateTransaction, users[0], {}, { amount: 11 }, { id: personal.body.id })).statusCode, 400);
+    assert.equal((await invoke(updateTransaction, users[0], {}, { paymentMethod: 'CASH' }, { id: personal.body.id })).body.payment_method, 'CASH');
+    assert.equal((await invoke(updateTransaction, users[0], {}, { description: 'Preserve source' }, { id: cash.body.id })).body.payment_method, 'CASH');
+    assert.equal((await invoke(updateTransaction, users[2], {}, { paymentMethod: 'TRANSFER' }, { id: cash.body.id })).statusCode, 404);
+    await invoke(updateSettings, users[0], {}, { separatePersonalWallets: false });
+    assert.equal((await invoke(getTransactions, users[0])).body.find(row => row.id === bank.body.id).payment_method, 'TRANSFER');
+    assert.equal((await invoke(addTransaction, users[0], {}, payload(1))).statusCode, 201);
+
   } finally {
     if (users.length) await db.query('DELETE FROM transactions WHERE user_id = ANY($1::int[])', [users.map(user => user.userId)]);
     if (businesses.length) await db.query('DELETE FROM businesses WHERE id = ANY($1::int[])', [businesses]);

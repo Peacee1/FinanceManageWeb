@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings, separate_personal_wallets, personal_accent FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     
     let userProfile = result.rows[0];
@@ -143,12 +143,18 @@ const updateCategories = async (req, res, next) => {
 
 // Cập nhật cài đặt (budgets, goals...)
 const updateSettings = async (req, res) => {
-  const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos, budgetSettings } = req.body;
+  const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos, budgetSettings, separatePersonalWallets, personalAccent } = req.body;
+  if (personalAccent !== undefined && !['purple','pink','green','blue','yellow'].includes(personalAccent)) return res.status(400).json({ message: 'Màu giao diện không hợp lệ.' });
+  if (personalAccent !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn màu này dành cho tài khoản cá nhân.' });
+  if (separatePersonalWallets !== undefined && typeof separatePersonalWallets !== 'boolean') return res.status(400).json({ message: 'Tuỳ chọn phân biệt tiền phải là bật hoặc tắt.' });
+  if (separatePersonalWallets !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn này chỉ dành cho tài chính cá nhân.' });
   try {
     const fields = [];
     const values = [];
     let count = 1;
 
+    if (personalAccent !== undefined) { fields.push(`personal_accent = $${count++}`); values.push(personalAccent); }
+    if (separatePersonalWallets !== undefined) { fields.push(`separate_personal_wallets = $${count++}`); values.push(separatePersonalWallets); }
     if (monthlyBudgets !== undefined) { fields.push(`monthly_budgets = $${count++}`); values.push(JSON.stringify(monthlyBudgets)); }
     if (bankSaving !== undefined) { fields.push(`bank_saving = $${count++}`); values.push(JSON.stringify(bankSaving)); }
     if (investmentIncome !== undefined) { fields.push(`investment_income = $${count++}`); values.push(investmentIncome); }
