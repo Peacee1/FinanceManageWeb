@@ -977,6 +977,63 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             );
           })()}
 
+              {/* Calendar Widget */}
+              <div className="widget">
+                <div className="widget-header">
+                  <div>
+                    <h3 className="widget-title">Lịch giao dịch</h3>
+                    <div style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '4px'}}>Tháng {currentMonth + 1}, {currentYear}</div>
+                  </div>
+                  <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
+                    <div className="date-selector" style={{padding: '0.4rem 0.8rem', background: 'var(--color-bg)'}}>
+                      <button className="btn-icon" onClick={handlePrevDate}><ChevronLeft size={16}/></button>
+                      <span style={{fontSize: '0.8rem', cursor: 'pointer'}} onClick={handleToday}>
+                        {currentDate.toDateString() === new Date().toDateString() ? 'Hôm nay' : currentDate.toLocaleDateString('vi-VN')}
+                      </span>
+                      <button className="btn-icon" onClick={handleNextDate}><ChevronRight size={16}/></button>
+                    </div>
+                    <div style={{display: 'flex', background: 'var(--color-bg)', padding: '4px', borderRadius: '8px', gap: '4px'}}>
+                      <div style={{padding: '4px 12px', background: 'var(--color-card)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', color: 'var(--color-text)'}}>Tháng</div>
+                      <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Tuần</div>
+                      <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Ngày</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="cal-header-row">
+                  <div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div>
+                </div>
+                <div className="cal-grid">
+                  {grid.map((day, i) => {
+                    const isSelectedDate = !day.muted && day.date === currentDate.getDate();
+                    return (
+                    <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.isToday ? 'today' : ''} ${isSelectedDate ? 'active' : ''}`} 
+                         onClick={() => !day.muted && setSelectedDayInfo(day)}
+                         style={{ position: 'relative', cursor: day.muted ? 'not-allowed' : 'pointer', border: isSelectedDate ? '2px solid var(--color-primary)' : '' }}>
+                      <div className="cal-date" style={{background: isSelectedDate ? 'var(--color-primary)' : '', color: isSelectedDate ? 'var(--color-on-primary)' : ''}}>{day.date}</div>
+                      {(() => {
+                        const allTxs = [...day.incomes, ...day.expenses];
+                        return (
+                          <>
+                            {allTxs.slice(0, 4).map((t, j) => (
+                              <div key={j} className={`tx-badge ${t.type.toLowerCase()}`}>
+                                <div className={`tx-dot ${t.type.toLowerCase()}`}></div> {t.type === 'INCOME' ? '+' : '-'}{formatCompact(t.amount)}
+                              </div>
+                            ))}
+                            {allTxs.length > 4 && (
+                              <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.7rem', fontWeight: '700', color: 'var(--color-primary-ink)', background: 'var(--promo-bg-1)', padding: '2px 5px', borderRadius: '8px' }}>
+                                +{allTxs.length - 4}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  );
+                })}
+                </div>
+              </div>
+
           <TransactionChat onCreated={fetchTransactions} />
           {/* Top Stat Cards */}
           <div className="cards-row">
@@ -1059,63 +1116,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <div className="main-grid">
             <div className="grid-col">
               
-              {/* Calendar Widget */}
-              <div className="widget">
-                <div className="widget-header">
-                  <div>
-                    <h3 className="widget-title">Lịch giao dịch</h3>
-                    <div style={{fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '4px'}}>Tháng {currentMonth + 1}, {currentYear}</div>
-                  </div>
-                  <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
-                    <div className="date-selector" style={{padding: '0.4rem 0.8rem', background: 'var(--color-bg)'}}>
-                      <button className="btn-icon" onClick={handlePrevDate}><ChevronLeft size={16}/></button>
-                      <span style={{fontSize: '0.8rem', cursor: 'pointer'}} onClick={handleToday}>
-                        {currentDate.toDateString() === new Date().toDateString() ? 'Hôm nay' : currentDate.toLocaleDateString('vi-VN')}
-                      </span>
-                      <button className="btn-icon" onClick={handleNextDate}><ChevronRight size={16}/></button>
-                    </div>
-                    <div style={{display: 'flex', background: 'var(--color-bg)', padding: '4px', borderRadius: '8px', gap: '4px'}}>
-                      <div style={{padding: '4px 12px', background: 'var(--color-card)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', color: 'var(--color-text)'}}>Tháng</div>
-                      <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Tuần</div>
-                      <div style={{padding: '4px 12px', fontSize: '0.8rem', fontWeight: '500', color: 'var(--color-text-secondary)'}}>Ngày</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="cal-header-row">
-                  <div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div>
-                </div>
-                <div className="cal-grid">
-                  {grid.map((day, i) => {
-                    const isSelectedDate = !day.muted && day.date === currentDate.getDate();
-                    return (
-                    <div key={i} className={`cal-cell ${day.muted ? 'muted' : ''} ${day.isToday ? 'today' : ''} ${isSelectedDate ? 'active' : ''}`} 
-                         onClick={() => !day.muted && setSelectedDayInfo(day)}
-                         style={{ position: 'relative', cursor: day.muted ? 'not-allowed' : 'pointer', border: isSelectedDate ? '2px solid var(--color-primary)' : '' }}>
-                      <div className="cal-date" style={{background: isSelectedDate ? 'var(--color-primary)' : '', color: isSelectedDate ? 'var(--color-on-primary)' : ''}}>{day.date}</div>
-                      {(() => {
-                        const allTxs = [...day.incomes, ...day.expenses];
-                        return (
-                          <>
-                            {allTxs.slice(0, 4).map((t, j) => (
-                              <div key={j} className={`tx-badge ${t.type.toLowerCase()}`}>
-                                <div className={`tx-dot ${t.type.toLowerCase()}`}></div> {t.type === 'INCOME' ? '+' : '-'}{formatCompact(t.amount)}
-                              </div>
-                            ))}
-                            {allTxs.length > 4 && (
-                              <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.7rem', fontWeight: '700', color: 'var(--color-primary-ink)', background: 'var(--promo-bg-1)', padding: '2px 5px', borderRadius: '8px' }}>
-                                +{allTxs.length - 4}
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                  );
-                })}
-                </div>
-              </div>
-
               {/* Recent Transactions Widget */}
               <div className="widget">
                 <div className="widget-header">
