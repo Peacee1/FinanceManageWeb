@@ -1,3 +1,5 @@
+import BankPayments from '../features/business/BankPayments';
+import BankPaymentDialog from '../features/business/BankPaymentDialog';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Inventory from '../features/inventory/Inventory';
@@ -14,6 +16,7 @@ const formatCurrency = (amount) => {
 };
 
 const EmployeeDashboard = ({ user, handleLogout }) => {
+  const [bankPayment, setBankPayment] = useState(null);
   const [activeSection, setActiveSection] = useState('sales');
   const [businessContext, setBusinessContext] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -115,7 +118,8 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
       setPaymentMethod('');
       fetchProducts();
       setCart([]);
-      setSuccessMsg(saleResponse.data.transaction.approval_status === 'PENDING' ? 'Đã thu tiền, doanh thu đang chờ chủ quán duyệt.' : 'Thanh toán thành công, doanh thu đã được duyệt.');
+      if (saleResponse.data.bankPayment) setBankPayment(saleResponse.data.bankPayment);
+      setSuccessMsg(saleResponse.data.bankPayment ? 'Đang chờ ngân hàng xác nhận tiền vào.' : saleResponse.data.transaction.approval_status === 'PENDING' ? 'Đã thu tiền, doanh thu đang chờ chủ quán duyệt.' : 'Thanh toán thành công, doanh thu đã được duyệt.');
       fetchTodayOrders();
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
@@ -154,12 +158,14 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, padding: '12px 20px' }}>
         <button className="btn-primary" onClick={() => setActiveSection('sales')}>Bán hàng</button>
+        <button className="btn-primary" onClick={() => setActiveSection('bank')}>Ngân hàng</button>
         <button className="btn-primary" onClick={() => setActiveSection('submissions')}>Gửi thu / chi</button>
         {isCafeModel(businessContext?.model) && <button className="btn-primary" onClick={() => setActiveSection('tables')}>Tổng quan quán</button>}
         <button className="btn-primary" onClick={() => setActiveSection('inventory')}>Kho hàng · Nhập / xuất</button>
       </div>
       {successMsg && <div role={successMsg.startsWith('❌') ? 'alert' : 'status'} style={{ margin: '0 20px 12px', padding: 12, border: '1px solid var(--color-border)', borderRadius: 10 }}>{successMsg}</div>}
-      {activeSection === 'submissions' ? <div style={{ padding: 20 }}><TransactionApprovals user={user} businessId={businessContext?.id} /></div> : activeSection === 'tables' && isCafeModel(businessContext?.model) ? <div style={{ padding: 20 }}><CafeOverview user={user} businessId={businessContext.id} /></div> : activeSection === 'inventory' ? <div style={{ padding: 20 }}><Inventory user={user} /></div> : (
+      {bankPayment && <BankPaymentDialog payment={bankPayment} onClose={() => setBankPayment(null)} onChanged={fetchTodayOrders} />}
+      {activeSection === 'bank' ? <div style={{ padding: 20 }}><BankPayments user={user} /></div> : activeSection === 'submissions' ? <div style={{ padding: 20 }}><TransactionApprovals user={user} businessId={businessContext?.id} /></div> : activeSection === 'tables' && isCafeModel(businessContext?.model) ? <div style={{ padding: 20 }}><CafeOverview user={user} businessId={businessContext.id} /></div> : activeSection === 'inventory' ? <div style={{ padding: 20 }}><Inventory user={user} /></div> : (
       <div className="employee-pos-grid">
         {/* Left: Product Grid */}
         <div style={{ padding: '20px', overflowY: 'auto' }}>
@@ -212,6 +218,8 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
                   <div>
                     <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{order.description || 'Bán hàng'}</div>
                     <div style={{ fontSize: '.8rem' }}>{order.payment_method === 'CASH' ? 'Tiền mặt' : order.payment_method === 'TRANSFER' ? 'Chuyển khoản' : 'Chưa ghi nhận hình thức'}</div>
+                    {order.bank_payment_status === 'WAITING' && <div>Chờ ngân hàng xác nhận</div>}
+                    {order.bank_payment_status === 'VERIFIED' && <div>Ngân hàng đã xác nhận</div>}
                     <div style={{ fontSize: '.8rem' }}>{order.approval_status === 'PENDING' ? 'Chờ chủ quán duyệt' : order.approval_status === 'REJECTED' ? 'Đã từ chối' : 'Đã duyệt'}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{new Date(order.created_at || order.date).toLocaleTimeString('vi-VN')}</div>
                   </div>

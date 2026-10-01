@@ -1,3 +1,4 @@
+const { prepareBankPayment, publicIntent } = require('../services/bankPaymentService');
 const db = require('../config/db');
 const { randomUUID } = require('crypto');
 const { vietnamDate } = require('../utils/businessDate');
@@ -100,6 +101,10 @@ async function quoteTable(req, res, next) {
       if (!table) throw failure(404, 'Không tìm thấy bàn.');
       if (table.version !== req.body.version || !table.current_session_id) throw failure(409, 'Phiên sử dụng bàn đã thay đổi. Vui lòng tải lại.');
       const session = (await client.query('SELECT *, clock_timestamp() AS ended_at FROM cafe_table_sessions WHERE id=$1 FOR UPDATE', [table.current_session_id])).rows[0];
+      if (session.transaction_id) {
+        const pending = (await client.query("SELECT * FROM bank_payment_intents WHERE transaction_id=$1 AND status='WAITING'", [session.transaction_id])).rows[0];
+        if (pending) return { sessionId: session.id, quoteToken: session.quote_token, amount: Number(session.quote_amount), startedAt: session.started_at, endedAt: session.quoted_at, units: session.billed_units, billingUnit: session.billing_unit, hourlyRate: Number(session.hourly_rate), tableId: table.id, tableName: table.name, bankPayment: publicIntent(pending) };
+      }
       const fee = calculateTableFee(session.started_at, session.ended_at, session.hourly_rate, session.billing_unit);
       const token = randomUUID();
       await client.query('UPDATE cafe_table_sessions SET quote_token=$1, quoted_at=$2, quote_amount=$3, billed_units=$4 WHERE id=$5', [token, session.ended_at, fee.amount, fee.units, session.id]);
@@ -122,9 +127,21 @@ async function payTable(req, res, next) {
         if (session.payment_method !== paymentMethod) throw failure(409, 'Phiên bàn đã thanh toán bằng hình thức khác.');
         return { table, amount: Number(session.quote_amount), replayed: true };
       }
+      if (session.transaction_id) {
+        const pending = (await client.query("SELECT * FROM bank_payment_intents WHERE transaction_id=$1 AND status='WAITING'", [session.transaction_id])).rows[0];
+        if (pending) {
+          if (paymentMethod !== 'TRANSFER') throw failure(409, 'Hãy huỷ yêu cầu chuyển khoản trước khi đổi sang tiền mặt.');
+          return { table, amount: Number(session.quote_amount), bankPayment: publicIntent(pending), replayed: true };
+        }
+      }
       if (table.current_session_id !== session.id || new Date(session.current_time) - new Date(session.quoted_at) > 120000) throw failure(409, 'Bảng phí đã hết hạn hoặc phiên bàn đã thay đổi. Vui lòng lấy lại bảng phí.');
       const description = `Phụ thu bàn ${session.table_name}: ${session.billed_units} ${session.billing_unit === 'HOUR' ? 'giờ' : 'phút'}, ${session.hourly_rate}đ/giờ`;
-      const transaction = (await client.query("INSERT INTO transactions(user_id,business_id,type,amount,category,date,description,payment_method) VALUES ($1,$2,'INCOME',$3,'Phụ thu bàn',$4,$5,$6) RETURNING id", [req.user.userId, business.id, session.quote_amount, vietnamDate(), description, paymentMethod])).rows[0];
+      const transaction = (await client.query("INSERT INTO transactions(user_id,business_id,type,amount,category,date,description,payment_method) VALUES ($1,$2,'INCOME',$3,'Phụ thu bàn',$4,$5,$6) RETURNING *", [req.user.userId, business.id, session.quote_amount, vietnamDate(), description, paymentMethod])).rows[0];
+      const bankPayment = await prepareBankPayment(client, transaction, session);
+      if (bankPayment) {
+        await client.query('UPDATE cafe_table_sessions SET transaction_id=$1 WHERE id=$2', [transaction.id, session.id]);
+        return { table, amount: Number(session.quote_amount), bankPayment, replayed: false };
+      }
       await client.query('UPDATE cafe_table_sessions SET closed_at=quoted_at, transaction_id=$1, paid_by=$2, payment_method=$3 WHERE id=$4', [transaction.id, req.user.userId, paymentMethod, session.id]);
       const closed = (await client.query(`UPDATE cafe_tables SET is_occupied=false,current_session_id=NULL,version=version+1,updated_at=now(),updated_by=$1 WHERE id=$2 RETURNING ${columns}`, [req.user.userId, table.id])).rows[0];
       return { table: closed, amount: Number(session.quote_amount), replayed: false };

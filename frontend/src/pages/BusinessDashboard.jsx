@@ -1,3 +1,4 @@
+import BankPayments from '../features/business/BankPayments';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -835,6 +836,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
           {isCafeModel(bizData?.model) && <li className={`nav-item ${bizSubTab === 'tables' ? 'active' : ''}`} onClick={() => { setBizSubTab('tables'); setIsSidebarOpen(false); }}><LayoutDashboard size={20}/> Tổng quan quán</li>}
           <li className={`nav-item ${bizSubTab === 'inventory' ? 'active' : ''}`} onClick={() => { setBizSubTab('inventory'); setIsSidebarOpen(false); }}><ShoppingBag size={20}/> Kho hàng</li>
 
+          <li className={`nav-item ${bizSubTab === 'bank' ? 'active' : ''}`} onClick={() => { setBizSubTab('bank'); setIsSidebarOpen(false); }}><CircleDollarSign size={20}/> Ngân hàng</li>
           <li className={`nav-item ${bizSubTab === 'approvals' ? 'active' : ''}`} onClick={() => { setBizSubTab('approvals'); setIsSidebarOpen(false); }}><CircleDollarSign size={20}/> Duyệt thu chi</li>
           <li className={`nav-item ${bizSubTab === 'transactions' ? 'active' : ''}`} onClick={() => { setBizSubTab('transactions'); setIsSidebarOpen(false); }}><CircleDollarSign size={20}/> Sổ quỹ</li>
         </ul>
@@ -2369,7 +2371,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
 
                 {/* Sub tabs */}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px', background: 'var(--color-bg)', borderRadius: '14px', padding: '5px' }}>
-                  {['overview', ...(isCafeModel(bizData?.model) ? ['tables'] : []), 'products', 'employees', 'inventory', 'approvals'].map(tab => (
+                  {['overview', ...(isCafeModel(bizData?.model) ? ['tables'] : []), 'products', 'employees', 'inventory', 'approvals', 'bank'].map(tab => (
                     <button key={tab} onClick={() => {
                       setBizSubTab(tab);
                       if (tab === 'employees' && bizEmployees.length === 0) {
@@ -2381,7 +2383,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                     }}
                       style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: bizSubTab === tab ? '700' : '500', background: bizSubTab === tab ? 'white' : 'transparent', color: bizSubTab === tab ? 'var(--color-primary)' : 'var(--color-text-secondary)', boxShadow: bizSubTab === tab ? '0 2px 8px rgba(124,58,237,0.15)' : 'none', transition: 'all 0.2s' }}
                     >
-                      {tab === 'approvals' ? '✅ Duyệt thu chi' : tab === 'tables' ? '☕ Tổng quan quán' : tab === 'overview' ? '📊 Tổng quan' : tab === 'products' ? '🛍️ Sản phẩm' : tab === 'inventory' ? '📦 Kho hàng' : '👥 Nhân viên'}
+                      {tab === 'bank' ? '🏦 Ngân hàng' : tab === 'approvals' ? '✅ Duyệt thu chi' : tab === 'tables' ? '☕ Tổng quan quán' : tab === 'overview' ? '📊 Tổng quan' : tab === 'products' ? '🛍️ Sản phẩm' : tab === 'inventory' ? '📦 Kho hàng' : '👥 Nhân viên'}
                     </button>
                   ))}
                 </div>
@@ -2391,6 +2393,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                 {bizSubTab === 'tables' && isCafeModel(bizData?.model) && <CafeOverview user={user} businessId={Number(id)} />}
                 {bizSubTab === 'inventory' && <Inventory user={user} businessId={Number(id)} />}
 
+                {bizSubTab === 'bank' && <BankPayments user={user} />}
                 {bizSubTab === 'approvals' && <TransactionApprovals user={user} businessId={Number(id)} />}
                 {bizSubTab === 'transactions' && <BusinessLedger businessId={Number(id)} onAdd={() => { setEditTxId(null); setType('EXPENSE'); setAmount(''); setDescription(''); setIsModalOpen(true); }} />}
 

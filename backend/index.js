@@ -36,9 +36,10 @@ app.use((req, res, next) => {
 });
 app.get('/internal/metrics', metrics);
 app.use('/api', operations);
+app.use('/api', (req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+app.post('/api/payments/sepay/:id',express.raw({ type:'application/json',limit:'32kb' }),require('./controllers/bankController').webhook);
 app.use(express.json({ limit: '100kb' }));
 const limiter = (limit, windowMs) => rateLimit({ limit, windowMs, standardHeaders: 'draft-8', legacyHeaders: false, message: { message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.' } });
-app.use('/api', (req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
 app.use('/api/auth', limiter(30, 15 * 60 * 1000));
 app.use('/api/ai', limiter(5, 60 * 1000));
 app.use('/api/uploads', (req, res, next) => {
@@ -53,6 +54,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/business', businessRoutes);
+app.use('/api/payments', require('./routes/paymentRoutes'));
 
 const db = require('./config/db');
 const stopEvidenceCleanup = require('./services/evidenceService').startEvidenceCleanup();

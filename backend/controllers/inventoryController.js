@@ -1,3 +1,4 @@
+const { prepareBankPayment } = require('../services/bankPaymentService');
 const db = require('../config/db');
 const { createHash } = require('crypto');
 const { isPositiveInteger, isDate } = require('../utils/validation');
@@ -84,7 +85,7 @@ const checkout = async (req, res, next) => {
       const existing = (await client.query('SELECT * FROM transactions WHERE business_id = $1 AND sale_request_id = $2', [businessId, requestId])).rows[0];
       if (existing) {
         if (existing.user_id !== req.user.userId || existing.sale_request_hash !== fingerprint) throw error(409, 'Mã đơn đã được sử dụng cho một giỏ hàng khác.');
-        return { transaction: existing, replayed: true };
+        return { transaction: existing, bankPayment: await prepareBankPayment(client, existing), replayed: true };
       }
       const products = (await client.query('SELECT * FROM products WHERE business_id = $1 AND id = ANY($2::int[]) AND archived_at IS NULL ORDER BY id FOR UPDATE', [businessId, normalized.map(item => item.productId)])).rows;
       if (products.length !== normalized.length) throw error(404, 'Một hàng hóa không còn tồn tại trong doanh nghiệp.');
@@ -107,9 +108,9 @@ const checkout = async (req, res, next) => {
           await client.query("INSERT INTO stock_movements(business_id,product_id,actor_id,type,quantity,stock_after,reason,transaction_id,actor_name,product_name) VALUES ($1,$2,$3,'OUT',$4,$5,'SALE',$6,(SELECT name FROM users WHERE id = $3),$7)", [businessId, product.id, req.user.userId, item.quantity, stockAfter, transaction.id, product.name]);
         }
       }
-      return { transaction, replayed: false };
+      return { transaction, bankPayment: await prepareBankPayment(client, transaction), replayed: false };
     });
-    res.status(result.replayed ? 200 : 201).json({ message: 'Thanh toán thành công.', ...result });
+    res.status(result.replayed ? 200 : 201).json({ message: result.bankPayment ? 'Đang chờ ngân hàng xác nhận chuyển khoản.' : 'Đã ghi nhận đơn hàng.', ...result });
   } catch (failure) { fail(res, next, failure); }
 };
 

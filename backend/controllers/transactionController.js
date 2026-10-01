@@ -1,3 +1,4 @@
+const { prepareBankPayment } = require('../services/bankPaymentService');
 const db = require('../config/db');
 const { transactionError, isPositiveInteger, isDate } = require('../utils/validation');
 const { transactionScope } = require('../utils/transactionScope');
@@ -22,6 +23,7 @@ const getTransactions = async (req, res, next) => {
     if (req.query.approvalStatus !== undefined && !['PENDING','APPROVED','REJECTED','ALL'].includes(req.query.approvalStatus)) return res.status(400).json({ message: 'Trạng thái không hợp lệ.' });
     const status = req.query.approvalStatus || (req.user.role === 'employee' ? 'ALL' : 'APPROVED');
     if (status !== 'ALL') { params.push(status); query += ` AND t.approval_status=$${params.length}`; }
+    if (status === 'APPROVED') query += " AND t.bank_payment_status IN ('MANUAL','VERIFIED')";
     if (req.query.date) { params.push(req.query.date); query += ` AND t.date=$${params.length}::date`; }
     if (month !== undefined) {
       params.push(`${year}-${String(month).padStart(2, '0')}-01`);
@@ -95,16 +97,16 @@ const addTransaction = async (req, res, next) => {
         const previous = (await client.query('SELECT * FROM transactions WHERE user_id=$1 AND submission_request_id=$2', [req.user.userId,req.body.requestId])).rows[0];
         if (previous) {
           if (previous.submission_request_hash !== fingerprint) return { conflict: true };
-          return { row: previous, replayed: true };
+          return { row: previous, bankPayment: await prepareBankPayment(client, previous), replayed: true };
         }
       }
       const row = (await client.query(`INSERT INTO transactions(user_id,business_id,type,amount,category,date,description,payment_method,submission_request_id,submission_request_hash,evidence_filename,evidence_mime,evidence_expires_at)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,(SELECT expires_at FROM transaction_evidence_files WHERE filename=$11)) RETURNING *`, [req.user.userId,scope.businessId,type,amount,category,saleDate,description || '',req.body.paymentMethod || null,req.user.role === 'employee' ? req.body.requestId : null,fingerprint,req.file?.filename || null,req.file?.mimetype || null])).rows[0];
-      return { row, replayed: false };
+      return { row, bankPayment: await prepareBankPayment(client, row), replayed: false };
     });
     if (result.conflict) return res.status(409).json({ message: 'Mã yêu cầu đã được dùng cho khoản thu chi khác.' });
     req.evidencePersisted = Boolean(req.file && !result.replayed);
-    res.status(result.replayed ? 200 : 201).json(publicTransaction(result.row));
+    res.status(result.replayed ? 200 : 201).json({ ...publicTransaction(result.row), bankPayment: result.bankPayment });
   } catch (error) { next(error); }
 };
 
@@ -115,7 +117,7 @@ const deleteTransaction = async (req, res, next) => {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
     const params = [...scope.params, req.params.id];
-    const result = await db.query(`DELETE FROM transactions t WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.id = $${params.length} RETURNING *`, params);
+    const result = await db.query(`DELETE FROM transactions t WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.bank_payment_status='MANUAL' AND t.id = $${params.length} RETURNING *`, params);
     if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền xóa.' });
     if (result.rows[0].evidence_filename) await removeEvidence(result.rows[0].evidence_filename);
     res.json({ message: 'Xóa giao dịch thành công.', transaction: publicTransaction(result.rows[0]) });
@@ -135,7 +137,7 @@ const updateTransaction = async (req, res, next) => {
     const params = [...scope.params];
     const updates = fields.map(field => { params.push(req.body[field]); return `${field} = $${params.length}`; });
     params.push(req.params.id);
-    const result = await db.query(`UPDATE transactions t SET ${updates.join(', ')} WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.id = $${params.length} RETURNING *`, params);
+    const result = await db.query(`UPDATE transactions t SET ${updates.join(', ')} WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.bank_payment_status='MANUAL' AND t.id = $${params.length} RETURNING *`, params);
     if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền sửa.' });
     res.json(publicTransaction(result.rows[0]));
   } catch (error) { next(error); }

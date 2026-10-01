@@ -1,0 +1,14 @@
+.bank-dialog { max-width: 460px; width: calc(100% - 32px); max-height: 90vh; overflow-y: auto; border: 1px solid #E9E5F3; border-radius: 16px; padding: 24px; color: #181525; background: #FFFFFF; }
+.bank-dialog::backdrop { background: rgb(24 21 37 / 55%); }
+.bank-dialog p { margin: 12px 0; }
+.bank-qr { display: block; width: min(100%, 300px); height: auto; margin: 12px auto; }
+.bank-code { overflow-wrap: anywhere; }
+.bank-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.bank-actions button,.bank-panel button { min-height: 44px; padding: 10px 16px; border: 1px solid #E9E5F3; border-radius: 8px; cursor: pointer; }
+.bank-panel { background: #FFFFFF; border: 1px solid #E9E5F3; border-radius: 16px; padding: 20px; }
+.bank-panel form { display: grid; gap: 12px; max-width: 600px; }
+.bank-panel label { display: grid; gap: 6px; }
+.bank-panel input,.bank-panel select { min-height: 44px; padding: 8px; border: 1px solid #E9E5F3; border-radius: 8px; max-width: 100%; }
+.bank-panel label.bank-check { display: flex; align-items: center; gap: 10px; }
+.bank-panel p { margin: 12px 0; }
+.bank-row { border-top: 1px solid #E9E5F3; padding: 16px 0; overflow-wrap: anywhere; }

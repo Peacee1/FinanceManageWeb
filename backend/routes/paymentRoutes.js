@@ -1,0 +1,12 @@
+const express=require('express');
+const { protect,ownerOnly }=require('../middleware/authMiddleware');
+const bank=require('../controllers/bankController');
+const router=express.Router();
+router.get('/connection',protect,ownerOnly,bank.getConnection);
+router.put('/connection',protect,ownerOnly,bank.saveConnection);
+router.get('/intents',protect,bank.listIntents);
+router.get('/intents/:id',protect,bank.getIntent);
+router.post('/intents/:id/cancel',protect,bank.cancelIntent);
+router.get('/events',protect,ownerOnly,bank.listEvents);
+router.post('/events/:id/reconcile',protect,ownerOnly,bank.reconcileEvent);
+module.exports=router;

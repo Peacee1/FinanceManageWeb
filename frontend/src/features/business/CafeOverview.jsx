@@ -1,3 +1,4 @@
+import BankPaymentDialog from './BankPaymentDialog';
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import './CafeOverview.css';
@@ -21,6 +22,7 @@ function BillingFields({ value, onChange, disabled, prefix }) {
 }
 
 export default function CafeOverview({ user, businessId }) {
+  const [bankPayment, setBankPayment] = useState(null);
   const [tables, setTables] = useState([]);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,7 @@ export default function CafeOverview({ user, businessId }) {
     try {
       const { data } = await action();
       setTables(current => data.deletedId ? current.filter(table => table.id !== data.deletedId) : key === 'create' ? [...current.filter(table => table.id !== data.table.id), data.table] : current.map(table => table.id === data.table.id ? data.table : table));
+      if (data.bankPayment) setBankPayment(data.bankPayment);
       setEditing(null);
       setQuote(null); setPaymentMethod('');
       if (key === 'create') setName('');
@@ -78,7 +81,7 @@ export default function CafeOverview({ user, businessId }) {
     busy.current = true; requestSequence.current++; setPending(table.id); setMessage('');
     try {
       const { data } = await axios.post(`/api/business/tables/${table.id}/quote`, { version: table.version }, config());
-      setQuote(data.quote); setPaymentMethod('');
+      if (data.quote.bankPayment) { setBankPayment(data.quote.bankPayment); setQuote(null); } else setQuote(data.quote); setPaymentMethod('');
     } catch (error) {
       if ([404, 409].includes(error.response?.status)) await refresh();
       setMessage(error.response?.data?.message || 'Không thể lấy bảng phí. Vui lòng thử lại.');
@@ -86,6 +89,7 @@ export default function CafeOverview({ user, businessId }) {
   };
   const occupied = tables.filter(table => table.is_occupied).length;
   return <section className="cafe-overview">
+    {bankPayment && <BankPaymentDialog payment={bankPayment} onClose={() => setBankPayment(null)} onChanged={refresh} />}
     <div className="cafe-heading"><div><h2>Tổng quan quán</h2><p>{tables.length} bàn · {occupied} có khách · {tables.length - occupied} còn trống</p></div><button className="btn-primary" disabled={pending !== null} onClick={refresh}>Tải lại</button></div>
     {owner && <form className="cafe-create" onSubmit={event => { event.preventDefault(); mutate('create', () => axios.post('/api/business/tables', { name, ...billing }, config())); }}>
       <label htmlFor="cafe-table-name">Tên bàn<input id="cafe-table-name" value={name} maxLength={50} placeholder="Ví dụ: Bàn 1" required disabled={pending !== null} onChange={event => setName(event.target.value)} /></label>

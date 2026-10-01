@@ -23,6 +23,7 @@ ${setting}
 `;
 }
 if (!/^INTERNAL_METRICS_TOKEN=.+$/m.test(env)) env += `\nINTERNAL_METRICS_TOKEN=${randomBytes(32).toString('hex')}\n`;
+if (!/^PAYMENT_SECRET_KEY=.+$/m.test(env)) env += `\nPAYMENT_SECRET_KEY=${randomBytes(32).toString('hex')}\n`;
 for (const [key, value] of Object.entries({ NODE_ENV: 'production', HOST: '127.0.0.1' })) {
   env = new RegExp(`^${key}=.*$`, 'm').test(env) ? env.replace(new RegExp(`^${key}=.*$`, 'm'), `${key}=${value}`) : `${env.trimEnd()}
 ${key}=${value}
@@ -53,6 +54,12 @@ if command -v selinuxenabled >/dev/null && selinuxenabled; then sudo chcon -R -t
 nginx_config=/etc/nginx/conf.d/quanlychitieu.conf
 sudo cp "$nginx_config" "$release_dir/nginx.conf"
 sudo sed -i 's/client_max_body_size 1M;/client_max_body_size 6M;/' "$nginx_config"
+# Overwrite the client header: only the local trusted proxy declares TLS.
+if sudo grep -q 'proxy_set_header X-Forwarded-Proto' "$nginx_config"; then
+  sudo sed -i 's/proxy_set_header X-Forwarded-Proto.*;/proxy_set_header X-Forwarded-Proto $scheme;/' "$nginx_config"
+else
+  sudo sed -i '/proxy_set_header X-Real-IP/a\      proxy_set_header X-Forwarded-Proto $scheme;' "$nginx_config"
+fi
 if ! sudo nginx -t; then
   sudo cp "$release_dir/nginx.conf" "$nginx_config"
   exit 1

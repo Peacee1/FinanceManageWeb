@@ -1,3 +1,4 @@
+import BankPaymentDialog from './BankPaymentDialog';
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { newRequestId } from '../../utils/requestId';
@@ -8,6 +9,7 @@ const statuses = { PENDING: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED:
 const blank = { type: 'EXPENSE', amount: '', category: '', description: '', paymentMethod: '' };
 export default function TransactionApprovals({ user, businessId }) {
   const owner = user?.role === 'owner';
+  const [bankPayment, setBankPayment] = useState(null);
   const [rows,setRows] = useState([]);
   const [status,setStatus] = useState('PENDING');
   const [cursors,setCursors] = useState(['']);
@@ -65,7 +67,8 @@ export default function TransactionApprovals({ user, businessId }) {
       Object.entries({ ...form,date: attempt.current.date,scope: 'business',requestId: attempt.current.requestId,...(businessId ? { businessId } : {}) }).forEach(([key,value]) => payload.append(key,value));
       if (file) payload.append('evidence',file);
       const { data } = await axios.post('/api/transactions',payload,config());
-      setSuccess(data.approval_status === 'APPROVED' ? 'Khoản thu chi đã được tự động duyệt.' : 'Đã gửi khoản thu chi, đang chờ chủ quán duyệt.');
+      if (data.bankPayment) setBankPayment(data.bankPayment);
+      setSuccess(data.bankPayment ? 'Đang chờ ngân hàng xác nhận tiền vào, trạng thái duyệt được xử lý riêng.' : data.approval_status === 'APPROVED' ? 'Khoản thu chi đã được tự động duyệt.' : 'Đã gửi khoản thu chi, đang chờ chủ quán duyệt.');
       setForm(blank); setFile(null); if (fileInput.current) fileInput.current.value=''; attempt.current=null;
       setCursors(['']);
     });
@@ -75,6 +78,7 @@ export default function TransactionApprovals({ user, businessId }) {
     setImage(URL.createObjectURL(response.data));
   });
   return <section className="inventory inventory-card">
+    {bankPayment && <BankPaymentDialog payment={bankPayment} onClose={() => setBankPayment(null)} onChanged={() => setRevision(value => value+1)} />}
     <div className="inventory-heading"><h2>{owner ? 'Duyệt thu chi' : 'Gửi khoản thu / chi'}</h2><button disabled={loading || pending} onClick={() => setRevision(value => value+1)}>Làm mới</button></div>
     <p className="inventory-error"><strong>Ảnh bằng chứng chỉ được lưu 1 tháng kể từ lúc tải lên.</strong> Sau thời hạn này ảnh sẽ bị xoá khỏi server, giao dịch vẫn được giữ lại. Khoản chờ duyệt hoặc bị từ chối chưa tính vào doanh thu/chi phí.</p>
     {error && <p role="alert" className="inventory-error">{error}</p>}{success && <p role="status" className="inventory-success">{success}</p>}
@@ -94,7 +98,7 @@ export default function TransactionApprovals({ user, businessId }) {
     <h3 style={{ marginTop: 24 }}>{owner ? 'Danh sách thu chi' : 'Các khoản bạn đã ghi nhận'}</h3>
     {loading ? <p role="status">Đang tải…</p> : !rows.length ? <p>Chưa có khoản thu chi.</p> : <div className="inventory-table"><table><thead><tr><th>Ngày / Người tạo</th><th>Nội dung</th><th>Số tiền / Hình thức</th><th>Trạng thái</th><th>Bằng chứng</th>{owner && <th>Duyệt</th>}</tr></thead><tbody>{rows.map(row => <tr key={row.id}>
       <td>{new Date(row.date).toLocaleDateString('vi-VN')}{owner && <small>{row.submitter_name}</small>}</td><td>{row.category}<small>{row.description}</small></td>
-      <td>{row.type === 'INCOME' ? '+' : '-'}{Number(row.amount).toLocaleString('vi-VN')}đ<small>{row.payment_method === 'CASH' ? 'Tiền mặt' : row.payment_method === 'TRANSFER' ? 'Chuyển khoản' : 'Chưa ghi nhận'}</small></td><td>{statuses[row.approval_status]}</td>
+      <td>{row.type === 'INCOME' ? '+' : '-'}{Number(row.amount).toLocaleString('vi-VN')}đ<small>{row.payment_method === 'CASH' ? 'Tiền mặt' : row.payment_method === 'TRANSFER' ? 'Chuyển khoản' : 'Chưa ghi nhận'}</small></td><td>{statuses[row.approval_status]}{row.bank_payment_status === 'WAITING' && <small>Chờ tiền ngân hàng · chưa tính doanh thu</small>}{row.bank_payment_status === 'VERIFIED' && <small>Ngân hàng đã xác nhận</small>}{row.bank_payment_status === 'EXCEPTION' && <small>Yêu cầu chuyển khoản đã huỷ</small>}{row.bank_intent_id && <button disabled={pending} onClick={() => perform(async () => { const response=await axios.get(`/api/payments/intents/${row.bank_intent_id}`,config()); setBankPayment(response.data.payment); })}>Xem thanh toán</button>}</td>
       <td>{row.has_evidence ? <><button disabled={pending} onClick={() => showEvidence(row.id)}>Xem ảnh</button><small>Hết hạn: {new Date(row.evidence_expires_at).toLocaleString('vi-VN')}</small></> : row.evidence_expires_at ? 'Ảnh đã hết hạn' : 'Không có ảnh'}</td>
       {owner && <td>{row.approval_status === 'PENDING' && <div className="inventory-actions"><button className="inventory-primary" disabled={pending} onClick={() => perform(() => axios.post(`/api/business/approvals/${row.id}`,{ decision: 'APPROVED' },config()))}>Duyệt</button><button disabled={pending} onClick={() => perform(() => axios.post(`/api/business/approvals/${row.id}`,{ decision: 'REJECTED' },config()))}>Từ chối</button></div>}</td>}
     </tr>)}</tbody></table></div>}
