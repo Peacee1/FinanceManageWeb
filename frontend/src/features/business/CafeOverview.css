@@ -7,7 +7,7 @@
 .cafe-create input { padding: 12px; min-height: 44px; width: 100%; box-sizing: border-box; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg); color: var(--color-text); }
 .cafe-overview button { min-height: 44px; white-space: normal; }
 .cafe-message { padding: 12px; border: 1px solid var(--color-warning, #FBBF24); border-radius: 10px; }
-.cafe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; }
+.cafe-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
 .cafe-table { min-width: 0; padding: 18px; border: 2px solid var(--color-border); border-radius: 14px; background: var(--color-bg); }
 .cafe-table.occupied { border-color: var(--color-primary); }
 .cafe-table h3 { margin: 0; overflow-wrap: anywhere; }
@@ -20,4 +20,12 @@
 .cafe-overview select { min-height: 44px; padding: 10px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg); color: var(--color-text); width: 100%; }
 .cafe-payment { padding: 18px; border: 2px solid var(--color-primary); border-radius: 14px; margin-bottom: 20px; }
 .cafe-payment label { display: grid; gap: 8px; margin-bottom: 12px; }
+@media (max-width: 768px) {
+  .cafe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .cafe-table { padding: 10px; }
+  .cafe-table h3 { font-size: 1rem; }
+  .cafe-table p { font-size: .85rem; overflow-wrap: anywhere; }
+  .cafe-table-actions { flex-direction: column; }
+  .cafe-table button { padding: 8px; font-size: .8rem; }
+}
 @media (max-width: 480px) { .cafe-overview { padding: 14px; } .cafe-create > button { width: 100%; } }
