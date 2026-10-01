@@ -19,6 +19,7 @@ test('inventory permissions, stock corrections, atomic checkout and retry protec
       users.push(user.id);
     }
     for (const owner of [users[0], users[2]]) businesses.push((await db.query("INSERT INTO businesses(owner_id,business_code,model,name) VALUES ($1,$2,'Quan cafe','Inventory integration') RETURNING id", [owner, `INV-${businesses.length}-${suffix}`])).rows[0].id);
+    await db.query('UPDATE businesses SET auto_approve_transactions=true WHERE id=ANY($1::int[])', [businesses]);
     await db.query("INSERT INTO employees(business_id,user_id,employee_code,name) VALUES ($1,$2,1,'Inventory integration')", [businesses[0], users[1]]);
     const product = (await db.query("INSERT INTO products(business_id,name,price) VALUES ($1,'Tracked test product',1000) RETURNING id", [businesses[0]])).rows[0].id;
     const foreignProduct = (await db.query("INSERT INTO products(business_id,name,price) VALUES ($1,'Foreign test product',1000) RETURNING id", [businesses[1]])).rows[0].id;

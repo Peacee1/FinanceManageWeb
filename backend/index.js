@@ -55,6 +55,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/business', businessRoutes);
 
 const db = require('./config/db');
+const stopEvidenceCleanup = require('./services/evidenceService').startEvidenceCleanup();
 app.get('/api/health', async (req, res) => {
   try { await db.query('SELECT 1'); res.json({ status: 'ok' }); }
   catch { res.status(503).json({ status: 'unavailable' }); }
@@ -77,6 +78,7 @@ server.headersTimeout = 10000;
 server.keepAliveTimeout = 5000;
 const shutdown = () => {
   stopMetrics();
+  stopEvidenceCleanup();
   const timeout = setTimeout(() => process.exit(1), 10000).unref();
   server.close(async () => { await db.close(); clearTimeout(timeout); process.exit(0); });
 };

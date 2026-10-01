@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Inventory from '../features/inventory/Inventory';
+import TransactionApprovals from '../features/business/TransactionApprovals';
 import CafeOverview, { isCafeModel } from '../features/business/CafeOverview';
 import { newRequestId } from '../utils/requestId';
 import { vietnamDate } from '../utils/businessDate';
@@ -20,6 +21,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]); // { product, quantity }
   const [todayOrders, setTodayOrders] = useState([]);
+  const [todayIncome, setTodayIncome] = useState(0);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -32,7 +34,6 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
 
   useEffect(() => {
     fetchProducts();
-    fetchTodayOrders();
     axiosAuth.get('/api/business/context').then(response => setBusinessContext(response.data.business)).catch(error => setSuccessMsg(error.response?.data?.message || 'Không thể tải thông tin quán.'));
   }, []);
 
@@ -50,7 +51,8 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
 
   const fetchTodayOrders = async () => {
     try {
-      const res = await axiosAuth.get('/api/transactions?scope=business');
+      const [res, summary] = await Promise.all([axiosAuth.get('/api/transactions?scope=business&limit=50'), axiosAuth.get('/api/transactions/summary?scope=business')]);
+      setTodayIncome(Number(summary.data.today_income));
       const today = vietnamDate();
       const todayTx = (res.data || []).filter(t => t.date?.startsWith(today) && t.type === 'INCOME');
       setTodayOrders(todayTx);
@@ -58,6 +60,13 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
       console.error('Loi lay lich su:', err);
     }
   };
+
+  useEffect(() => {
+    if (activeSection !== 'sales') return;
+    fetchTodayOrders();
+    const timer = setInterval(() => { if (!document.hidden) fetchTodayOrders(); }, 30000);
+    return () => clearInterval(timer);
+  }, [activeSection]);
 
   const addToCart = (product) => {
     if (submitting) return;
@@ -101,12 +110,12 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
       const items = cart.map(item => ({ productId: item.product.id, quantity: item.quantity }));
       const signature = JSON.stringify({ items, paymentMethod });
       if (checkoutAttempt.current?.signature !== signature) checkoutAttempt.current = { signature, requestId: newRequestId() };
-      await axiosAuth.post('/api/business/checkout', { items, paymentMethod, requestId: checkoutAttempt.current.requestId, expectedTotal: cartTotal });
+      const saleResponse = await axiosAuth.post('/api/business/checkout', { items, paymentMethod, requestId: checkoutAttempt.current.requestId, expectedTotal: cartTotal });
       checkoutAttempt.current = null;
       setPaymentMethod('');
       fetchProducts();
       setCart([]);
-      setSuccessMsg('Thanh toan thanh cong!');
+      setSuccessMsg(saleResponse.data.transaction.approval_status === 'PENDING' ? 'Đã thu tiền, doanh thu đang chờ chủ quán duyệt.' : 'Thanh toán thành công, doanh thu đã được duyệt.');
       fetchTodayOrders();
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
@@ -119,7 +128,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
     }
   };
 
-  const todayRevenue = todayOrders.reduce((sum, t) => sum + parseInt(t.amount || 0), 0);
+  const todayRevenue = todayIncome;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', fontFamily: 'Inter, sans-serif' }}>
@@ -145,11 +154,12 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, padding: '12px 20px' }}>
         <button className="btn-primary" onClick={() => setActiveSection('sales')}>Bán hàng</button>
+        <button className="btn-primary" onClick={() => setActiveSection('submissions')}>Gửi thu / chi</button>
         {isCafeModel(businessContext?.model) && <button className="btn-primary" onClick={() => setActiveSection('tables')}>Tổng quan quán</button>}
         <button className="btn-primary" onClick={() => setActiveSection('inventory')}>Kho hàng · Nhập / xuất</button>
       </div>
       {successMsg && <div role={successMsg.startsWith('❌') ? 'alert' : 'status'} style={{ margin: '0 20px 12px', padding: 12, border: '1px solid var(--color-border)', borderRadius: 10 }}>{successMsg}</div>}
-      {activeSection === 'tables' && isCafeModel(businessContext?.model) ? <div style={{ padding: 20 }}><CafeOverview user={user} businessId={businessContext.id} /></div> : activeSection === 'inventory' ? <div style={{ padding: 20 }}><Inventory user={user} /></div> : (
+      {activeSection === 'submissions' ? <div style={{ padding: 20 }}><TransactionApprovals user={user} businessId={businessContext?.id} /></div> : activeSection === 'tables' && isCafeModel(businessContext?.model) ? <div style={{ padding: 20 }}><CafeOverview user={user} businessId={businessContext.id} /></div> : activeSection === 'inventory' ? <div style={{ padding: 20 }}><Inventory user={user} /></div> : (
       <div className="employee-pos-grid">
         {/* Left: Product Grid */}
         <div style={{ padding: '20px', overflowY: 'auto' }}>
@@ -202,6 +212,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
                   <div>
                     <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{order.description || 'Bán hàng'}</div>
                     <div style={{ fontSize: '.8rem' }}>{order.payment_method === 'CASH' ? 'Tiền mặt' : order.payment_method === 'TRANSFER' ? 'Chuyển khoản' : 'Chưa ghi nhận hình thức'}</div>
+                    <div style={{ fontSize: '.8rem' }}>{order.approval_status === 'PENDING' ? 'Chờ chủ quán duyệt' : order.approval_status === 'REJECTED' ? 'Đã từ chối' : 'Đã duyệt'}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{new Date(order.created_at || order.date).toLocaleTimeString('vi-VN')}</div>
                   </div>
                   <div style={{ fontWeight: '800', color: 'var(--color-income)', fontSize: '1rem' }}>+{formatCurrency(order.amount)}</div>

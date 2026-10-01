@@ -49,7 +49,15 @@ sudo mkdir -p "$public_release"
 sudo cp -R "$release_dir/html/." "$public_release/"
 sudo chmod -R a+rX "$public_release"
 if command -v selinuxenabled >/dev/null && selinuxenabled; then sudo chcon -R -t httpd_sys_content_t "$public_release"; fi
-sudo nginx -t
+# Multipart evidence is limited to one 5 MB image by the authenticated API.
+nginx_config=/etc/nginx/conf.d/quanlychitieu.conf
+sudo cp "$nginx_config" "$release_dir/nginx.conf"
+sudo sed -i 's/client_max_body_size 1M;/client_max_body_size 6M;/' "$nginx_config"
+if ! sudo nginx -t; then
+  sudo cp "$release_dir/nginx.conf" "$nginx_config"
+  exit 1
+fi
+sudo systemctl reload nginx
 # Save the served frontend before switching to the new release.
 previous_html=$(readlink -f /usr/share/nginx/html)
 if [[ ! -L /usr/share/nginx/html ]]; then

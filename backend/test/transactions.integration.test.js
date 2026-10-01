@@ -20,10 +20,11 @@ test('personal and business revenue stay separate and ownership is enforced', { 
       const result = await db.query("INSERT INTO businesses(owner_id, business_code, model, name) VALUES ($1, $2, 'Quan cafe', 'Scope integration') RETURNING id", [owner.userId, `TEST-${businesses.length}-${suffix}`]);
       businesses.push(result.rows[0].id);
     }
+    await db.query('UPDATE businesses SET auto_approve_transactions=true WHERE id=ANY($1::int[])', [businesses]);
     await db.query("INSERT INTO employees(business_id, user_id, employee_code, name) VALUES ($1, $2, 1, 'Scope integration')", [businesses[0], users[1].userId]);
     const payload = amount => ({ type: 'INCOME', amount, category: 'Integration', date: new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10) });
     const personal = await invoke(addTransaction, users[0], {}, payload(10));
-    const employee = await invoke(addTransaction, users[1], { scope: 'business' }, { ...payload(20), date: '1999-01-01', paymentMethod: 'CASH' });
+    const employee = await invoke(addTransaction, users[1], { scope: 'business' }, { ...payload(20), date: '1999-01-01', paymentMethod: 'CASH', requestId: randomUUID() });
     await invoke(addTransaction, users[0], { scope: 'business' }, payload(30));
     await invoke(addTransaction, users[2], { scope: 'business' }, payload(40));
     assert.equal(personal.body.business_id, null);

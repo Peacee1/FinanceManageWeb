@@ -95,6 +95,7 @@ export default function CafeOverview({ user, businessId }) {
       <div className="cafe-table-actions"><button className="btn-primary" disabled={pending !== null || !paymentMethod}>Xác nhận đã thu tiền và đóng bàn</button><button className="btn-primary" type="button" disabled={pending !== null} onClick={() => setQuote(null)}>Huỷ</button></div>
     </form>}
     <p className="cafe-hint">Trạng thái được dùng chung cho chủ quán và nhân viên. Tự cập nhật mỗi 15 giây khi mở tab này.</p>
+    {user?.role === 'employee' && <p className="cafe-hint">Khoản phụ thu đã thu tiền xuất hiện trong mục Gửi thu / chi. Doanh thu chỉ được tính sau khi khoản thu được duyệt.</p>}
     {loading ? <p role="status">Đang tải bàn…</p> : tables.length === 0 ? <p>{owner ? 'Chưa có bàn. Nhập tên bàn để bắt đầu.' : 'Chủ quán chưa tạo bàn.'}</p> : <div className="cafe-grid">
       {tables.map(table => <article key={table.id} className={`cafe-table ${table.is_occupied ? 'occupied' : ''}`}>
         <h3>{table.name}</h3><p className="cafe-status">{table.is_occupied ? '● Có khách' : '○ Còn trống'}</p>

@@ -15,6 +15,7 @@ test('cafe tables isolate businesses, restrict creation and synchronize occupanc
   try {
     for (const role of ['owner', 'employee', 'owner']) users.push((await db.query('INSERT INTO users(name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id', ['Cafe test', `${users.length}-${suffix}@example.invalid`, 'invalid-test-hash', role])).rows[0].id);
     for (const owner of [users[0], users[2]]) businesses.push((await db.query('INSERT INTO businesses(owner_id,business_code,model,name) VALUES ($1,$2,$3,$4) RETURNING id', [owner, `CAFE-${businesses.length}-${suffix}`, businesses.length ? 'Quán ăn' : 'Quán cafe', 'Cafe test'])).rows[0].id);
+    await db.query('UPDATE businesses SET auto_approve_transactions=true WHERE id=ANY($1::int[])', [businesses]);
     await db.query("INSERT INTO employees(business_id,user_id,employee_code,name) VALUES ($1,$2,1,'Cafe test')", [businesses[0], users[1]]);
     const app = express(); app.use(express.json()); app.use('/api/business', routes);
     app.use((error, req, res, next) => res.status(500).json({ message: 'INTERNAL' }));
