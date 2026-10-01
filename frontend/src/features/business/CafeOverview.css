@@ -1,0 +1,16 @@
+.cafe-overview { padding: 20px; background: var(--color-card); border: 1px solid var(--color-border); border-radius: 16px; }
+.cafe-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.cafe-heading h2 { margin: 0; }
+.cafe-heading p, .cafe-hint { color: var(--color-text-secondary); }
+.cafe-create { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 20px 0; }
+.cafe-create label { display: grid; gap: 8px; flex: 1; min-width: min(220px, 100%); }
+.cafe-create input { padding: 12px; min-height: 44px; width: 100%; box-sizing: border-box; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg); color: var(--color-text); }
+.cafe-overview button { min-height: 44px; white-space: normal; }
+.cafe-message { padding: 12px; border: 1px solid var(--color-warning, #FBBF24); border-radius: 10px; }
+.cafe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 16px; }
+.cafe-table { min-width: 0; padding: 18px; border: 2px solid var(--color-border); border-radius: 14px; background: var(--color-bg); }
+.cafe-table.occupied { border-color: var(--color-primary); }
+.cafe-table h3 { margin: 0; overflow-wrap: anywhere; }
+.cafe-status { font-weight: 700; }
+.cafe-table button { width: 100%; }
+@media (max-width: 480px) { .cafe-overview { padding: 14px; } .cafe-create > button { width: 100%; } }

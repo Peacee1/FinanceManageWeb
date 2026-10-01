@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Inventory from '../features/inventory/Inventory';
+import CafeOverview, { isCafeModel } from '../features/business/CafeOverview';
 import { newRequestId } from '../utils/requestId';
 import { vietnamDate } from '../utils/businessDate';
 import { ShoppingBag, Plus, Minus, Trash2, CheckCircle, LogOut, PawPrint, Clock } from 'lucide-react';
@@ -13,6 +14,7 @@ const formatCurrency = (amount) => {
 
 const EmployeeDashboard = ({ user, handleLogout }) => {
   const [activeSection, setActiveSection] = useState('sales');
+  const [businessContext, setBusinessContext] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('');
   const checkoutAttempt = useRef(null);
   const [products, setProducts] = useState([]);
@@ -31,6 +33,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
   useEffect(() => {
     fetchProducts();
     fetchTodayOrders();
+    axiosAuth.get('/api/business/context').then(response => setBusinessContext(response.data.business)).catch(error => setSuccessMsg(error.response?.data?.message || 'Không thể tải thông tin quán.'));
   }, []);
 
   const fetchProducts = async () => {
@@ -140,12 +143,13 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, padding: '12px 20px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, padding: '12px 20px' }}>
         <button className="btn-primary" onClick={() => setActiveSection('sales')}>Bán hàng</button>
+        {isCafeModel(businessContext?.model) && <button className="btn-primary" onClick={() => setActiveSection('tables')}>Tổng quan quán</button>}
         <button className="btn-primary" onClick={() => setActiveSection('inventory')}>Kho hàng · Nhập / xuất</button>
       </div>
       {successMsg && <div role={successMsg.startsWith('❌') ? 'alert' : 'status'} style={{ margin: '0 20px 12px', padding: 12, border: '1px solid var(--color-border)', borderRadius: 10 }}>{successMsg}</div>}
-      {activeSection === 'inventory' ? <div style={{ padding: 20 }}><Inventory user={user} /></div> : (
+      {activeSection === 'tables' && isCafeModel(businessContext?.model) ? <div style={{ padding: 20 }}><CafeOverview user={user} businessId={businessContext.id} /></div> : activeSection === 'inventory' ? <div style={{ padding: 20 }}><Inventory user={user} /></div> : (
       <div className="employee-pos-grid">
         {/* Left: Product Grid */}
         <div style={{ padding: '20px', overflowY: 'auto' }}>

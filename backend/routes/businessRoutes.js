@@ -4,6 +4,11 @@ const multer = require('multer');
 const path = require('path');
 const { validateUpload } = require('../middleware/validateUpload');
 const { protect, ownerOnly } = require('../middleware/authMiddleware');
+const { getContext, listTables, createTable, setOccupancy } = require('../controllers/cafeController');
+router.get('/context', protect, getContext);
+router.get('/tables', protect, listTables);
+router.post('/tables', protect, ownerOnly, createTable);
+router.patch('/tables/:id/occupancy', protect, setOccupancy);
 const {
   createBusiness, getMyBusiness, updateBusiness,
   addEmployee, listEmployees, updateEmployee, removeEmployee,
