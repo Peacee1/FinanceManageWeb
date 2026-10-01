@@ -407,6 +407,28 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     return () => { cancelled = true; document.removeEventListener('visibilitychange', refresh); clearInterval(interval); };
   }, [activeTab, bizData?.id]);
 
+  const handleCreateBiz = async () => {
+    if (bizActionLoading) return;
+    if (!bizForm.name.trim()) { setBizMsg('⚠️ Vui lòng nhập tên quán.'); return; }
+    setBizActionLoading(true);
+    setBizMsg('');
+    try {
+      const form = new FormData();
+      form.append('model', bizForm.model);
+      form.append('name', bizForm.name.trim());
+      form.append('maxEmployees', bizForm.maxEmployees);
+      if (bizAvatarFile) form.append('avatar', bizAvatarFile);
+      const { data } = await axios.post('/api/business/create', form, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setBizData(data.business);
+      setIsBizCreating(false);
+      setBizMsg('✅ Tạo quán thành công! Mã quán: ' + data.business.business_code);
+    } catch (error) {
+      setBizMsg('❌ ' + (error.response?.data?.message || 'Không thể tạo quán. Vui lòng thử lại.'));
+    } finally { setBizActionLoading(false); }
+  };
+
   const handleAvatarUpload = (e, target = 'profile') => {
     setCropTarget(target);
     const file = e.target.files[0];
