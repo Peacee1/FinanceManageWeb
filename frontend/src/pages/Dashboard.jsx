@@ -1,6 +1,7 @@
 import { personalPalettes, themedAsset } from '../features/personalization/personalTheme';
 import '../features/personalization/personalTheme.css';
 import PersonalWalletSummary from '../features/transactions/PersonalWalletSummary';
+import TransactionChat from '../features/transactions/TransactionChat';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Cropper from 'react-easy-crop';
@@ -976,6 +977,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             );
           })()}
 
+          <TransactionChat onCreated={fetchTransactions} />
           {/* Top Stat Cards */}
           <div className="cards-row">
             <div className="stat-card">

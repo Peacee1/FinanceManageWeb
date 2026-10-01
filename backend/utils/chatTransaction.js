@@ -1,0 +1,31 @@
+const { isDate } = require('./validation');
+const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase();
+function parseChatTransaction(message, now = new Date()) {
+  if (typeof message !== 'string' || !message.trim() || message.length > 500) return { message: 'Nhập một khoản thu hoặc chi, tối đa 500 ký tự.' };
+  const text = normalize(message);
+  if (/\b(khong|chua|dinh|du kien|se|neu|vi du|thu lai|xoa|huy)\b|\?|\n|-\s*\d/.test(text)) return { message: 'Chỉ ghi khoản đã thực hiện, mỗi tin nhắn một khoản. Ví dụ: nay mua hành 12k.' };
+  const matches = [...text.matchAll(/\b(\d+(?:[.,]\d+)?)\s*(trieu|nghin|ngan|tr|k|m|vnd|dong|d)\b/g)];
+  if (matches.length !== 1) return { message: 'Cần đúng một số tiền kèm đơn vị, ví dụ 12k, 20m hoặc 12000đ.' };
+  const [,number,unit] = matches[0];
+  const multiplier = ['trieu','tr','m'].includes(unit) ? 1000000 : ['nghin','ngan','k'].includes(unit) ? 1000 : 1;
+  const parts = number.replace(',', '.').split('.');
+  const denominator = 10 ** (parts[1]?.length || 0);
+  const numerator = Number(parts.join('')) * multiplier;
+  const amount = numerator / denominator;
+  if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(amount) || amount <= 0 || amount > 1000000000000) return { message: 'Số tiền phải là số nguyên VND, lớn hơn 0 và không quá 1.000 tỷ.' };
+  const income = /\b(luong|thu nhap|nhan tien|duoc thuong|co luong|nhan luong|thu tien|ban duoc)\b/.test(text);
+  const expense = /\b(mua|chi|tra tien|thanh toan|an|uong|do xang|dong tien)\b/.test(text);
+  if (income === expense) return { message: 'Chưa rõ đây là thu hay chi. Hãy ghi rõ “nhận lương” hoặc “mua/thanh toán”.' };
+  let date = new Date(now.getTime() + 7 * 3600000).toISOString().slice(0,10);
+  if (/\b(mai|hom kia|tuan|thang|nam ngoai)\b/.test(text)) return { message: 'Hãy ghi ngày cụ thể dạng DD/MM/YYYY hoặc “hôm qua”.' };
+  if (/\bhom qua\b/.test(text)) date = new Date(Date.parse(date) - 86400000).toISOString().slice(0,10);
+  const dates = [...text.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)];
+  if (dates.length > 1) return { message: 'Mỗi tin nhắn chỉ ghi một ngày giao dịch.' };
+  if (dates.length) date = `${dates[0][3]}-${dates[0][2].padStart(2,'0')}-${dates[0][1].padStart(2,'0')}`;
+  if (!isDate(date) || date > new Date(now.getTime()+7*3600000).toISOString().slice(0,10)) return { message: 'Ngày giao dịch không hợp lệ hoặc nằm trong tương lai.' };
+  const cash = /\btien mat\b/.test(text), transfer = /\b(chuyen khoan|tai khoan|ck)\b/.test(text);
+  if (cash && transfer) return { message: 'Chọn một nguồn tiền: tiền mặt hoặc tài khoản.' };
+  const category = income ? (/\bluong\b/.test(text) ? 'Lương' : 'Khác') : /\b(hanh|rau|thit|ca phe|an|uong|gao|sua|banh)\b/.test(text) ? 'Ăn uống' : /\b(xang|xe|taxi|grab)\b/.test(text) ? 'Di chuyển' : /\b(phim|game|giai tri)\b/.test(text) ? 'Giải trí' : /\b(quan ao|giay|mua sam)\b/.test(text) ? 'Shopping' : 'Khác';
+  return { transaction: { type: income ? 'INCOME' : 'EXPENSE', amount, category, date, description: message.trim(), paymentMethod: cash ? 'CASH' : transfer ? 'TRANSFER' : null } };
+}
+module.exports = { parseChatTransaction };
