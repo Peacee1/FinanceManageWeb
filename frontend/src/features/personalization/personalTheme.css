@@ -17,5 +17,7 @@
 
 [data-theme='dark'][data-personal-accent] { --color-primary-ink: var(--color-primary); }
 [data-theme='dark'][data-personal-accent='purple'] { --color-primary-ink: #C4B5FD; }
-[data-personal-accent] .nav-item.active,[data-personal-accent] .auth-link,[data-personal-accent] .verify-btn { color: var(--color-primary-ink); }
+[data-personal-accent] .nav-item.active { color: var(--color-on-primary); }
+[data-personal-accent] .nav-item:hover:not(.active),[data-personal-accent] .auth-link,[data-personal-accent] .verify-btn { color: var(--color-primary-ink); }
+[data-theme='dark'][data-personal-accent='blue'] { --color-primary-ink: #93C5FD; }
 [data-personal-accent] .verify-btn { background: var(--promo-bg-1); }
