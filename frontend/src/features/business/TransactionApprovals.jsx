@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { newRequestId } from '../../utils/requestId';
 import { vietnamDate } from '../../utils/businessDate';
-import '../inventory/Inventory.css';
+import '../inventory/inventory.css';
 
 const statuses = { PENDING: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối' };
 const blank = { type: 'EXPENSE', amount: '', category: '', description: '', paymentMethod: '' };
