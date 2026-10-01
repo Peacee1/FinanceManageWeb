@@ -9,6 +9,7 @@ const { removeEvidence } = require('../services/evidenceService');
 
 const getTransactions = async (req, res, next) => {
   const { month, year, limit, offset } = req.query;
+  if (req.query.date !== undefined && !isDate(req.query.date)) return res.status(400).json({ message: 'Ngày không hợp lệ.' });
   const cursor = req.query.cursor ? /^([0-9]{4}-[0-9]{2}-[0-9]{2}):([0-9]+)$/.exec(req.query.cursor) : null;
   if (req.query.cursor && (!cursor || !isDate(cursor[1]) || !isPositiveInteger(cursor[2]))) return res.status(400).json({ message: 'Con trỏ trang không hợp lệ.' });
   if ((month !== undefined || year !== undefined) && (!isPositiveInteger(month) || Number(month) > 12 || !isPositiveInteger(year) || Number(year) < 1900 || Number(year) > 9998)) return res.status(400).json({ message: 'Tháng/năm không hợp lệ.' });
@@ -21,6 +22,7 @@ const getTransactions = async (req, res, next) => {
     if (req.query.approvalStatus !== undefined && !['PENDING','APPROVED','REJECTED','ALL'].includes(req.query.approvalStatus)) return res.status(400).json({ message: 'Trạng thái không hợp lệ.' });
     const status = req.query.approvalStatus || (req.user.role === 'employee' ? 'ALL' : 'APPROVED');
     if (status !== 'ALL') { params.push(status); query += ` AND t.approval_status=$${params.length}`; }
+    if (req.query.date) { params.push(req.query.date); query += ` AND t.date=$${params.length}::date`; }
     if (month !== undefined) {
       params.push(`${year}-${String(month).padStart(2, '0')}-01`);
       query += ` AND t.date >= $${params.length}::date AND t.date < ($${params.length}::date + interval '1 month')`;

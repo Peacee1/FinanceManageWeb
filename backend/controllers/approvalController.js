@@ -69,4 +69,14 @@ async function getEvidence(req,res,next) {
     });
   } catch (error) { next(error); }
 }
-module.exports = { getSettings,saveSettings,listApprovals,reviewTransaction,getEvidence };
+async function getCalendar(req,res,next) {
+  const { month,year } = req.query;
+  if (!isPositiveInteger(month) || Number(month)>12 || !isPositiveInteger(year) || Number(year)<1900 || Number(year)>9998) return res.status(400).json({ message: 'Tháng/năm không hợp lệ.' });
+  try {
+    const scope = await businessScope(req,res); if (!scope) return;
+    const start = `${year}-${String(month).padStart(2,'0')}-01`;
+    const days = (await db.query(`SELECT date,SUM(income) AS income,SUM(expense) AS expense FROM business_daily_totals WHERE business_id=$1 AND date>=$2::date AND date<($2::date+interval '1 month') GROUP BY date ORDER BY date`, [scope.businessId,start])).rows;
+    res.json({ days });
+  } catch (error) { next(error); }
+}
+module.exports = { getSettings,saveSettings,listApprovals,reviewTransaction,getEvidence,getCalendar };

@@ -5,6 +5,7 @@ import Cropper from 'react-easy-crop';
 import Inventory from '../features/inventory/Inventory';
 import CafeOverview, { isCafeModel } from '../features/business/CafeOverview';
 import BusinessLedger from '../features/business/BusinessLedger';
+import BusinessCalendar from '../features/business/BusinessCalendar';
 import TransactionApprovals from '../features/business/TransactionApprovals';
 import { 
   LayoutDashboard, CalendarRange, CircleDollarSign, WalletCards, 
@@ -2411,6 +2412,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                         <div style={{ fontSize: '0.8rem', color: '#047857', marginTop: '5px' }}>Biên: {totalIncome > 0 ? Math.round(((totalIncome - totalExpense) / totalIncome) * 100) : 0}%</div>
                       </div>
                     </div>
+                    <BusinessCalendar businessId={Number(id)} currentDate={currentDate} onDateChange={setCurrentDate} />
                     <div className="widget">
                       <h3 style={{ fontWeight: '700', marginBottom: '15px' }}>Phân tích Dòng tiền</h3>
                       <div style={{ height: 260 }}>

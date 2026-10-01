@@ -1,0 +1,11 @@
+.business-calendar-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+.business-calendar-nav button { min-height: 44px; min-width: 44px; padding: 8px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg); color: var(--color-text); cursor: pointer; }
+.business-calendar .widget-header { flex-wrap: wrap; gap: 12px; }
+.business-calendar p { color: var(--color-text-secondary); margin: 8px 0 14px; }
+.business-calendar .cal-cell { display: flex; flex-direction: column; gap: 5px; text-align: left; color: var(--color-text); background: var(--color-card); font: inherit; cursor: pointer; min-width: 0; }
+.business-calendar .cal-cell:disabled { cursor: default; background: var(--color-bg); }
+.business-calendar .cal-cell.business-calendar-selected { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.business-calendar .tx-badge { max-width: 100%; overflow: hidden; white-space: nowrap; }
+.business-calendar-details { margin-top: 20px; }
+.business-calendar .cal-cell:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+@media(max-width:480px) { .business-calendar .cal-grid { gap: 2px; } .business-calendar .tx-badge { font-size: .6rem; padding: 2px; } .business-calendar .widget-header { align-items: flex-start; } }
