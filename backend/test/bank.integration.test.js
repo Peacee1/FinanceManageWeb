@@ -102,6 +102,8 @@ test('SePay verifies money exactly once, isolates businesses, protects revenue a
       await db.query('DELETE FROM bank_events WHERE business_id=ANY($1::int[])', [businesses]);
       await db.query('DELETE FROM bank_payment_intents WHERE business_id=ANY($1::int[])', [businesses]);
       await db.query('DELETE FROM bank_connections WHERE business_id=ANY($1::int[])', [businesses]);
+      await db.query('DELETE FROM stock_movements WHERE business_id=ANY($1::int[])', [businesses]);
+      await db.query('DELETE FROM sale_items WHERE transaction_id IN (SELECT id FROM transactions WHERE business_id=ANY($1::int[]))', [businesses]);
       await db.query('DELETE FROM transactions WHERE business_id=ANY($1::int[])', [businesses]);
       await db.query('DELETE FROM business_daily_totals WHERE business_id=ANY($1::int[])', [businesses]);
       await db.query('DELETE FROM businesses WHERE id=ANY($1::int[])', [businesses]);
