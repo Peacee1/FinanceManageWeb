@@ -36,8 +36,11 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   const navigate = useNavigate();
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    const preference = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => document.documentElement.setAttribute('data-theme', theme === 'system' ? (preference.matches ? 'dark' : 'light') : theme);
+    apply(); localStorage.setItem('theme', theme);
+    if (theme === 'system') preference.addEventListener('change', apply);
+    return () => preference.removeEventListener('change', apply);
   }, [theme]);
 
   const [transactions, setTransactions] = useState([]);

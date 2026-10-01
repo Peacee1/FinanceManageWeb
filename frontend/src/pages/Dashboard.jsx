@@ -712,7 +712,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     if (b !== null) {
       stat = i === 0 ? 'Đang diễn ra' : (spent > b ? 'Vượt ngân sách' : 'Hoàn thành');
       c = i === 0 ? 'var(--color-primary)' : (spent > b ? '#E11D48' : '#16A34A');
-      bg = i === 0 ? '#F5F3FF' : (spent > b ? '#FFE4E6' : '#DCFCE7');
+      bg = i === 0 ? 'var(--promo-bg-1)' : (spent > b ? '#FFE4E6' : '#DCFCE7');
     }
     
     budgetHistory.push({ m: m + 1, y, b, s: spent, stat, c, bg, isCurrent: i === 0 });
@@ -795,7 +795,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   });
 
   const renderSidebarBadge = (plan) => {
-    if (plan === 'ultra') return <div className="pro-badge" style={{background: '#EDE9FE', color: 'var(--color-primary-ink)', borderColor: '#DDD6FE'}}>💎 Ultra</div>;
+    if (plan === 'ultra') return <div className="pro-badge" style={{background: 'var(--promo-bg-2)', color: 'var(--color-primary-ink)', borderColor: 'var(--color-border)'}}>💎 Ultra</div>;
     if (plan === 'plus') return <div className="pro-badge">⭐ Plus</div>;
     return <div className="pro-badge" style={{background: '#F3F4F6', color: '#4B5563', borderColor: '#E5E7EB'}}>Normal</div>;
   };
@@ -1079,7 +1079,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
                               </div>
                             ))}
                             {allTxs.length > 4 && (
-                              <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.7rem', fontWeight: '700', color: 'var(--color-primary-ink)', background: '#F3E8FF', padding: '2px 5px', borderRadius: '8px' }}>
+                              <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.7rem', fontWeight: '700', color: 'var(--color-primary-ink)', background: 'var(--promo-bg-1)', padding: '2px 5px', borderRadius: '8px' }}>
                                 +{allTxs.length - 4}
                               </div>
                             )}

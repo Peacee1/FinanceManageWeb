@@ -1,5 +1,6 @@
 :root {
   --color-primary: #7C3AED;
+  --color-primary-rgb: 124,58,237;
   --color-primary-hover: #6D28D9;
   --color-secondary: #F472B6;
   --color-accent: #C7F464;
@@ -73,7 +74,7 @@ html {
   border: 1px solid var(--color-border);
   padding: 2.5rem;
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(124, 58, 237, 0.08);
+  box-shadow: 0 10px 40px rgba(var(--color-primary-rgb), 0.08);
   width: 100%;
   max-width: 400px;
   transition: transform 0.3s ease;
@@ -130,7 +131,7 @@ html {
 
 .input-group input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .btn-primary {
@@ -260,7 +261,7 @@ html {
 }
 
 .nav-item:hover {
-  background-color: rgba(124, 58, 237, 0.05);
+  background-color: rgba(var(--color-primary-rgb), 0.05);
   color: var(--color-primary);
 }
 
@@ -276,7 +277,7 @@ html {
   text-align: center;
   margin-top: auto;
   position: relative;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.08);
 }
 
 .promo-card h4 {
@@ -569,7 +570,7 @@ html {
 
 .cal-cell.today {
   border: 2px solid var(--color-primary);
-  background: rgba(124, 58, 237, 0.03);
+  background: rgba(var(--color-primary-rgb), 0.03);
 }
 
 .cal-date {
