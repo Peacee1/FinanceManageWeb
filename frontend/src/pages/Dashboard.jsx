@@ -2193,7 +2193,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         )}
 
         {activeTab === 'family' && <FamilySettings />}
-        {activeTab === 'map' && profileData?.maps_enabled && <TransactionMap transactions={transactions} monthTransactions={currentMonthTx} />}
+        {activeTab === 'map' && profileData?.maps_enabled && <TransactionMap transactions={transactions} monthTransactions={currentMonthTx} onOpenTransactions={() => setActiveTab('transactions')} />}
         {activeTab === 'personalization' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
             <div style={{ marginBottom: '20px' }}>

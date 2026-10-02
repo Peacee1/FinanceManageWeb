@@ -1,0 +1,32 @@
+.transaction-map-page { padding: 0 20px 24px; }
+.transaction-map-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:20px; }
+.transaction-map-heading h2 { margin:0 0 6px; font-size:1.5rem; }
+.transaction-map-heading p,.transaction-map-empty p { color:var(--color-text-secondary); margin:0; font-size:.9rem; line-height:1.5; }
+.transaction-map-filters { display:flex; gap:12px; flex-wrap:wrap; }
+.transaction-map-filters label { display:flex; flex-direction:column; gap:6px; font-size:.75rem; font-weight:600; color:var(--color-text-secondary); }
+.transaction-map-filters select { min-width:155px; padding:10px 32px 10px 12px; border:1px solid var(--color-border); border-radius:10px; background:var(--color-card); color:var(--color-text); font:inherit; font-size:.875rem; }
+.transaction-map-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+.transaction-map-summary>div { display:flex; align-items:center; gap:12px; padding:18px; background:var(--color-card); border:1px solid var(--color-border); border-radius:14px; min-width:0; }
+.map-stat-icon { display:flex; align-items:center; justify-content:center; flex-shrink:0; width:42px; height:42px; border-radius:12px; background:rgba(124,58,237,.12); color:var(--color-primary-ink); }
+.map-stat-icon.expense { color:var(--color-expense); background:rgba(225,29,72,.1); }
+.map-stat-icon.income { color:var(--color-income); background:rgba(5,150,105,.1); }
+.transaction-map-summary small { display:block; font-size:.8rem; margin-bottom:5px; color:var(--color-text-secondary); }
+.transaction-map-summary strong { display:block; font-size:1.2rem; overflow-wrap:anywhere; }
+.transaction-map-summary strong span { font-size:.8rem; font-weight:400; color:var(--color-text-secondary); }
+.transaction-map-card { background:var(--color-card); border:1px solid var(--color-border); border-radius:16px; overflow:hidden; }
+.transaction-map-card-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:16px 20px; }
+.transaction-map-card-header>span { display:flex; align-items:center; gap:8px; font-weight:600; }
+.transaction-map-legend { display:flex; flex-wrap:wrap; gap:16px; font-size:.8rem; color:var(--color-text-secondary); }
+.transaction-map-legend span { display:flex; align-items:center; gap:6px; }
+.transaction-map-legend i { width:9px; height:9px; border-radius:50%; }
+.transaction-map-legend .expense { background:#e11d48; }.transaction-map-legend .income { background:#059669; }.transaction-map-legend .mixed { background:#7c3aed; }
+.transaction-map-frame { position:relative; border-radius:12px; overflow:hidden; background:#e8eef1; }
+.transaction-map-card .transaction-map-frame { margin:0 12px; }
+.transaction-map-status { position:absolute; z-index:1; top:16px; left:50%; transform:translateX(-50%); background:var(--color-card); color:var(--color-text); border:1px solid var(--color-border); padding:10px 16px; border-radius:12px; box-shadow:0 4px 20px #0002; display:flex; align-items:center; gap:10px; font-size:.85rem; max-width:calc(100% - 90px); }
+.transaction-map-status button { display:flex; align-items:center; gap:6px; background:none; border:0; color:var(--color-primary-ink); cursor:pointer; white-space:nowrap; font:inherit; }
+.transaction-map-empty { display:flex; align-items:center; flex-wrap:wrap; gap:14px; padding:20px; }
+.transaction-map-empty>svg { color:var(--color-text-secondary); flex-shrink:0; }.transaction-map-empty>div { flex:1; min-width:200px; }.transaction-map-empty strong { display:block; margin-bottom:5px; }
+.transaction-map-empty button { white-space:nowrap; }
+.transaction-map-hint { padding:16px 20px; margin:0; color:var(--color-text-secondary); font-size:.85rem; }
+.transaction-map-frame .leaflet-popup-content { color:#182334; }.transaction-map-frame .leaflet-container { font-family:inherit; }
+@media(max-width:700px) { .transaction-map-page { padding:0 12px 20px; }.transaction-map-summary { grid-template-columns:1fr; gap:8px; }.transaction-map-summary>div { padding:12px 14px; }.transaction-map-filters { width:100%; }.transaction-map-filters label { flex:1; }.transaction-map-filters select { width:100%; min-width:0; }.transaction-map-card-header { padding:14px; }.transaction-map-empty { padding:16px; }.transaction-map-empty button { width:100%; } }
