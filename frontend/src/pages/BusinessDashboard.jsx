@@ -77,16 +77,6 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [prodAvatarFile, setProdAvatarFile] = useState(null);
   const [prodAvatarPreview, setProdAvatarPreview] = useState(null);
 
-  // Goals State
-  const [isGoalInitialized, setIsGoalInitialized] = useState(false);
-  const [goalForm, setGoalForm] = useState({ salary: '15000000', age: '25', gender: 'Nam' });
-  
-  const [bankSaving, setBankSaving] = useState({ amount: 5000000, rate: 6, months: 6 });
-  const [investmentIncome, setInvestmentIncome] = useState(2000000);
-  const [customNormalSaving, setCustomNormalSaving] = useState(null);
-  const [customBankSavingTotal, setCustomBankSavingTotal] = useState(null);
-  const [userGoal, setUserGoal] = useState({ name: 'Mua xe máy', targetAmount: 50000000, deadline: '2026-12-31', currentSaved: 15000000 });
-  
   const updateSettingsAPI = async (payload, reportFailure = false) => {
     try {
       const token = localStorage.getItem('token');
@@ -98,12 +88,6 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
     }
   };
 
-  const handleSaveGoals = async () => {
-    try {
-      await updateSettingsAPI({ bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal }, true);
-      alert('Lưu cài đặt mục tiêu thành công!');
-    } catch { alert('Không thể lưu mục tiêu. Vui lòng thử lại.'); }
-  };
   const [type, setType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Ăn uống');
@@ -283,22 +267,9 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
       const res = await axios.get('/api/users/me', { headers: { Authorization: `Bearer ${token}` } });
       setProfileData(res.data);
       const p = res.data;
-      if (p.bank_saving) setBankSaving(p.bank_saving);
       if (p.monthly_budgets) setMonthlyBudgets(p.monthly_budgets);
       if (p.budget_settings) setBudgetSettings(p.budget_settings);
-      if (p.user_goal) setUserGoal(p.user_goal);
       if (p.qa_pos) setQaPos(p.qa_pos);
-      if (p.investment_income != null) setInvestmentIncome(Number(p.investment_income));
-      if (p.custom_normal_saving != null) setCustomNormalSaving(Number(p.custom_normal_saving));
-      if (p.custom_bank_saving_total != null) setCustomBankSavingTotal(Number(p.custom_bank_saving_total));
-      if (res.data.is_goal_initialized) {
-        setIsGoalInitialized(true);
-        setGoalForm({
-          salary: res.data.salary || '15000000',
-          age: res.data.age || '25',
-          gender: res.data.gender || 'Nam'
-        });
-      }
     } catch (error) { console.error(error); }
   };
 
@@ -315,16 +286,6 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
       window.location.reload();
     } catch (error) {
       alert(error.response?.data?.message || 'Lỗi nâng cấp');
-    }
-  };
-
-  const saveGoalInit = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post('/api/users/init-goal', goalForm, { headers: { Authorization: `Bearer ${token}` } });
-      setIsGoalInitialized(true);
-    } catch (error) {
-      alert('Lỗi lưu thông tin mục tiêu');
     }
   };
 

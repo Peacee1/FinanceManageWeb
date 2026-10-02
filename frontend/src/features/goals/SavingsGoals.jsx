@@ -2,6 +2,7 @@ import React,{useEffect,useState,useRef} from 'react';
 import axios from 'axios';
 import {Target,Plus,ArrowDownLeft,ArrowUpRight,History,Settings2,X} from 'lucide-react';
 import {goalPlan} from './goalPlan.mjs';
+import SavingsInterestCalculator from './SavingsInterestCalculator';
 import './savingsGoals.css';
 const money=value=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(value||0));
 const date=value=>value?new Date(value.slice(0,10)+'T00:00:00').toLocaleDateString('vi-VN'):'';
@@ -15,9 +16,13 @@ export default function SavingsGoals(){
  const [data,setData]=useState({mode:'personal',items:[]}),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const [form,setForm]=useState(null),[editId,setEditId]=useState(null),[entry,setEntry]=useState(null),[history,setHistory]=useState(null),[filter,setFilter]=useState('all'),[busy,setBusy]=useState(false);
  const pending=useRef(false);
+ const revision=useRef(0);
+ const editor=useRef(null);
+ useEffect(()=>{if(form)editor.current?.scrollIntoView({behavior:'smooth',block:'start'});},[Boolean(form)]);
  const load=async()=>{const response=await axios.get('/api/users/goals',config());setData(response.data);};
  useEffect(()=>{let live=true;axios.get('/api/users/goals',config()).then(response=>{if(live)setData(response.data);}).catch(()=>{if(live)setError('Không tải được mục tiêu. Hãy thử lại.');}).finally(()=>{if(live)setLoading(false);});return()=>{live=false;};},[]);
- const perform=async(work)=>{if(pending.current)return;pending.current=true;setBusy(true);setError('');setNotice('');try{await work();}catch(failure){setError(failure.response?.data?.message||'Không thể lưu thay đổi. Hãy thử lại.');}finally{pending.current=false;setBusy(false);}};
+ useEffect(()=>{let live=true;const refresh=async()=>{if(document.hidden||pending.current)return;const version=revision.current;try{const response=await axios.get('/api/users/goals',config());if(live&&version===revision.current)setData(response.data);}catch{/* Keep current data during temporary connection loss. */}};const timer=setInterval(refresh,20000);window.addEventListener('focus',refresh);return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',refresh);};},[]);
+ const perform=async(work)=>{if(pending.current)return;pending.current=true;revision.current++;setBusy(true);setError('');setNotice('');try{await work();}catch(failure){setError(failure.response?.data?.message||'Không thể lưu thay đổi. Hãy thử lại.');}finally{pending.current=false;revision.current++;setBusy(false);}};
  const field=(key,value)=>setForm(current=>({...current,[key]:value,requestId:crypto.randomUUID()}));
  const startEdit=goal=>{setEntry(null);setHistory(null);setError('');setEditId(goal.id);setForm({name:goal.name,targetAmount:String(goal.target_amount),initialAmount:'0',deadline:goal.deadline?.slice(0,10)||'',monthlyAmount:String(goal.monthly_amount),priority:goal.priority,status:goal.status,reminder:goal.reminder,reminderDay:goal.reminder_day});};
  const saveGoal=event=>{event.preventDefault();perform(async()=>{
@@ -40,10 +45,10 @@ export default function SavingsGoals(){
   <div className="goals-heading"><div><h2>Mục tiêu tiết kiệm{data.mode==='family'?' gia đình':''}</h2><p>Dành tiền cho điều bạn muốn, theo dõi từng lần góp.</p></div><button className="btn-primary" type="button" disabled={busy||loading} onClick={()=>{setForm(empty());setEditId(null);setEntry(null);setHistory(null);setError('');}}><Plus size={18}/>Tạo mục tiêu</button></div>
   {error&&<div className="goals-message error" role="alert">{error}{loading===false&&!data.items.length&&!form&&<button type="button" onClick={()=>perform(async()=>{await load();})}>Thử lại</button>}</div>}
   {notice&&<div className="goals-message" role="status">{notice}</div>}
-  {form&&<form className="goal-editor" onSubmit={saveGoal}>
+  {form&&<form className="goal-editor" ref={editor} onSubmit={saveGoal}>
    <div className="goal-section-heading"><h3>{editId?'Chỉnh sửa mục tiêu':'Bạn muốn dành tiền cho điều gì?'}</h3><button type="button" disabled={busy} aria-label="Đóng biểu mẫu mục tiêu" onClick={()=>setForm(null)}><X size={20}/></button></div>
    {!editId&&<div className="goal-presets">{['Mua xe','Du lịch','Quỹ dự phòng','Mua nhà'].map(name=><button type="button" key={name} onClick={()=>field('name',name)}>{name}</button>)}</div>}
-   <div className="goal-form-grid">
+   <fieldset className="goal-form-grid" disabled={busy}>
     <label>Tên mục tiêu<input required maxLength={100} value={form.name} placeholder="Ví dụ: Chuyến đi Đà Nẵng" onChange={event=>field('name',event.target.value)}/></label>
     <label>Số tiền cần (VNĐ)<AmountInput required value={form.targetAmount} onChange={value=>field('targetAmount',value)} placeholder="30.000.000"/></label>
     {!editId&&<label>Đã dành riêng cho mục tiêu (VNĐ)<AmountInput required value={form.initialAmount} onChange={value=>field('initialAmount',value)}/></label>}
@@ -54,7 +59,7 @@ export default function SavingsGoals(){
     <label>Nhắc góp tiền<select value={form.reminder} onChange={event=>{field('reminder',event.target.value);field('reminderDay',1);}}><option value="none">Không nhắc</option><option value="weekly">Hằng tuần</option><option value="monthly">Hằng tháng</option></select></label>
     {form.reminder==='weekly'&&<label>Ngày nhắc<select value={form.reminderDay} onChange={event=>field('reminderDay',Number(event.target.value))}>{['Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy','Chủ nhật'].map((name,index)=><option value={index+1} key={name}>{name}</option>)}</select></label>}
     {form.reminder==='monthly'&&<label>Ngày nhắc trong tháng<input required type="number" min={1} max={31} value={form.reminderDay} onChange={event=>field('reminderDay',Number(event.target.value))}/><small>Tháng thiếu ngày này sẽ nhắc vào ngày cuối tháng.</small></label>}
-   </div>
+   </fieldset>
    <p className="goal-help">Chỉ tính tiền bạn đã dành riêng. Góp/rút mục tiêu không ghi thành thu nhập hoặc chi tiêu.{form.reminder!=='none'?' Nhắc trong chuông thông báo từ 7h sáng ngày bạn chọn.':''}</p>
    <button className="btn-primary" disabled={busy}>{busy?'Đang lưu…':editId?'Lưu thay đổi':'Tạo mục tiêu'}</button>
   </form>}
@@ -75,5 +80,6 @@ export default function SavingsGoals(){
     {history?.goal.id===goal.id&&<div className="goal-history"><div className="goal-section-heading"><h4>Lịch sử dành tiền</h4><button type="button" onClick={()=>setHistory(null)} aria-label="Đóng lịch sử"><X size={18}/></button></div>{!history.items.length?<p>Chưa có lần góp/rút nào.</p>:history.items.map(item=><div className="goal-history-row" key={item.id}><div><strong>{item.kind==='OPENING'?'Số tiền ban đầu':item.kind==='DEPOSIT'?'Góp tiền':'Rút tiền'}</strong><span>{item.actor_name} · {new Date(item.created_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})}</span>{item.note&&<small>{item.note}</small>}</div><b className={item.kind==='WITHDRAW'?'withdraw':'deposit'}>{item.kind==='WITHDRAW'?'-':'+'}{money(item.amount)}</b></div>)}{history.nextCursor&&<button type="button" disabled={busy} onClick={()=>showHistory(goal,true)}>Xem thêm</button>}</div>}
    </article>;
   })}</div>}
+  <SavingsInterestCalculator/>
  </section>;
 }
