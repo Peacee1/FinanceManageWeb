@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../config/db');
+const { transactionScope } = require('../utils/transactionScope');
 
 /**
  * Phân tích tài chính bằng Google Gemini AI.
@@ -29,12 +30,14 @@ const analyzeFinances = async (req, res) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    const scope = await transactionScope(req);
+    if (scope.error) return res.status(scope.error).json({ message: scope.message });
     const txResult = await db.query(
       `SELECT type, amount, category, date
-       FROM transactions
-       WHERE user_id = $1 AND business_id IS NULL AND date >= $2
+       FROM transactions t
+       WHERE ${scope.clause} AND date >= $${scope.params.length + 1}
        ORDER BY date DESC`,
-      [userId, thirtyDaysAgo.toISOString()]
+      [...scope.params, thirtyDaysAgo.toISOString()]
     );
 
     const transactions = txResult.rows;

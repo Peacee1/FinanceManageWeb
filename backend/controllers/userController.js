@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { sharedFields, familySettings } = require('../utils/familySettings');
 
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
@@ -7,6 +8,11 @@ const getProfile = async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     
     let userProfile = result.rows[0];
+    const shared = await familySettings(req.user.userId);
+    userProfile.finance_mode = shared ? 'family' : 'personal';
+    if (shared) {
+      for (const field of sharedFields) userProfile[field] = shared[field] ?? (field === 'monthly_budgets' ? {} : field === 'separate_personal_wallets' ? false : null);
+    }
     if (!userProfile.custom_categories) {
       userProfile.custom_categories = [
         { name: 'Ăn uống', type: 'EXPENSE', color: '#FB7185' },
@@ -128,12 +134,17 @@ const updateCategories = async (req, res, next) => {
   if (new Set(keys).size !== keys.length) return res.status(400).json({ message: 'Danh mục bị trùng.' });
   try {
     const result = await db.transaction(async client => {
+      const membership = (await client.query('SELECT family_id FROM users WHERE id=$1 FOR UPDATE', [req.user.userId])).rows[0];
       const user = (await client.query('SELECT coin, custom_categories FROM users WHERE id = $1 FOR UPDATE', [req.user.userId])).rows[0];
+      if (membership.family_id) user.custom_categories = (await client.query('SELECT settings FROM families WHERE id=$1 FOR UPDATE', [membership.family_id])).rows[0].settings.custom_categories;
       const defaults = ['EXPENSE:Ăn uống', 'EXPENSE:Mua sắm', 'EXPENSE:Di chuyển', 'EXPENSE:Hoá đơn', 'EXPENSE:Giải trí', 'INCOME:Lương', 'INCOME:Đầu tư', 'INCOME:Khác', 'EXPENSE:Khác'];
       const previous = new Set(user.custom_categories ? user.custom_categories.map(c => `${c.type}:${c.name.trim()}`) : defaults);
       const cost = keys.filter(key => !previous.has(key)).length * 100;
       if (user.coin < cost) return false;
-      await client.query('UPDATE users SET coin = coin - $1, custom_categories = $2 WHERE id = $3', [cost, JSON.stringify(categories), req.user.userId]);
+      if (membership.family_id) {
+        await client.query('UPDATE users SET coin=coin-$1 WHERE id=$2', [cost, req.user.userId]);
+        await client.query("UPDATE families SET settings=jsonb_set(settings,'{custom_categories}',$1::jsonb) WHERE id=$2", [JSON.stringify(categories), membership.family_id]);
+      } else await client.query('UPDATE users SET coin = coin - $1, custom_categories = $2 WHERE id = $3', [cost, JSON.stringify(categories), req.user.userId]);
       return true;
     });
     if (!result) return res.status(400).json({ message: 'Không đủ coin để thêm danh mục.' });
@@ -166,8 +177,22 @@ const updateSettings = async (req, res) => {
 
     if (fields.length > 0) {
       values.push(req.user.userId);
-      const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${count}`;
-      await db.query(query, values);
+      await db.transaction(async client => {
+        const membership = (await client.query('SELECT family_id FROM users WHERE id=$1 FOR SHARE', [req.user.userId])).rows[0];
+        const shared = {};
+        const personalFields = [], personalValues = [];
+        fields.forEach((field, index) => {
+          const column = field.split(' = ')[0];
+          if (membership.family_id && sharedFields.includes(column)) {
+            shared[column] = ['monthly_budgets','budget_settings','bank_saving','user_goal'].includes(column) ? JSON.parse(values[index]) : values[index];
+          } else { personalValues.push(values[index]); personalFields.push(`${column} = $${personalValues.length}`); }
+        });
+        if (Object.keys(shared).length) await client.query('UPDATE families SET settings=settings || $1::jsonb WHERE id=$2', [JSON.stringify(shared), membership.family_id]);
+        if (personalFields.length) {
+          personalValues.push(req.user.userId);
+          await client.query(`UPDATE users SET ${personalFields.join(', ')} WHERE id=$${personalValues.length}`, personalValues);
+        }
+      });
     }
     res.json({ message: 'Lưu cài đặt thành công' });
   } catch (err) {

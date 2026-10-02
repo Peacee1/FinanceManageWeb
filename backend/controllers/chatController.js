@@ -1,5 +1,6 @@
 const { createHash } = require('crypto');
 const db = require('../config/db');
+const { familySettings } = require('../utils/familySettings');
 const { parseChatTransaction } = require('../utils/chatTransaction');
 const { suggestChatTransaction,readChatDraft } = require('../utils/chatAI');
 async function chatTransaction(req,res,next) {
@@ -20,14 +21,15 @@ async function chatTransaction(req,res,next) {
       catch { return res.status(503).json({message:'AI đang bận. Thử lại hoặc dùng câu đơn giản kèm số tiền.'}); }
     }
     const result = await db.transaction(async client => {
+      const membership = (await client.query('SELECT family_id FROM users WHERE id=$1 FOR SHARE',[req.user.userId])).rows[0];
       await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[`chat:${req.user.userId}:${requestId}`]);
-      const previous = (await client.query('SELECT id,type,amount,category,date,description,payment_method,submission_request_hash FROM transactions WHERE user_id=$1 AND business_id IS NULL AND submission_request_id=$2',[req.user.userId,requestId])).rows[0];
+      const previous = (await client.query('SELECT id,type,amount,category,date,description,payment_method,submission_request_hash FROM transactions WHERE user_id=$1 AND business_id IS NULL AND submission_request_id=$2 AND family_id IS NOT DISTINCT FROM $3::int',[req.user.userId,requestId,membership.family_id])).rows[0];
       if (previous) return previous.submission_request_hash === hash ? {transaction:previous,replayed:true} : {conflict:true};
       if (!parsed.transaction) return parsed;
       const tx = parsed.transaction;
       if (paymentMethod && tx.paymentMethod && paymentMethod !== tx.paymentMethod) return {message:'Nguồn tiền bạn chọn khác với tin nhắn. Hãy sửa tin nhắn hoặc chọn lại.'};
       tx.paymentMethod ||= paymentMethod || null;
-      const settings = (await client.query('SELECT separate_personal_wallets FROM users WHERE id=$1',[req.user.userId])).rows[0];
+      const settings = membership.family_id ? await familySettings(req.user.userId,client) : (await client.query('SELECT separate_personal_wallets FROM users WHERE id=$1',[req.user.userId])).rows[0];
       if (settings?.separate_personal_wallets && !tx.paymentMethod) return {needsPayment:true,message:'Khoản đã được nhận diện. Chọn tiền mặt hoặc tài khoản để ghi.',draft:tx};
       const row = (await client.query(`INSERT INTO transactions(user_id,business_id,type,amount,category,date,description,payment_method,submission_request_id,submission_request_hash)
         VALUES($1,NULL,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id,type,amount,category,date,description,payment_method`,[req.user.userId,tx.type,tx.amount,tx.category,tx.date,tx.description,tx.paymentMethod,requestId,hash])).rows[0];

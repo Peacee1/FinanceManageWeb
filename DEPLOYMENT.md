@@ -1,5 +1,7 @@
 # Development and deployment
 
+Gia đình: migration `013_family.sql` thêm sổ chung riêng với Cá nhân, tối đa hai tài khoản (ràng buộc slot ở database). Trong mục Gia đình, một người tạo sổ và gửi mã mời cho người thứ hai. Sau khi tham gia, backend chỉ cho dùng sổ Gia đình; dữ liệu Cá nhân cũ được giữ riêng, không chuyển/cộng vào sổ chung. Hai người có quyền thêm/sửa/xóa thu chi chung; lịch, báo cáo, chat, AI, ngân sách, danh mục và mục tiêu sử dụng dữ liệu Gia đình. Giao diện cập nhật mỗi 5 giây khi đang mở. Chưa hỗ trợ rời Gia đình hoặc chuyển lại Cá nhân. Chạy migration trước khi khởi động phiên bản mới; dùng `RUN_DB_TESTS=1 npm test` trên database kiểm thử đã migrate để kiểm tra giới hạn thành viên đồng thời và cách ly dữ liệu.
+
 Backend: copy `backend/.env.example` to `backend/.env`, supply local credentials and a random JWT secret, initialize PostgreSQL with `backend/database.sql`, then run `npm ci`, `npm run migrate`, and `npm start` inside `backend`.
 
 Frontend: run `npm ci` and `npm run dev` inside `frontend`. Vite proxies `/api` to the local backend.

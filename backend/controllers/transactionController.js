@@ -7,6 +7,7 @@ const { createHash } = require('crypto');
 const { createReadStream } = require('fs');
 const { publicTransactionColumns, publicTransaction } = require('../utils/transactionProjection');
 const { removeEvidence } = require('../services/evidenceService');
+const { familySettings } = require('../utils/familySettings');
 
 const getTransactions = async (req, res, next) => {
   const { month, year, limit, offset } = req.query;
@@ -83,7 +84,7 @@ const addTransaction = async (req, res, next) => {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
     if (scope.businessId === null) {
-      const settings = (await db.query('SELECT separate_personal_wallets FROM users WHERE id=$1', [req.user.userId])).rows[0];
+      const settings = scope.familyId ? await familySettings(req.user.userId) : (await db.query('SELECT separate_personal_wallets FROM users WHERE id=$1', [req.user.userId])).rows[0];
       if (settings?.separate_personal_wallets && !['CASH','TRANSFER'].includes(req.body.paymentMethod)) return res.status(400).json({ message: 'Vui lòng chọn tiền mặt hoặc tiền tài khoản.' });
     }
     const { type, amount, category, date, description } = req.body;
@@ -138,7 +139,9 @@ const updateTransaction = async (req, res, next) => {
     const scope = await transactionScope(req);
     if (scope.error) return res.status(scope.error).json({ message: scope.message });
     if (scope.businessId === null) {
-      const current = (await db.query('SELECT t.payment_method,u.separate_personal_wallets FROM transactions t JOIN users u ON u.id=t.user_id WHERE t.id=$1 AND t.user_id=$2 AND t.business_id IS NULL', [req.params.id,req.user.userId])).rows[0];
+      const current = (await db.query(`SELECT t.payment_method FROM transactions t WHERE ${scope.clause} AND t.id=$${scope.params.length + 1}`, [...scope.params, req.params.id])).rows[0];
+      const settings = scope.familyId ? await familySettings(req.user.userId) : (await db.query('SELECT separate_personal_wallets FROM users WHERE id=$1', [req.user.userId])).rows[0];
+      if (current) current.separate_personal_wallets = settings?.separate_personal_wallets;
       if (current?.separate_personal_wallets && !['CASH','TRANSFER'].includes(req.body.paymentMethod ?? current.payment_method)) return res.status(400).json({ message: 'Vui lòng chọn tiền mặt hoặc tiền tài khoản cho giao dịch này.' });
     }
     const fields = ['type', 'amount', 'category', 'date', 'description', ...(scope.businessId === null ? ['paymentMethod'] : [])].filter(field => req.body[field] !== undefined);

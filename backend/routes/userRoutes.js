@@ -32,6 +32,10 @@ const upload = multer({
 });
 
 router.get('/me', protect, getProfile);
+const family = require('../controllers/familyController');
+router.get('/family', protect, family.getFamily);
+router.post('/family/create', protect, family.createFamily);
+router.post('/family/join', protect, family.joinFamily);
 router.post('/verify-email', protect, verifyEmail);
 router.post('/update-phone', protect, updatePhone);
 router.post('/verify-phone', protect, verifyPhone);

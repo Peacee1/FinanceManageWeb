@@ -1,6 +1,7 @@
 import { personalPalettes, themedAsset } from '../features/personalization/personalTheme';
 import '../features/personalization/personalTheme.css';
 import PersonalWalletSummary from '../features/transactions/PersonalWalletSummary';
+import FamilySettings from '../features/family/FamilySettings';
 import TransactionChat from '../features/transactions/TransactionChat';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -11,7 +12,7 @@ import {
   Search, Bell, Crown, ChevronLeft, ChevronRight, Plus, Minus, 
   FileDown, ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Utensils, Car, Gamepad2, MoreHorizontal, Gift,
-  Edit2, Trash2, Menu, X, Sun, Moon, Palette, Briefcase, Building2, Zap, Smartphone, Sliders, ArrowLeft
+  Edit2, Trash2, Menu, X, Sun, Moon, Palette, Briefcase, Building2, Zap, Smartphone, Sliders, ArrowLeft, Users
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -314,6 +315,14 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       }
     } catch (error) { console.error(error); }
   };
+
+  useEffect(() => {
+    if (profileData?.finance_mode !== 'family') return;
+    const refresh = () => { if (!document.hidden) { fetchTransactions(); fetchProfile(); } };
+    const timer = setInterval(refresh, 5000);
+    window.addEventListener('focus', refresh);
+    return () => { clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, [profileData?.finance_mode]);
 
   const handleUpgrade = async (targetPlan) => {
     try {
@@ -860,6 +869,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <li className={`nav-item ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => { setActiveTab('goals'); setIsSidebarOpen(false); }}><Target size={20}/> Mục tiêu</li>
           <li className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }}><Tags size={20}/> Danh mục</li>
           <li className="nav-item" onClick={() => { setIsProfileOpen(true); setIsSidebarOpen(false); }}><User size={20}/> Tài khoản</li>
+          <li className={`nav-item ${activeTab === 'family' ? 'active' : ''}`} onClick={() => { setActiveTab('family'); setIsSidebarOpen(false); }}><User size={20}/> Gia đình</li>
           <li className={`nav-item ${activeTab === 'personalization' ? 'active' : ''}`} onClick={() => { setActiveTab('personalization'); setIsSidebarOpen(false); }}><Palette size={20}/> Cá nhân hóa</li>
           <li className={`nav-item ${activeTab === 'business' ? 'active' : ''}`} onClick={() => { setActiveTab('business'); setIsSidebarOpen(false); }}><Building2 size={20}/> Doanh nghiệp</li>
           <li className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}><Settings size={20}/> Cài đặt</li>
@@ -882,7 +892,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             </button>
             <div>
               <h1>Xin chào, {user.name.split(' ')[0]}! 👋</h1>
-              <p>Cùng quản lý tài chính để đạt được mục tiêu của bạn</p>
+              <p>{profileData?.finance_mode === 'family' ? 'Gia đình · Lịch và thu chi chung' : 'Cá nhân · Sổ thu chi riêng'}</p>
             </div>
           </div>
           
@@ -923,6 +933,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               )}
             </div>
           </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '12px 16px', margin: '0 0 16px', borderRadius: 12, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
+          <span style={{ fontWeight: 600 }}>{profileData?.finance_mode === 'family' ? 'Đang sử dụng chế độ Gia đình' : 'Đang sử dụng chế độ Cá nhân'}</span>
+          <button type="button" className="btn-primary" onClick={() => { setActiveTab('family'); setIsSidebarOpen(false); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Users size={18} />{profileData?.finance_mode === 'family' ? 'Quản lý Gia đình' : 'Chuyển sang chế độ Gia đình'}
+          </button>
         </div>
 
         {activeTab === 'overview' && (
@@ -2168,6 +2185,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </div>
         )}
 
+        {activeTab === 'family' && <FamilySettings />}
         {activeTab === 'personalization' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
             <div style={{ marginBottom: '20px' }}>
