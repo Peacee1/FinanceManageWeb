@@ -38,7 +38,9 @@ function MapCanvas({ point, onPoint, transactions = [], height = 320 }) {
       const source = sources[sourceIndex];
       layer = L.tileLayer(source.url, { maxZoom: source.maxZoom, referrerPolicy: 'strict-origin-when-cross-origin', attribution: source.attribution });
       layer.on('tileload', () => { loaded++; clearTimeout(timer); if (live) setTileState('ready'); });
-      layer.on('load', () => { if (!loaded) failed(); });
+      layer.on('load', () => {
+        if (!loaded) { clearTimeout(timer); timer = setTimeout(failed, 0); }
+      });
       layer.addTo(instance); timer = setTimeout(failed, 9000);
     };
     loadSource();
