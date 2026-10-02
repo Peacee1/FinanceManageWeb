@@ -891,7 +891,12 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <Menu size={24} color="var(--color-text)" />
             </button>
             <div>
-              <h1>Xin chào, {user.name.split(' ')[0]}! 👋</h1>
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 16px' }}>
+                <h1 style={{ marginBottom: 0 }}>Xin chào, {user.name.split(' ')[0]}! 👋</h1>
+                <button type="button" className="btn-primary" onClick={() => { setActiveTab('family'); setIsSidebarOpen(false); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, padding: '8px 12px' }}>
+                  <Users size={16} />{profileData?.finance_mode === 'family' ? 'Quản lý Gia đình' : 'Chuyển sang chế độ Gia đình'}
+                </button>
+              </div>
               <p>{profileData?.finance_mode === 'family' ? 'Gia đình · Lịch và thu chi chung' : 'Cá nhân · Sổ thu chi riêng'}</p>
             </div>
           </div>
@@ -933,13 +938,6 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               )}
             </div>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, padding: '12px 16px', margin: '0 0 16px', borderRadius: 12, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)' }}>
-          <span style={{ fontWeight: 600 }}>{profileData?.finance_mode === 'family' ? 'Đang sử dụng chế độ Gia đình' : 'Đang sử dụng chế độ Cá nhân'}</span>
-          <button type="button" className="btn-primary" onClick={() => { setActiveTab('family'); setIsSidebarOpen(false); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Users size={18} />{profileData?.finance_mode === 'family' ? 'Quản lý Gia đình' : 'Chuyển sang chế độ Gia đình'}
-          </button>
         </div>
 
         {activeTab === 'overview' && (
