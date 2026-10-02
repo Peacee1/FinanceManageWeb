@@ -4,6 +4,7 @@ import PersonalWalletSummary from '../features/transactions/PersonalWalletSummar
 import FamilySettings from '../features/family/FamilySettings';
 import FamilyDissolutionPrompt from '../features/family/FamilyDissolutionPrompt';
 import TransactionMap, { LocationPicker, currentLocation } from '../features/maps/TransactionMap';
+import NotificationBell from '../features/notifications/NotificationBell';
 import TransactionChat from '../features/transactions/TransactionChat';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -925,10 +926,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             
             <button className="btn-today" onClick={handleToday}>Hôm nay</button>
             
-            <div className="notification">
-              <Bell size={20} color="var(--color-text-secondary)"/>
-              <div className="notification-dot"></div>
-            </div>
+            <NotificationBell onNavigate={target => {
+              if (target === 'checkin') setIsCheckinOpen(true);
+              else if (['transactions','family','business'].includes(target)) setActiveTab(target);
+            }} />
 
             <div className="user-profile-header" onClick={() => setIsDropdownOpen(!isDropdownOpen)} style={{position: 'relative'}}>
               {avatarSrc ? (

@@ -58,6 +58,7 @@ app.use('/api/payments', require('./routes/paymentRoutes'));
 
 const db = require('./config/db');
 const stopEvidenceCleanup = require('./services/evidenceService').startEvidenceCleanup();
+const stopNotifications = require('./services/notificationService').startNotificationScheduler();
 app.get('/api/health', async (req, res) => {
   try { await db.query('SELECT 1'); res.json({ status: 'ok' }); }
   catch { res.status(503).json({ status: 'unavailable' }); }
@@ -81,6 +82,7 @@ server.keepAliveTimeout = 5000;
 const shutdown = () => {
   stopMetrics();
   stopEvidenceCleanup();
+  stopNotifications();
   const timeout = setTimeout(() => process.exit(1), 10000).unref();
   server.close(async () => { await db.close(); clearTimeout(timeout); process.exit(0); });
 };

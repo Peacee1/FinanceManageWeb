@@ -52,8 +52,11 @@ const dissolveFamily = async (req, res, next) => {
       const familyId = (await client.query('SELECT family_id FROM users WHERE id=$1', [req.user.userId])).rows[0]?.family_id;
       if (!familyId) fail(409, 'Bạn chưa tham gia Gia đình hoặc gia đình đã giải tán.');
       const members = (await client.query('SELECT id FROM users WHERE family_id=$1 ORDER BY id FOR UPDATE', [familyId])).rows;
-      const family = (await client.query('SELECT creator_id FROM families WHERE id=$1 FOR UPDATE', [familyId])).rows[0];
+      const family = (await client.query('SELECT creator_id,name FROM families WHERE id=$1 FOR UPDATE', [familyId])).rows[0];
       if (family.creator_id !== req.user.userId) fail(403, 'Chỉ người tạo Gia đình mới có thể giải tán.');
+      const actor = (await client.query('SELECT name FROM users WHERE id=$1', [req.user.userId])).rows[0];
+      for (const member of members) await client.query(`INSERT INTO notifications(user_id,kind,title,message,target,event_key)
+        VALUES($1,'family_dissolved','Gia đình đã bị giải tán',$2,'family',$3) ON CONFLICT(user_id,event_key) DO NOTHING`, [member.id, `${actor.name} đã giải tán Gia đình “${family.name}”. Bạn có thể chọn đồng bộ dữ liệu về lịch Cá nhân.`, `family-dissolved:${familyId}`]);
       for (const member of members) await client.query("INSERT INTO family_dissolution_notices(user_id,family_id) VALUES($1,$2) ON CONFLICT(user_id,family_id) DO UPDATE SET resolved_at=NULL,sync_data=NULL,event_type='dissolved'", [member.id, familyId]);
       await client.query('UPDATE families SET dissolved_at=now() WHERE id=$1', [familyId]);
       await client.query('UPDATE users SET family_id=NULL,family_slot=NULL WHERE family_id=$1', [familyId]);

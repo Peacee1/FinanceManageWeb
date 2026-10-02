@@ -32,6 +32,9 @@ const upload = multer({
 });
 
 router.get('/me', protect, getProfile);
+const notifications = require('../controllers/notificationController');
+router.get('/notifications', protect, notifications.listNotifications);
+router.post('/notifications/read', protect, notifications.markRead);
 const family = require('../controllers/familyController');
 router.get('/family', protect, family.getFamily);
 router.post('/family/create', protect, family.createFamily);
