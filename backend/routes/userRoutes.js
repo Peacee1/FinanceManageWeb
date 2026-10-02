@@ -32,6 +32,10 @@ const upload = multer({
 });
 
 router.get('/me', protect, getProfile);
+const savedLocations = require('../controllers/savedLocationController');
+router.get('/saved-locations', protect, savedLocations.list);
+router.post('/saved-locations', protect, savedLocations.save);
+router.delete('/saved-locations/:id', protect, savedLocations.remove);
 const notifications = require('../controllers/notificationController');
 router.get('/notifications', protect, notifications.listNotifications);
 router.post('/notifications/read', protect, notifications.markRead);

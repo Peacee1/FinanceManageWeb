@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 import { MapPin, ArrowDownLeft, ArrowUpRight, RefreshCw, Maximize2, Minimize2, GripHorizontal, LocateFixed } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -120,6 +121,14 @@ function MapCanvas({ point, onPoint, transactions = [], height = 320, resizable 
 }
 export function LocationPicker({ value, onChange, autoLocate }) {
   const [error, setError] = useState(''), [busy, setBusy] = useState(false);
+  const [places,setPlaces] = useState([]), [placeError,setPlaceError] = useState(''), [saving,setSaving] = useState(false), [selected,setSelected] = useState('');
+  const [placeNotice,setPlaceNotice] = useState('');
+  const config = () => ({headers:{Authorization:`Bearer ${localStorage.getItem('token')}`}});
+  useEffect(() => {
+    let live=true;
+    axios.get('/api/users/saved-locations',config()).then(response=>{if(live) setPlaces(response.data);}).catch(()=>{if(live) setPlaceError('Không tải được địa điểm đã lưu. Bạn vẫn có thể chọn trên bản đồ.');});
+    return ()=>{live=false;};
+  },[]);
   const request = useRef(0), changed = useRef(false), change = useRef(onChange);
   change.current = onChange;
   const locate = async () => {
@@ -129,9 +138,34 @@ export function LocationPicker({ value, onChange, autoLocate }) {
     finally { if (request.current === id) setBusy(false); }
   };
   useEffect(() => { if (autoLocate) locate(); return () => { request.current++; }; }, [autoLocate]);
-  const choose = point => { changed.current = true; onChange(point); };
+  const choose = point => { changed.current = true; setSelected(''); setPlaceNotice(''); onChange(point); };
+  const savePlace = async () => {
+    setSaving(true); setPlaceError(''); setPlaceNotice('');
+    try {
+      const response=await axios.post('/api/users/saved-locations',{name:value.label.trim(),lat:value.lat,lng:value.lng},config());
+      setPlaces(current=>[response.data,...current.filter(place=>place.id!==response.data.id)]);
+      setSelected(String(response.data.id)); setPlaceNotice('Đã lưu địa điểm. Bạn có thể chọn nhanh cho các khoản sau.');
+    } catch(failure) { setPlaceError(failure.response?.data?.message || 'Không lưu được địa điểm. Hãy thử lại.'); }
+    finally {setSaving(false);}
+  };
+  const removePlace = async () => {
+    setSaving(true); setPlaceError(''); setPlaceNotice('');
+    try {await axios.delete(`/api/users/saved-locations/${selected}`,config()); setPlaces(current=>current.filter(place=>String(place.id)!==selected)); setSelected(''); setPlaceNotice('Đã xóa khỏi địa điểm đã lưu.');}
+    catch(failure) {setPlaceError(failure.response?.data?.message || 'Không xóa được địa điểm.');}
+    finally {setSaving(false);}
+  };
   return <div className="input-group">
     <label>Vị trí thu chi (tuỳ chọn)</label>
+    <div className="saved-place-controls">
+      <label>Chọn nhanh địa điểm đã lưu<select aria-label="Địa điểm đã lưu" value={selected} disabled={saving} onChange={event=>{
+        const place=places.find(item=>String(item.id)===event.target.value);
+        if(place) choose({lat:place.lat,lng:place.lng,label:place.name});
+        setSelected(event.target.value);
+      }}><option value="">{places.length ? 'Chọn Nhà riêng, Công ty, Chợ…' : 'Chưa có địa điểm đã lưu'}</option>{places.map(place=><option key={place.id} value={place.id}>{place.name}</option>)}</select></label>
+      {selected && <button type="button" className="btn-secondary" disabled={saving} onClick={removePlace}>Xóa địa điểm đã lưu</button>}
+    </div>
+    {placeError && <p role="alert">{placeError}</p>}
+    {placeNotice && <p role="status">{placeNotice}</p>}
     <p>Chạm vào bản đồ để đổi vị trí. Vị trí chỉ được lưu khi bạn lưu khoản thu chi.</p>
     <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}><button type="button" className="btn-secondary" disabled={busy} onClick={locate}>{busy ? 'Đang lấy vị trí…' : 'Vị trí hiện tại'}</button><button type="button" className="btn-secondary" onClick={() => choose(null)}>Bỏ vị trí</button></div>
     {error && <p role="status">{error}</p>}
@@ -140,7 +174,8 @@ export function LocationPicker({ value, onChange, autoLocate }) {
       <label>Vĩ độ<input type="number" min="-90" max="90" step="any" value={value?.lat ?? ''} onChange={event => { if (event.target.value !== '' && Math.abs(Number(event.target.value)) <= 90) choose({ ...value, lat: Number(event.target.value), lng: value?.lng ?? 106.7009 }); }} /></label>
       <label>Kinh độ<input type="number" min="-180" max="180" step="any" value={value?.lng ?? ''} onChange={event => { if (event.target.value !== '' && Math.abs(Number(event.target.value)) <= 180) choose({ ...value, lng: Number(event.target.value), lat: value?.lat ?? 10.7769 }); }} /></label>
     </div>
-    {value && <input aria-label="Tên địa điểm" maxLength={200} placeholder="Tên địa điểm (tuỳ chọn)" value={value.label || ''} onChange={event => choose({ ...value, label: event.target.value })} />}
+    {value && <div className="saved-place-controls"><label>Tên địa điểm<input aria-label="Tên địa điểm" maxLength={100} list="location-name-suggestions" placeholder="Nhà riêng, Công ty, Chợ…" value={value.label || ''} onChange={event => choose({ ...value, label: event.target.value })} /></label><button type="button" className="btn-secondary" disabled={saving || !valid(value) || !value.label?.trim()} onClick={savePlace}>{saving ? 'Đang lưu…' : 'Lưu địa điểm'}</button><small>Lưu cùng tên sẽ cập nhật vị trí đã lưu. Khoản thu chi chỉ được lưu khi bạn hoàn tất biểu mẫu.</small></div>}
+    <datalist id="location-name-suggestions"><option value="Nhà riêng"/><option value="Công ty"/><option value="Chợ"/><option value="Siêu thị"/></datalist>
   </div>;
 }
 export default function TransactionMap({ transactions, monthTransactions, onOpenTransactions }) {
