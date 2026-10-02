@@ -7,15 +7,19 @@ const time = date => new Date(date).toLocaleString('vi-VN', { timeZone: 'Asia/Ho
 export default function NotificationBell({ onNavigate }) {
   const [open, setOpen] = useState(false), [items, setItems] = useState([]), [unread, setUnread] = useState(0), [cursor, setCursor] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const root = useRef(null), mounted = useRef(false), fetching = useRef(false);
+  const refreshQueued = useRef(false), olderLoaded = useRef(false);
   const config = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
   const refresh = async () => {
-    if (fetching.current) return;
+    if (fetching.current) { refreshQueued.current = true; return; }
     fetching.current = true;
     try {
       const response = await axios.get('/api/users/notifications', config());
-      if (mounted.current) { setItems(response.data.items); setUnread(response.data.unread); setCursor(response.data.nextCursor); setError(''); }
+      if (mounted.current) {
+        setItems(current => olderLoaded.current ? [...response.data.items,...current.filter(item => !response.data.items.some(row => row.id === item.id))] : response.data.items);
+        setUnread(response.data.unread); if (!olderLoaded.current) setCursor(response.data.nextCursor); setError('');
+      }
     } catch { if (mounted.current) setError('Không thể tải thông báo. Hãy thử lại.'); }
-    finally { fetching.current = false; }
+    finally { fetching.current = false; if (refreshQueued.current && mounted.current) { refreshQueued.current = false; refresh(); } }
   };
   useEffect(() => {
     mounted.current = true; refresh();
@@ -39,13 +43,13 @@ export default function NotificationBell({ onNavigate }) {
   };
   const readAll = async () => {
     setBusy(true);
-    try { await axios.post('/api/users/notifications/read', { all: true }, config()); await refresh(); }
+    try { await axios.post('/api/users/notifications/read', { all: true }, config()); setItems(current => current.map(item => ({ ...item, read_at: item.read_at || new Date().toISOString() }))); setUnread(0); await refresh(); }
     catch { setError('Không thể đánh dấu đã đọc. Hãy thử lại.'); }
     finally { setBusy(false); }
   };
   const more = async () => {
     setBusy(true);
-    try { const result = await axios.get(`/api/users/notifications?before=${cursor}`, config()); setItems(current => [...current,...result.data.items.filter(item => !current.some(row => row.id === item.id))]); setCursor(result.data.nextCursor); setUnread(result.data.unread); }
+    try { const result = await axios.get(`/api/users/notifications?before=${cursor}`, config()); olderLoaded.current = true; setItems(current => [...current,...result.data.items.filter(item => !current.some(row => row.id === item.id))]); setCursor(result.data.nextCursor); setUnread(result.data.unread); }
     catch { setError('Không thể tải thêm thông báo.'); }
     finally { setBusy(false); }
   };

@@ -72,7 +72,10 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     finally { setAccentBusy(false); }
   };
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    return ['family','business','transactions'].includes(tab) ? tab : 'overview';
+  });
   const [businessModel, setBusinessModel] = useState('Quán cafe');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -151,7 +154,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const currentYear = currentDate.getFullYear();
 
   // Checkin Modal State
-  const [isCheckinOpen, setIsCheckinOpen] = useState(false);
+  const [isCheckinOpen, setIsCheckinOpen] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'checkin');
 
   // Category State
   const [newCategory, setNewCategory] = useState({ name: '', type: 'EXPENSE', color: 'var(--color-primary-ink)' });

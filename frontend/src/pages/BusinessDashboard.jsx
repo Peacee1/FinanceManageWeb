@@ -1,4 +1,5 @@
 import BankPayments from '../features/business/BankPayments';
+import NotificationBell from '../features/notifications/NotificationBell';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -880,10 +881,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
             
             <button className="btn-today" onClick={handleToday}>Hôm nay</button>
             
-            <div className="notification">
-              <Bell size={20} color="var(--color-text-secondary)"/>
-              <div className="notification-dot"></div>
-            </div>
+            <NotificationBell onNavigate={target => { if (target === 'business') setActiveTab('transactions'); else navigate(`/?tab=${target}`); }} />
 
             <div className="user-profile-header" onClick={() => setIsDropdownOpen(!isDropdownOpen)} style={{position: 'relative'}}>
               {avatarSrc ? (

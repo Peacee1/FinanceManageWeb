@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, ArrowDownLeft, ArrowUpRight, RefreshCw } from 'lucide-react';
+import { MapPin, ArrowDownLeft, ArrowUpRight, RefreshCw, Maximize2, Minimize2, GripHorizontal, LocateFixed } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './transactionMap.css';
@@ -13,14 +13,36 @@ export function currentLocation() {
 const valid = point => point && Number.isFinite(point.lat) && Number.isFinite(point.lng);
 const money = value => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
-function MapCanvas({ point, onPoint, transactions = [], height = 320 }) {
+function MapCanvas({ point, onPoint, transactions = [], height = 320, resizable = false }) {
   const container = useRef(null), map = useRef(null), pins = useRef(null), callback = useRef(onPoint);
   callback.current = onPoint;
   const [tileState, setTileState] = useState('loading'), [retry, setRetry] = useState(0);
   const lastView = useRef('');
+  const [mapHeight, setMapHeight] = useState(() => Math.max(520, Math.round(window.innerHeight * .75)));
+  const [expanded, setExpanded] = useState(false);
+  const [locating, setLocating] = useState(false), [locationError, setLocationError] = useState('');
+  const selfLocation = useRef(null), locationRequest = useRef(0);
+  const drag = useRef(null);
+  const locateSelf = async () => {
+    const id = ++locationRequest.current;
+    setLocating(true); setLocationError('');
+    try {
+      const point = await currentLocation();
+      if (!map.current || locationRequest.current !== id) return;
+      if (selfLocation.current) map.current.removeLayer(selfLocation.current);
+      selfLocation.current = L.circleMarker([point.lat,point.lng], { radius:9,color:'#fff',weight:3,fillColor:'#2563eb',fillOpacity:1 }).bindPopup('Vị trí hiện tại của bạn').addTo(map.current);
+      map.current.setView([point.lat,point.lng],16);
+    } catch (error) { if (locationRequest.current === id && map.current) setLocationError(error.message); }
+    finally { if (locationRequest.current === id && map.current) setLocating(false); }
+  };
   useEffect(() => {
-    setTileState('loading'); lastView.current = '';
-    const instance = L.map(container.current).setView([10.7769, 106.7009], 12);
+    const escape = event => { if (event.key === 'Escape') setExpanded(false); };
+    if (expanded) document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [expanded]);
+  useEffect(() => {
+    setTileState('loading'); setLocating(false); lastView.current = '';
+    const instance = L.map(container.current, { scrollWheelZoom: !resizable }).setView([10.7769, 106.7009], 12);
     map.current = instance; pins.current = L.layerGroup().addTo(instance);
     const sources = [
       { url: import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.de/{z}/{x}/{y}.png', maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · <a href="https://www.openstreetmap.de/">OpenStreetMap.de</a>' },
@@ -46,7 +68,7 @@ function MapCanvas({ point, onPoint, transactions = [], height = 320 }) {
     loadSource();
     instance.on('click', event => callback.current?.({ lat: event.latlng.lat, lng: ((event.latlng.lng + 180) % 360 + 360) % 360 - 180 }));
     const observer = new ResizeObserver(() => instance.invalidateSize()); observer.observe(container.current);
-    return () => { live = false; clearTimeout(timer); observer.disconnect(); layer?.off(); instance.remove(); map.current = null; };
+    return () => { live = false; locationRequest.current++; selfLocation.current=null; clearTimeout(timer); observer.disconnect(); layer?.off(); instance.remove(); map.current = null; };
   }, [retry]);
   useEffect(() => {
     if (!map.current) return;
@@ -81,11 +103,19 @@ function MapCanvas({ point, onPoint, transactions = [], height = 320 }) {
     const key = JSON.stringify(bounds);
     if (bounds.length && lastView.current !== key) { map.current.fitBounds(bounds, { padding: [30,30], maxZoom: 16 }); lastView.current = key; }
   }, [point, onPoint, transactions, retry]);
-  return <div className="transaction-map-frame">
-    <div ref={container} aria-label={onPoint ? 'Bản đồ chọn vị trí thu chi' : 'Bản đồ các điểm thu chi'} style={{ height, width: '100%', zIndex: 0 }} />
+  return <div className={`map-canvas-shell ${expanded ? 'map-canvas-expanded' : ''}`}>
+    <div className="transaction-map-frame" style={{ height: expanded ? 'calc(100dvh - 70px)' : resizable ? mapHeight : height }}>
+    <div ref={container} aria-label={onPoint ? 'Bản đồ chọn vị trí thu chi' : 'Bản đồ các điểm thu chi'} style={{ height: '100%', width: '100%', zIndex: 0 }} />
+    {resizable && <div className="map-action-buttons">
+      <button type="button" disabled={locating} aria-label="Định vị tôi" onClick={locateSelf}><LocateFixed size={17} />{locating ? 'Đang định vị…' : 'Định vị tôi'}</button>
+      <button type="button" aria-label={expanded ? 'Thu gọn bản đồ' : 'Phóng rộng bản đồ'} onClick={() => setExpanded(value => !value)}>{expanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}{expanded ? 'Thu gọn' : 'Phóng rộng'}</button>
+    </div>}
+    {locationError && <div className="map-location-error" role="status">{locationError}</div>}
     {tileState !== 'ready' && <div className="transaction-map-status" role="status">
       {tileState === 'loading' ? <><RefreshCw size={16} />Đang tải bản đồ…</> : <><span>Chưa tải được bản đồ.</span><button type="button" onClick={() => setRetry(value => value + 1)}><RefreshCw size={16} />Thử lại</button></>}
     </div>}
+    </div>
+    {resizable && !expanded && <button type="button" className="map-resize-handle" aria-label="Kéo để thay đổi chiều cao bản đồ; dùng phím lên xuống để điều chỉnh" onPointerDown={event => { drag.current = { y: event.clientY, height: mapHeight }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={event => { if (drag.current) setMapHeight(Math.max(400,Math.min(1600,drag.current.height + event.clientY-drag.current.y))); }} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} onKeyDown={event => { if (['ArrowUp','ArrowDown'].includes(event.key)) { event.preventDefault(); setMapHeight(value => Math.max(400,Math.min(1600,value + (event.key === 'ArrowDown' ? 80 : -80)))); } }}><GripHorizontal size={18} />Kéo xuống để mở rộng bản đồ</button>}
   </div>;
 }
 export function LocationPicker({ value, onChange, autoLocate }) {
@@ -133,7 +163,7 @@ export default function TransactionMap({ transactions, monthTransactions, onOpen
     </div>
     <div className="transaction-map-card">
       <div className="transaction-map-card-header"><span><MapPin size={18} />Các điểm thu chi</span><div className="transaction-map-legend"><span><i className="expense" />Chi tiêu</span><span><i className="income" />Thu nhập</span><span><i className="mixed" />Thu & chi</span></div></div>
-      <MapCanvas transactions={located} height="clamp(360px, 55vh, 600px)" />
+      <MapCanvas transactions={located} resizable />
       {!located.length ? <div className="transaction-map-empty"><MapPin size={24} /><div><strong>Chưa có khoản thu chi kèm vị trí</strong><p>Vào Thu chi, sửa một khoản và chọn địa điểm để hiện điểm trên bản đồ.</p></div><button type="button" className="btn-primary" onClick={onOpenTransactions}>Mở Thu chi</button></div> : <p className="transaction-map-hint">Chạm vào điểm trên bản đồ để xem số tiền và các giao dịch tại đó.</p>}
     </div>
   </section>;

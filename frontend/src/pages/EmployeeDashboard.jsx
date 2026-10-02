@@ -1,4 +1,5 @@
 import BankPayments from '../features/business/BankPayments';
+import NotificationBell from '../features/notifications/NotificationBell';
 import BankPaymentDialog from '../features/business/BankPaymentDialog';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -146,6 +147,7 @@ const EmployeeDashboard = ({ user, handleLogout }) => {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <NotificationBell onNavigate={() => setActiveSection('submissions')} />
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Doanh thu hôm nay</div>
             <div style={{ fontWeight: '800', fontSize: '1rem', color: 'var(--color-income)' }}>{formatCurrency(todayRevenue)}</div>

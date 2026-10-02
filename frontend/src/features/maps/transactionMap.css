@@ -1,4 +1,4 @@
-.transaction-map-page { padding: 0 20px 24px; }
+.transaction-map-page { padding: 0 20px 24px; flex:1; min-height:0; overflow-y:auto; }
 .transaction-map-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:20px; }
 .transaction-map-heading h2 { margin:0 0 6px; font-size:1.5rem; }
 .transaction-map-heading p,.transaction-map-empty p { color:var(--color-text-secondary); margin:0; font-size:.9rem; line-height:1.5; }
@@ -21,6 +21,13 @@
 .transaction-map-legend i { width:9px; height:9px; border-radius:50%; }
 .transaction-map-legend .expense { background:#e11d48; }.transaction-map-legend .income { background:#059669; }.transaction-map-legend .mixed { background:#7c3aed; }
 .transaction-map-frame { position:relative; border-radius:12px; overflow:hidden; background:#e8eef1; }
+.map-canvas-shell { position:relative; }
+.map-canvas-expanded { position:fixed; inset:12px; z-index:2000; padding:12px; background:var(--color-card); border:1px solid var(--color-border); border-radius:16px; box-shadow:0 20px 80px #0008; }
+.transaction-map-card .map-canvas-expanded .transaction-map-frame { margin:0; }
+.map-action-buttons { position:absolute; right:12px; top:12px; z-index:2; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; max-width:calc(100% - 70px); }
+.map-action-buttons button { display:flex; align-items:center; gap:7px; padding:9px 12px; border:1px solid var(--color-border); border-radius:10px; background:var(--color-card); color:var(--color-text); cursor:pointer; box-shadow:0 2px 10px #0002; font:inherit; font-size:.8rem; }.map-action-buttons button:disabled { opacity:.7; }
+.map-location-error { position:absolute; bottom:32px; left:12px; right:12px; z-index:2; border-radius:10px; padding:12px; background:var(--color-card); color:var(--color-text); box-shadow:0 2px 12px #0003; font-size:.8rem; line-height:1.5; }
+.map-resize-handle { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px; color:var(--color-text-secondary); background:none; border:0; cursor:ns-resize; touch-action:none; font:inherit; font-size:.8rem; }
 .transaction-map-card .transaction-map-frame { margin:0 12px; }
 .transaction-map-status { position:absolute; z-index:1; top:16px; left:50%; transform:translateX(-50%); background:var(--color-card); color:var(--color-text); border:1px solid var(--color-border); padding:10px 16px; border-radius:12px; box-shadow:0 4px 20px #0002; display:flex; align-items:center; gap:10px; font-size:.85rem; max-width:calc(100% - 90px); }
 .transaction-map-status button { display:flex; align-items:center; gap:6px; background:none; border:0; color:var(--color-primary-ink); cursor:pointer; white-space:nowrap; font:inherit; }
