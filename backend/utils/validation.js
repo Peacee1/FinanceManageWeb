@@ -8,6 +8,10 @@ function transactionError(body, partial = false) {
   if (check('category') && (typeof body.category !== 'string' || !body.category.trim() || body.category.length > 100)) return 'Danh mục không hợp lệ.';
   if (check('date') && !isDate(body.date)) return 'Ngày giao dịch không hợp lệ.';
   if (body.description !== undefined && (typeof body.description !== 'string' || body.description.length > 2000)) return 'Mô tả tối đa 2000 ký tự.';
+  if (body.location !== undefined && body.location !== null) {
+    const point = body.location;
+    if (typeof point !== 'object' || Array.isArray(point) || !Number.isFinite(point.lat) || Math.abs(point.lat) > 90 || !Number.isFinite(point.lng) || Math.abs(point.lng) > 180 || (point.label !== undefined && (typeof point.label !== 'string' || point.label.length > 200)) || Object.keys(point).some(key => !['lat','lng','label'].includes(key))) return 'Vị trí không hợp lệ.';
+  }
   return null;
 }
 module.exports = { isPositiveInteger, isDate, isPassword, transactionError };

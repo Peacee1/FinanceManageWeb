@@ -105,8 +105,8 @@ const addTransaction = async (req, res, next) => {
           return { row: previous, bankPayment: await prepareBankPayment(client, previous), replayed: true };
         }
       }
-      const row = (await client.query(`INSERT INTO transactions(user_id,business_id,type,amount,category,date,description,payment_method,submission_request_id,submission_request_hash,evidence_filename,evidence_mime,evidence_expires_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,(SELECT expires_at FROM transaction_evidence_files WHERE filename=$11)) RETURNING *`, [req.user.userId,scope.businessId,type,amount,category,saleDate,description || '',req.body.paymentMethod || null,req.user.role === 'employee' ? req.body.requestId : null,fingerprint,req.file?.filename || null,req.file?.mimetype || null])).rows[0];
+      const row = (await client.query(`INSERT INTO transactions(user_id,business_id,type,amount,category,date,description,payment_method,submission_request_id,submission_request_hash,evidence_filename,evidence_mime,evidence_expires_at,location)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,(SELECT expires_at FROM transaction_evidence_files WHERE filename=$11),$13) RETURNING *`, [req.user.userId,scope.businessId,type,amount,category,saleDate,description || '',req.body.paymentMethod || null,req.user.role === 'employee' ? req.body.requestId : null,fingerprint,req.file?.filename || null,req.file?.mimetype || null,scope.businessId === null && req.body.location ? JSON.stringify(req.body.location) : null])).rows[0];
       return { row, bankPayment: await prepareBankPayment(client, row), replayed: false };
     });
     if (result.conflict) return res.status(409).json({ message: 'Mã yêu cầu đã được dùng cho khoản thu chi khác.' });
@@ -144,10 +144,10 @@ const updateTransaction = async (req, res, next) => {
       if (current) current.separate_personal_wallets = settings?.separate_personal_wallets;
       if (current?.separate_personal_wallets && !['CASH','TRANSFER'].includes(req.body.paymentMethod ?? current.payment_method)) return res.status(400).json({ message: 'Vui lòng chọn tiền mặt hoặc tiền tài khoản cho giao dịch này.' });
     }
-    const fields = ['type', 'amount', 'category', 'date', 'description', ...(scope.businessId === null ? ['paymentMethod'] : [])].filter(field => req.body[field] !== undefined);
+    const fields = ['type', 'amount', 'category', 'date', 'description', ...(scope.businessId === null ? ['paymentMethod','location'] : [])].filter(field => req.body[field] !== undefined);
     if (!fields.length) return res.status(400).json({ message: 'Chưa có nội dung cập nhật.' });
     const params = [...scope.params];
-    const updates = fields.map(field => { params.push(req.body[field]); return `${field === 'paymentMethod' ? 'payment_method' : field} = $${params.length}`; });
+    const updates = fields.map(field => { params.push(field === 'location' && req.body[field] !== null ? JSON.stringify(req.body[field]) : req.body[field]); return `${field === 'paymentMethod' ? 'payment_method' : field} = $${params.length}`; });
     params.push(req.params.id);
     const result = await db.query(`UPDATE transactions t SET ${updates.join(', ')} WHERE ${scope.clause} AND t.sale_request_id IS NULL AND t.bank_payment_status='MANUAL' AND t.id = $${params.length} RETURNING *`, params);
     if (!result.rows.length) return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc không có quyền sửa.' });

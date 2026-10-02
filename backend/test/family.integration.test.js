@@ -47,12 +47,13 @@ test('family sync choices, creator-only dissolution, member leave and paid slots
   const payload = amount => ({ type: 'INCOME', amount, category: 'Lương', date: '2026-10-02' });
   try {
     for (let i=0;i<3;i++) users.push({ userId: (await db.query("INSERT INTO users(name,email,password_hash,role,coin) VALUES('Lifecycle test',$1,'test','owner',3000) RETURNING id", [`${randomUUID()}@example.invalid`])).rows[0].id, role: 'owner' });
-    await invoke(addTransaction, users[0], payload(100));
+    await invoke(addTransaction, users[0], { ...payload(100), location: { lat: 10.77, lng: 106.7, label: 'Địa điểm cũ' } });
     await invoke(addTransaction, users[1], payload(200));
     const created = await invoke(createFamily, users[0], { name: 'Lifecycle', syncPersonal: true });
     familyId = created.body.family.id; const inviteCode = created.body.family.invite_code;
     await invoke(joinFamily, users[1], { inviteCode, syncPersonal: false });
     assert.deepEqual((await invoke(getTransactions, users[1])).body.map(t => Number(t.amount)), [100]);
+    assert.equal((await invoke(getTransactions, users[1])).body[0].location.label, 'Địa điểm cũ');
     assert.equal((await invoke(dissolveFamily, users[1])).statusCode, 403);
     assert.equal((await invoke(leaveFamily, users[0])).statusCode, 403);
     assert.equal((await invoke(joinFamily, users[2], { inviteCode })).statusCode, 409);
@@ -63,7 +64,9 @@ test('family sync choices, creator-only dissolution, member leave and paid slots
     await db.query('UPDATE users SET coin=0 WHERE id=$1', [users[0].userId]);
     assert.equal((await invoke(buySlot, users[0], { requestId: randomUUID() })).statusCode, 400);
     assert.equal((await invoke(joinFamily, users[2], { inviteCode })).statusCode, 200);
-    await invoke(addTransaction, users[1], payload(30));
+    const located = await invoke(addTransaction, users[1], { ...payload(30), location: { lat: 21, lng: 105, label: 'Điểm thu nhập' } });
+    assert.equal(located.body.location.lat, 21);
+    assert.equal((await invoke(updateTransaction, users[2], { location: { lat: 11, lng: 107, label: 'Điểm thu nhập' } }, {}, { id: located.body.id })).statusCode, 200);
     await invoke(addTransaction, users[0], payload(40));
     assert.equal((await invoke(leaveFamily, users[1])).statusCode, 200);
     const left = (await invoke(getFamily, users[1])).body;
@@ -73,6 +76,7 @@ test('family sync choices, creator-only dissolution, member leave and paid slots
     const decision = { noticeId: left.pending[0].id, syncData: true };
     await Promise.all([1,2].map(() => invoke(resolveDissolution, users[1], decision)));
     assert.deepEqual((await invoke(getTransactions, users[1])).body.map(t => Number(t.amount)).sort((a,b)=>a-b), [30,200]);
+    assert.equal((await invoke(getTransactions, users[1])).body.find(tx => Number(tx.amount) === 30).location.label, 'Điểm thu nhập');
     assert.equal((await invoke(getFamily, users[1])).body.pending.length, 0);
     assert.equal((await invoke(dissolveFamily, users[0])).statusCode, 200);
     assert.equal((await invoke(joinFamily, users[1], { inviteCode })).statusCode, 404);
@@ -87,4 +91,23 @@ test('family sync choices, creator-only dissolution, member leave and paid slots
     await db.query('DELETE FROM users WHERE id=ANY($1::int[])', [users.map(user => user.userId)]);
     if (familyId) await db.query('DELETE FROM families WHERE id=$1', [familyId]);
   }
+});
+test('location validation, edit/remove and map preferences remain scoped to each account', { skip: process.env.RUN_DB_TESTS !== '1' }, async () => {
+  const users=[];
+  try {
+    for(let i=0;i<2;i++) users.push({ userId:(await db.query("INSERT INTO users(name,email,password_hash,role) VALUES('Map test',$1,'test','owner') RETURNING id", [`${randomUUID()}@example.invalid`])).rows[0].id, role:'owner' });
+    const payload={type:'EXPENSE',amount:100,category:'Ăn uống',date:'2026-10-02'};
+    assert.equal((await invoke(addTransaction,users[0],{...payload,location:{lat:91,lng:1}})).statusCode,400);
+    const added=await invoke(addTransaction,users[0],{...payload,location:{lat:0,lng:0,label:'Zero'}});
+    assert.equal(added.body.location.lat,0);
+    assert.equal((await invoke(updateTransaction,users[1],{location:null},{},{id:added.body.id})).statusCode,404);
+    await invoke(updateTransaction,users[0],{location:{lat:-30,lng:170,label:'New'}},{},{id:added.body.id});
+    assert.equal((await invoke(getTransactions,users[0])).body[0].location.lat,-30);
+    await invoke(updateTransaction,users[0],{location:null},{},{id:added.body.id});
+    assert.equal((await invoke(getTransactions,users[0])).body[0].location,null);
+    await invoke(updateSettings,users[0],{mapsEnabled:true});
+    assert.equal((await invoke(getProfile,users[0])).body.maps_enabled,true);
+    assert.equal((await invoke(getProfile,users[1])).body.maps_enabled,false);
+    assert.equal((await invoke(updateSettings,users[0],{mapsEnabled:'yes'})).statusCode,400);
+  } finally { await db.query('DELETE FROM users WHERE id=ANY($1::int[])',[users.map(user=>user.userId)]); }
 });

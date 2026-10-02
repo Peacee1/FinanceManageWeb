@@ -4,10 +4,11 @@ const { sharedFields, familySettings } = require('../utils/familySettings');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings, separate_personal_wallets, personal_accent FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings, separate_personal_wallets, personal_accent, maps_enabled FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     
     let userProfile = result.rows[0];
+
     const shared = await familySettings(req.user.userId);
     userProfile.finance_mode = shared ? 'family' : 'personal';
     if (shared) {
@@ -155,6 +156,9 @@ const updateCategories = async (req, res, next) => {
 // Cập nhật cài đặt (budgets, goals...)
 const updateSettings = async (req, res) => {
   const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos, budgetSettings, separatePersonalWallets, personalAccent } = req.body;
+  const { mapsEnabled } = req.body;
+  if (mapsEnabled !== undefined && typeof mapsEnabled !== 'boolean') return res.status(400).json({ message: 'Tuỳ chọn bản đồ không hợp lệ.' });
+  if (mapsEnabled !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn bản đồ dành cho sổ Cá nhân và Gia đình.' });
   if (personalAccent !== undefined && !['purple','pink','green','blue','yellow'].includes(personalAccent)) return res.status(400).json({ message: 'Màu giao diện không hợp lệ.' });
   if (personalAccent !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn màu này dành cho tài khoản cá nhân.' });
   if (separatePersonalWallets !== undefined && typeof separatePersonalWallets !== 'boolean') return res.status(400).json({ message: 'Tuỳ chọn phân biệt tiền phải là bật hoặc tắt.' });
@@ -163,6 +167,7 @@ const updateSettings = async (req, res) => {
     const fields = [];
     const values = [];
     let count = 1;
+    if (mapsEnabled !== undefined) { fields.push(`maps_enabled = $${count++}`); values.push(mapsEnabled); }
 
     if (personalAccent !== undefined) { fields.push(`personal_accent = $${count++}`); values.push(personalAccent); }
     if (separatePersonalWallets !== undefined) { fields.push(`separate_personal_wallets = $${count++}`); values.push(separatePersonalWallets); }

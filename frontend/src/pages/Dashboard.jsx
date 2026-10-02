@@ -3,6 +3,7 @@ import '../features/personalization/personalTheme.css';
 import PersonalWalletSummary from '../features/transactions/PersonalWalletSummary';
 import FamilySettings from '../features/family/FamilySettings';
 import FamilyDissolutionPrompt from '../features/family/FamilyDissolutionPrompt';
+import TransactionMap, { LocationPicker, currentLocation } from '../features/maps/TransactionMap';
 import TransactionChat from '../features/transactions/TransactionChat';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -49,6 +50,9 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [walletSettingBusy, setWalletSettingBusy] = useState(false);
   const [walletSettingError, setWalletSettingError] = useState('');
   const [profileData, setProfileData] = useState(null);
+  const [txLocation, setTxLocation] = useState(null);
+  const [mapSettingBusy, setMapSettingBusy] = useState(false);
+  const [mapSettingMessage, setMapSettingMessage] = useState('');
   const [accentBusy, setAccentBusy] = useState(false);
   const [accentError, setAccentError] = useState('');
   const personalAccent = profileData?.personal_accent || 'purple';
@@ -137,6 +141,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
   const [selectedDayInfo, setSelectedDayInfo] = useState(null);
   const [hoveredTx, setHoveredTx] = useState(null);
   const [editTxId, setEditTxId] = useState(null);
+  useEffect(() => { if (isModalOpen && !editTxId) setTxLocation(null); }, [isModalOpen, editTxId]);
   const [openTxMenu, setOpenTxMenu] = useState(null);
 
   // Month navigation state
@@ -558,6 +563,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
     setAmount(t.amount.toString());
     setDate(new Date(t.date).toISOString().substring(0, 10));
     setDescription(t.description || '');
+    setTxLocation(t.location || null);
     setPersonalPaymentMethod(t.payment_method || '');
     setIsModalOpen(true);
     setSelectedDayInfo(null);
@@ -570,11 +576,11 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       const token = localStorage.getItem('token');
       if (editTxId) {
         await axios.put(`/api/transactions/${editTxId}`, {
-          type, amount: parseInt(amount), category, date, description, ...((profileData?.separate_personal_wallets || (editTxId && personalPaymentMethod)) ? { paymentMethod: personalPaymentMethod } : {})
+          type, amount: parseInt(amount), category, date, description, ...(profileData?.maps_enabled ? { location: txLocation } : {}), ...((profileData?.separate_personal_wallets || (editTxId && personalPaymentMethod)) ? { paymentMethod: personalPaymentMethod } : {})
         }, { headers: { Authorization: `Bearer ${token}` } });
       } else {
         await axios.post('/api/transactions', {
-          type, amount: parseInt(amount), category, date, description, ...((profileData?.separate_personal_wallets || (editTxId && personalPaymentMethod)) ? { paymentMethod: personalPaymentMethod } : {})
+          type, amount: parseInt(amount), category, date, description, ...(profileData?.maps_enabled ? { location: txLocation } : {}), ...((profileData?.separate_personal_wallets || (editTxId && personalPaymentMethod)) ? { paymentMethod: personalPaymentMethod } : {})
         }, { headers: { Authorization: `Bearer ${token}` } });
       }
       setIsModalOpen(false);
@@ -871,6 +877,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           <li className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }}><Tags size={20}/> Danh mục</li>
           <li className="nav-item" onClick={() => { setIsProfileOpen(true); setIsSidebarOpen(false); }}><User size={20}/> Tài khoản</li>
           <li className={`nav-item ${activeTab === 'family' ? 'active' : ''}`} onClick={() => { setActiveTab('family'); setIsSidebarOpen(false); }}><User size={20}/> Gia đình</li>
+          {profileData?.maps_enabled && <li className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => { setActiveTab('map'); setIsSidebarOpen(false); }}><CalendarRange size={20}/> Bản đồ thu chi</li>}
           <li className={`nav-item ${activeTab === 'personalization' ? 'active' : ''}`} onClick={() => { setActiveTab('personalization'); setIsSidebarOpen(false); }}><Palette size={20}/> Cá nhân hóa</li>
           <li className={`nav-item ${activeTab === 'business' ? 'active' : ''}`} onClick={() => { setActiveTab('business'); setIsSidebarOpen(false); }}><Building2 size={20}/> Doanh nghiệp</li>
           <li className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }}><Settings size={20}/> Cài đặt</li>
@@ -2186,6 +2193,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
         )}
 
         {activeTab === 'family' && <FamilySettings />}
+        {activeTab === 'map' && profileData?.maps_enabled && <TransactionMap transactions={transactions} monthTransactions={currentMonthTx} />}
         {activeTab === 'personalization' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>
             <div style={{ marginBottom: '20px' }}>
@@ -2395,6 +2403,23 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
               <h2 style={{ fontSize: '1.4rem', fontWeight: '800' }}>Cài đặt hệ thống</h2>
               <p style={{ color: 'var(--color-text-secondary)' }}>Tùy chỉnh trải nghiệm cá nhân của bạn</p>
             </div>
+            <div className="widget" style={{ padding: 20, marginBottom: 20 }}>
+              <h3>Bản đồ thu chi</h3>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}><input type="checkbox" checked={Boolean(profileData?.maps_enabled)} disabled={mapSettingBusy || !profileData} onChange={async event => {
+                const enabled = event.target.checked;
+                setMapSettingBusy(true); setMapSettingMessage('');
+                let permissionMessage = '';
+                if (enabled) { try { await currentLocation(); } catch (failure) { permissionMessage = failure.message; } }
+                try {
+                  await updateSettingsAPI({ mapsEnabled: enabled }, true);
+                  setProfileData(current => ({ ...current, maps_enabled: enabled }));
+                  setMapSettingMessage(permissionMessage || (enabled ? 'Đã bật bản đồ. Bạn có thể thêm vị trí khi tạo thu chi.' : 'Đã tắt bản đồ. Vị trí đã lưu vẫn được giữ lại.'));
+                } catch (failure) { setMapSettingMessage(failure.response?.data?.message || 'Không thể lưu tuỳ chọn bản đồ.'); }
+                finally { setMapSettingBusy(false); }
+              }} />Tích hợp bản đồ</label>
+              <p>Khi bật, trình duyệt sẽ hỏi quyền vị trí. Bạn có thể chọn điểm thủ công nếu không cấp quyền. Trong Gia đình, vị trí thu chi đã lưu được chia sẻ với các thành viên cùng sổ.</p>
+              {mapSettingMessage && <p role="status">{mapSettingMessage}</p>}
+            </div>
             
             <div className="widget" style={{ padding: 20, marginBottom: 20 }}>
               <h3>Quản lý tiền cá nhân</h3>
@@ -2461,12 +2486,13 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
       {/* Modals from old code... */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="modal-header">
               <h3>{editTxId ? 'Sửa Giao Dịch' : 'Thêm Giao Dịch'}</h3>
               <button className="close-btn" onClick={() => { setIsModalOpen(false); setEditTxId(null); }}>×</button>
             </div>
             <form onSubmit={handleAddTransaction}>
+              {profileData?.maps_enabled && <LocationPicker value={txLocation} onChange={setTxLocation} autoLocate={!editTxId} />}
               <div className="input-group">
                 <label>Loại</label>
                 <select style={{padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)'}} value={type} onChange={e => { setType(e.target.value); setCategory(''); }}>
