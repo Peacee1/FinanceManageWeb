@@ -24,6 +24,20 @@ async function generateScheduledNotifications(at = new Date(), userId = null) {
       AND NOT has_created_business AND NOT EXISTS(SELECT 1 FROM businesses b WHERE b.owner_id=users.id)
       AND ((created_at + interval '1 month') AT TIME ZONE 'UTC') <= $1::timestamptz
       ON CONFLICT(user_id,event_key) DO NOTHING`, params);
+    await client.query(`WITH clock AS (SELECT $1::timestamptz AT TIME ZONE 'Asia/Ho_Chi_Minh' AS local)
+      INSERT INTO notifications(user_id,kind,title,message,target,event_key,created_at)
+      SELECT u.id,'goal_reminder','Đến lịch góp cho mục tiêu',
+        'Hôm nay là lịch góp cho “' || g.name || '”. Mở mục tiêu để cập nhật số tiền đã dành.',
+        'goals','goal-reminder:' || g.id || ':' || clock.local::date,$1::timestamptz
+      FROM savings_goals g JOIN users u ON (g.family_id IS NOT NULL AND u.family_id=g.family_id) OR (g.family_id IS NULL AND u.id=g.owner_id AND u.family_id IS NULL)
+      CROSS JOIN clock
+      WHERE g.status='active' AND g.reminder<>'none' AND u.role='owner' AND u.is_active IS DISTINCT FROM false
+      AND ($2::int IS NULL OR u.id=$2) AND clock.local::time >= time '07:00'
+      AND (g.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date < clock.local::date
+      AND ((g.reminder='weekly' AND extract(isodow FROM clock.local)=g.reminder_day)
+        OR (g.reminder='monthly' AND extract(day FROM clock.local)=least(g.reminder_day,extract(day FROM date_trunc('month',clock.local)+interval '1 month - 1 day')::int)))
+      AND NOT EXISTS(SELECT 1 FROM savings_goal_entries e WHERE e.goal_id=g.id AND e.kind='DEPOSIT' AND (e.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date=clock.local::date)
+      ON CONFLICT(user_id,event_key) DO NOTHING`,params);
   });
 }
 function startNotificationScheduler() {

@@ -1,3 +1,4 @@
+import SavingsGoals from '../features/goals/SavingsGoals';
 import { personalPalettes, themedAsset } from '../features/personalization/personalTheme';
 import '../features/personalization/personalTheme.css';
 import PersonalWalletSummary from '../features/transactions/PersonalWalletSummary';
@@ -74,7 +75,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
   const [activeTab, setActiveTab] = useState(() => {
     const tab = new URLSearchParams(window.location.search).get('tab');
-    return ['family','business','transactions'].includes(tab) ? tab : 'overview';
+    return ['family','business','transactions','goals'].includes(tab) ? tab : 'overview';
   });
   const [businessModel, setBusinessModel] = useState('Quán cafe');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -931,7 +932,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
             
             <NotificationBell onNavigate={target => {
               if (target === 'checkin') setIsCheckinOpen(true);
-              else if (['transactions','family','business'].includes(target)) setActiveTab(target);
+              else if (['transactions','family','business','goals'].includes(target)) setActiveTab(target);
             }} />
 
             <div className="user-profile-header" onClick={() => setIsDropdownOpen(!isDropdownOpen)} style={{position: 'relative'}}>
@@ -1986,155 +1987,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
           </div>
         )}
 
-        {activeTab === 'goals' && (
-          <div className="dashboard-scroll" style={{ padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-            {!isGoalInitialized ? (
-              <div style={{ maxWidth: '500px', width: '100%', boxSizing: 'border-box', marginTop: isMobile ? '20px' : '50px', background: 'var(--color-card)', padding: isMobile ? '20px' : '40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', textAlign: 'center' }}>
-                <img src={mascotAsset('goal_mascot')} alt="Goal Mascot" style={{ width: 150, marginBottom: '20px' }} />
-                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '10px', color: 'var(--color-text)' }}>Bắt đầu tiết kiệm cho những mục tiêu to lớn nhé!</h2>
-                <p style={{ color: 'var(--color-text-secondary)', marginBottom: '30px' }}>Để gợi ý lộ trình tốt nhất, Peacee1 cần biết một vài thông tin cơ bản về bạn.</p>
-                
-                <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
-                  <div className="input-group">
-                    <label style={{fontWeight: '600'}}>Mức lương hiện tại (VNĐ/tháng)</label>
-                    <input type="text" placeholder="Ví dụ: 15.000.000" value={goalForm.salary.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} onChange={e => setGoalForm({...goalForm, salary: e.target.value.replace(/\./g, '')})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                  </div>
-                  <div className="grid-responsive-1-1" style={{gap: '15px'}}>
-                    <div className="input-group">
-                      <label style={{fontWeight: '600'}}>Tuổi</label>
-                      <input type="number" placeholder="25" value={goalForm.age} onChange={e => setGoalForm({...goalForm, age: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                    <div className="input-group">
-                      <label style={{fontWeight: '600'}}>Giới tính</label>
-                      <select value={goalForm.gender} onChange={e => setGoalForm({...goalForm, gender: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', backgroundColor: 'var(--color-card)', boxSizing: 'border-box'}}>
-                        <option value="Nam">Nam</option>
-                        <option value="Nữ">Nữ</option>
-                        <option value="Khác">Khác</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={saveGoalInit} 
-                  style={{ width: '100%', padding: '15px', background: 'var(--color-primary)', color: 'var(--color-on-primary)', border: 'none', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(var(--color-primary-rgb), 0.3)' }}
-                >
-                  Bắt đầu lập mục tiêu
-                </button>
-              </div>
-            ) : (
-              <div style={{width: '100%', maxWidth: '1000px'}}>
-                <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '5px' }}>Mục tiêu của bạn</h2>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Theo dõi và quản lý các khoản tiết kiệm.</p>
-                  </div>
-                  <div style={{ background: 'var(--color-primary)', color: 'var(--color-on-primary)', padding: '15px 25px', borderRadius: '16px', boxShadow: '0 8px 20px rgba(var(--color-primary-rgb), 0.3)' }}>
-                    <div style={{ fontSize: '0.85rem', opacity: 0.9, marginBottom: '5px' }}>Tổng tiền đang tiết kiệm</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>
-                      {formatCurrency(
-                        (customNormalSaving !== null ? customNormalSaving : Math.max((parseInt(profileData?.salary) || 0) - totalExpense, 0)) +
-                        (customBankSavingTotal !== null ? customBankSavingTotal : Math.round(bankSaving.amount * (1 + (bankSaving.rate / 100) * (bankSaving.months / 12)))) +
-                        (investmentIncome || 0)
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid-responsive-1-1" style={{gap: '20px', marginBottom: '20px'}}>
-                  {/* Tiết kiệm bình thường */}
-                  <div className="widget" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Tiết kiệm bình thường</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Lương tháng - Chi tiêu</p>
-                    <div className="input-group">
-                      <label>Số tiền (VNĐ)</label>
-                      <input type="text" 
-                             value={(customNormalSaving !== null ? customNormalSaving : Math.max((parseInt(profileData?.salary) || 0) - totalExpense, 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} 
-                             onChange={(e) => setCustomNormalSaving(parseInt(e.target.value.replace(/\./g, '')) || 0)} 
-                             style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                  </div>
-
-                  {/* Đầu tư */}
-                  <div className="widget" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Đầu tư (Linh hoạt)</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Thu nhập đầu tư tháng này</p>
-                    <div className="input-group">
-                      <label>Số tiền (VNĐ)</label>
-                      <input type="text" value={investmentIncome ? investmentIncome.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setInvestmentIncome(parseInt(e.target.value.replace(/\./g, '')) || 0)} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gửi tiết kiệm */}
-                <div className="widget" style={{ marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '5px' }}>Gửi tiết kiệm</h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '15px' }}>Tính lãi suất theo số tháng gửi.</p>
-                  <div className="grid-responsive-1-1-1" style={{gap: '15px'}}>
-                    <div className="input-group">
-                      <label>Số tiền gửi (VNĐ)</label>
-                      <input type="text" value={bankSaving.amount ? bankSaving.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setBankSaving({...bankSaving, amount: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                    <div className="input-group">
-                      <label>Lãi suất (%/năm)</label>
-                      <input type="number" value={bankSaving.rate} onChange={(e) => setBankSaving({...bankSaving, rate: parseFloat(e.target.value) || 0})} step="0.1" style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                    <div className="input-group">
-                      <label>Số tháng gửi</label>
-                      <input type="number" value={bankSaving.months} onChange={(e) => setBankSaving({...bankSaving, months: parseInt(e.target.value) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px', padding: '15px', background: 'var(--color-background)', borderRadius: '12px', fontWeight: '600' }}>
-                    <span>Tổng tiền nhận được sau {bankSaving.months} tháng:</span>
-                    <input type="text" 
-                           value={(customBankSavingTotal !== null ? customBankSavingTotal : Math.round(bankSaving.amount * (1 + (bankSaving.rate / 100) * (bankSaving.months / 12)))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} 
-                           onChange={(e) => setCustomBankSavingTotal(parseInt(e.target.value.replace(/\./g, '')) || 0)} 
-                           style={{padding: '8px', borderRadius: '8px', border: '1px solid var(--color-primary)', width: '150px', fontWeight: 'bold', color: 'var(--color-primary-ink)'}} />
-                    <span>VNĐ</span>
-                  </div>
-                </div>
-
-                {/* Mục tiêu */}
-                <div className="widget">
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '15px' }}>Mục tiêu lớn</h3>
-                  <div className="grid-responsive-1-1" style={{gap: '15px'}}>
-                    <div className="input-group">
-                      <label>Tên mục tiêu</label>
-                      <input type="text" value={userGoal.name} onChange={(e) => setUserGoal({...userGoal, name: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                    <div className="input-group">
-                      <label>Thời hạn</label>
-                      <input type="date" value={userGoal.deadline} onChange={(e) => setUserGoal({...userGoal, deadline: e.target.value})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                    <div className="input-group">
-                      <label>Số tiền hiện có (VNĐ)</label>
-                      <input type="text" value={userGoal.currentSaved ? userGoal.currentSaved.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setUserGoal({...userGoal, currentSaved: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                    <div className="input-group">
-                      <label>Số tiền cần (VNĐ)</label>
-                      <input type="text" value={userGoal.targetAmount ? userGoal.targetAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''} onChange={(e) => setUserGoal({...userGoal, targetAmount: parseInt(e.target.value.replace(/\./g, '')) || 0})} style={{padding: '12px', borderRadius: '12px', border: '1px solid var(--color-border)', width: '100%', boxSizing: 'border-box'}} />
-                    </div>
-                  </div>
-                  <div style={{ marginTop: '20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '8px' }}>
-                      <span style={{fontWeight: '600', color: 'var(--color-primary-ink)'}}>Tiến độ hoàn thành</span>
-                      <span style={{fontWeight: '700'}}>{Math.min(Math.round((userGoal.currentSaved / userGoal.targetAmount) * 100) || 0, 100)}%</span>
-                    </div>
-                    <div style={{ height: 12, background: 'var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
-                      <div style={{ width: `${Math.min((userGoal.currentSaved / userGoal.targetAmount) * 100 || 0, 100)}%`, height: '100%', background: 'linear-gradient(90deg, #F472B6, var(--color-primary))', borderRadius: '6px' }}></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                  <button onClick={handleSaveGoals} className="btn-primary" style={{ padding: '12px 30px', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', background: 'linear-gradient(90deg, var(--color-primary), #F472B6)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(var(--color-primary-rgb), 0.3)' }}>
-                    Lưu các thay đổi
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {activeTab === 'goals' && <SavingsGoals />}
 
         {activeTab === 'categories' && (
           <div className="dashboard-scroll" style={{ padding: '0 20px 20px' }}>

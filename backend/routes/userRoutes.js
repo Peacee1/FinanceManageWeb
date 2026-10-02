@@ -32,6 +32,12 @@ const upload = multer({
 });
 
 router.get('/me', protect, getProfile);
+const goals = require('../controllers/savingsGoalController');
+router.get('/goals', protect, goals.list);
+router.post('/goals', protect, goals.create);
+router.patch('/goals/:id', protect, goals.update);
+router.post('/goals/:id/entries', protect, goals.contribute);
+router.get('/goals/:id/entries', protect, goals.history);
 const savedLocations = require('../controllers/savedLocationController');
 router.get('/saved-locations', protect, savedLocations.list);
 router.post('/saved-locations', protect, savedLocations.save);
