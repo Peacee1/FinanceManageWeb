@@ -2,7 +2,7 @@ const { test, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { randomUUID } = require('crypto');
 const db = require('../config/db');
-const { createFamily, joinFamily } = require('../controllers/familyController');
+const { createFamily, joinFamily, getFamily, dissolveFamily, leaveFamily, resolveDissolution, buySlot } = require('../controllers/familyController');
 const { addTransaction, getTransactions, getSummary, updateTransaction, deleteTransaction } = require('../controllers/transactionController');
 const { getProfile, updateSettings } = require('../controllers/userController');
 after(() => db.close());
@@ -37,6 +37,52 @@ test('two family members share calendar and totals; personal history and outside
     assert.equal((await invoke(addTransaction, partner, payload(1))).statusCode, 400);
     assert.equal((await invoke(deleteTransaction, partner, {}, {}, { id: shared.body.id })).statusCode, 200);
     assert.equal((await invoke(getTransactions, users[3])).body.length, 0);
+  } finally {
+    await db.query('DELETE FROM users WHERE id=ANY($1::int[])', [users.map(user => user.userId)]);
+    if (familyId) await db.query('DELETE FROM families WHERE id=$1', [familyId]);
+  }
+});
+test('family sync choices, creator-only dissolution, member leave and paid slots are atomic and replay-safe', { skip: process.env.RUN_DB_TESTS !== '1' }, async () => {
+  const users = []; let familyId;
+  const payload = amount => ({ type: 'INCOME', amount, category: 'Lương', date: '2026-10-02' });
+  try {
+    for (let i=0;i<3;i++) users.push({ userId: (await db.query("INSERT INTO users(name,email,password_hash,role,coin) VALUES('Lifecycle test',$1,'test','owner',3000) RETURNING id", [`${randomUUID()}@example.invalid`])).rows[0].id, role: 'owner' });
+    await invoke(addTransaction, users[0], payload(100));
+    await invoke(addTransaction, users[1], payload(200));
+    const created = await invoke(createFamily, users[0], { name: 'Lifecycle', syncPersonal: true });
+    familyId = created.body.family.id; const inviteCode = created.body.family.invite_code;
+    await invoke(joinFamily, users[1], { inviteCode, syncPersonal: false });
+    assert.deepEqual((await invoke(getTransactions, users[1])).body.map(t => Number(t.amount)), [100]);
+    assert.equal((await invoke(dissolveFamily, users[1])).statusCode, 403);
+    assert.equal((await invoke(leaveFamily, users[0])).statusCode, 403);
+    assert.equal((await invoke(joinFamily, users[2], { inviteCode })).statusCode, 409);
+    const requestId = randomUUID();
+    const purchases = await Promise.all([1,2].map(() => invoke(buySlot, users[1], { requestId })));
+    assert.equal(purchases[0].body.member_capacity, 3); assert.equal(purchases[1].body.coin, 1500);
+    assert.equal((await invoke(getProfile, users[1])).body.coin, 1500);
+    await db.query('UPDATE users SET coin=0 WHERE id=$1', [users[0].userId]);
+    assert.equal((await invoke(buySlot, users[0], { requestId: randomUUID() })).statusCode, 400);
+    assert.equal((await invoke(joinFamily, users[2], { inviteCode })).statusCode, 200);
+    await invoke(addTransaction, users[1], payload(30));
+    await invoke(addTransaction, users[0], payload(40));
+    assert.equal((await invoke(leaveFamily, users[1])).statusCode, 200);
+    const left = (await invoke(getFamily, users[1])).body;
+    assert.equal(left.pending[0].event_type, 'left'); assert.equal(left.mode, 'personal');
+    assert.equal((await invoke(resolveDissolution, users[2], { noticeId: left.pending[0].id, syncData: true })).statusCode, 404);
+    assert.equal((await invoke(joinFamily, users[1], { inviteCode })).statusCode, 409);
+    const decision = { noticeId: left.pending[0].id, syncData: true };
+    await Promise.all([1,2].map(() => invoke(resolveDissolution, users[1], decision)));
+    assert.deepEqual((await invoke(getTransactions, users[1])).body.map(t => Number(t.amount)).sort((a,b)=>a-b), [30,200]);
+    assert.equal((await invoke(getFamily, users[1])).body.pending.length, 0);
+    assert.equal((await invoke(dissolveFamily, users[0])).statusCode, 200);
+    assert.equal((await invoke(joinFamily, users[1], { inviteCode })).statusCode, 404);
+    const ownerNotice = (await invoke(getFamily, users[0])).body.pending[0];
+    await invoke(resolveDissolution, users[0], { noticeId: ownerNotice.id, syncData: true });
+    assert.deepEqual((await invoke(getTransactions, users[0])).body.map(t => Number(t.amount)).sort((a,b)=>a-b), [40,100]);
+    const thirdNotice = (await invoke(getFamily, users[2])).body.pending[0];
+    await invoke(resolveDissolution, users[2], { noticeId: thirdNotice.id, syncData: false });
+    assert.equal((await invoke(getFamily, users[2])).body.pending.length, 0);
+    assert.equal((await invoke(getTransactions, users[2])).body.length, 0);
   } finally {
     await db.query('DELETE FROM users WHERE id=ANY($1::int[])', [users.map(user => user.userId)]);
     if (familyId) await db.query('DELETE FROM families WHERE id=$1', [familyId]);

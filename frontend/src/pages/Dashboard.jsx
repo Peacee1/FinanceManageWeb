@@ -2,6 +2,7 @@ import { personalPalettes, themedAsset } from '../features/personalization/perso
 import '../features/personalization/personalTheme.css';
 import PersonalWalletSummary from '../features/transactions/PersonalWalletSummary';
 import FamilySettings from '../features/family/FamilySettings';
+import FamilyDissolutionPrompt from '../features/family/FamilyDissolutionPrompt';
 import TransactionChat from '../features/transactions/TransactionChat';
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -885,6 +886,7 @@ const Dashboard = ({ user, handleLogout, getPlanBadge }) => {
 
       {/* Main Content */}
       <div className="main-content">
+        <FamilyDissolutionPrompt />
         <div className="header">
           <div className="header-left" style={{ display: 'flex', alignItems: 'center' }}>
             <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
