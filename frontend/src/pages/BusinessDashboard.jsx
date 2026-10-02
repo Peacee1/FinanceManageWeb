@@ -1071,7 +1071,7 @@ const BusinessDashboard = ({ user, handleLogout, getPlanBadge }) => {
                       {(() => {
                         const allTxs = [...day.incomes, ...day.expenses];
                         return (
-                          <div className={"cal-day-transactions ${allTxs.length > 2 ? 'two-columns' : ''}"}>
+                          <div className={`cal-day-transactions ${allTxs.length > 2 ? 'two-columns' : ''}`}>
                             {allTxs.slice(0, 4).map((t, j) => (
                               <div key={j} className={`tx-badge ${t.type.toLowerCase()}`}>
                                 <div className={`tx-dot ${t.type.toLowerCase()}`}></div> {t.type === 'INCOME' ? '+' : '-'}{formatCompact(t.amount)}
