@@ -7,7 +7,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import {useMobile} from '../../App';
 import {Button,Card,Field,Label,Sheet,Choices,useTheme} from '../ui';
-import {Text} from '../i18n';
+import {Text,useTranslate,useCategoryLabel} from '../i18n';
 import {today,amountError} from '../format';
 import {parseVietQr,paymentLink,type Recipient} from './vietQr';
 
@@ -15,7 +15,7 @@ type BankApp={appId:string;appName:string;autofill?:number};
 type Bank={bin:string;code:string;shortName:string};
 
 export default function QrPayment({onClose,onSaved}:{onClose:()=>void;onSaved:()=>Promise<void>}){
- const {api,session,finance}=useMobile(),c=useTheme();
+ const {api,session,finance}=useMobile(),c=useTheme(),t=useTranslate(),categoryLabel=useCategoryLabel();
  const [permission,requestPermission]=useCameraPermissions();
  const [camera,setCamera]=useState(false),[apps,setApps]=useState<BankApp[]>([]),[banks,setBanks]=useState<Bank[]>([]),[appId,setAppId]=useState(''),[choosing,setChoosing]=useState(true),[search,setSearch]=useState('');
  const [recipient,setRecipient]=useState<Recipient|null>(null),[amount,setAmount]=useState(''),[memo,setMemo]=useState(''),[opened,setOpened]=useState(false),[saved,setSaved]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[reload,setReload]=useState(0);
@@ -46,8 +46,8 @@ export default function QrPayment({onClose,onSaved}:{onClose:()=>void;onSaved:()
   {recipient&&<><Card><Label>Người nhận</Label><Label translateContent={false}>{recipientBank?.shortName||recipient.bankBin}</Label><Label translateContent={false}>{recipient.account}</Label>{!!recipient.name&&<Label translateContent={false}>{recipient.name}</Label>}<Label muted>Kiểm tra tên người nhận trong app ngân hàng trước khi xác nhận.</Label></Card>{opened?<Card><Label translateContent={false}>{Number(amount).toLocaleString('vi-VN')} ₫ · {memo}</Label></Card>:<><Field label="Số tiền (VND)" value={amount} onChange={value=>setAmount(value.replace(/[^0-9]/g,''))} numeric/><Field label="Nội dung chuyển khoản" value={memo} onChange={value=>setMemo(value.slice(0,140))}/></>}
    <Label muted>{selectedApp?.autofill?'Ngân hàng hỗ trợ điền sẵn. Kiểm tra lại thông tin trong app.':'Nếu ngân hàng không điền sẵn, sao chép thông tin để nhập thủ công.'}</Label>
    <Button secondary title="Sao chép thông tin" onPress={()=>{void Clipboard.setStringAsync(`${recipientBank?.shortName||recipient.bankBin}\n${recipient.account}\n${amount} VND\n${memo}`).catch(()=>setError('Không sao chép được thông tin.'));}}/>
-   <Button title={`Mở ${selectedApp?.appName||'ngân hàng'}`} disabled={!valid||busy||saved} onPress={()=>void openBank()}/>
-   {opened&&!saved&&<><Label muted>Mở ngân hàng chưa có nghĩa đã thanh toán. Chỉ lưu sau khi bạn đã chuyển tiền.</Label><Choices items={categories.map(item=>({value:item.name,label:item.name}))} value={category} onChange={setCategory}/><Button title="Tôi đã thanh toán · Lưu khoản chi" disabled={busy||!category} onPress={()=>void save()}/></>}
+   <Button title={`${t('Mở')} ${selectedApp?.appName||t('ngân hàng')}`} disabled={!valid||busy||saved} onPress={()=>void openBank()}/>
+   {opened&&!saved&&<><Label muted>Mở ngân hàng chưa có nghĩa đã thanh toán. Chỉ lưu sau khi bạn đã chuyển tiền.</Label><Choices items={categories.map(item=>({value:item.name,label:categoryLabel(item.name)}))} value={category} onChange={setCategory}/><Button title="Tôi đã thanh toán · Lưu khoản chi" disabled={busy||!category} onPress={()=>void save()}/></>}
    {saved&&<Label>Đã lưu khoản chi.</Label>}<Button secondary title="Quét mã khác" disabled={busy} onPress={()=>{setRecipient(null);setOpened(false);setSaved(false);lastScan.current='';setError('');}}/>
   </>}{!!error&&<Text accessibilityRole="alert" style={{color:c.expense}}>{error}</Text>}
  </Sheet>;
