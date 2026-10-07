@@ -42,7 +42,6 @@ import type {Session} from './src/types';
 import {clearWebSession,readWebSession,saveWebSession} from './src/webSession';
 
 const API_URL=Platform.OS==='web'?'/api':process.env.EXPO_PUBLIC_API_URL||'https://finance.peacee1.io.vn/api';
-const SESSION_KEY='peacee1.session.v1';
 const selectedNavColor=(primary:string)=>primary;
 type Tab='home'|'analytics'|'calendar'|'profile';
 type SheetKind='notifications'|'goals'|'account'|'family'|'language'|'appearance'|'daily'|'categories'|'qr'|'advanced'|'backtap'|'widgets'|null;
@@ -61,6 +60,8 @@ export function Main(){
  const [pulling,setPulling]=useState(false);const [sheet,setSheet]=useState<SheetKind>(null),[entry,setEntry]=useState<'INCOME'|'EXPENSE'|null>(null);const [year,monthNumber]=month.split('-').map(Number);
  useEffect(()=>{if(Platform.OS!=='web'||!desktop)return;const handle=(event:KeyboardEvent)=>{if(sheet||entry||event.defaultPrevented||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||event.repeat)return;const target=event.target as HTMLElement|null;if(target?.closest('input,textarea,select,[contenteditable="true"],[role="textbox"],[role="dialog"]'))return;const delta=event.key==='ArrowDown'?1:event.key==='ArrowUp'?-1:0;if(!delta)return;event.preventDefault();const order:Tab[]=['home','analytics','calendar','profile'];const next=order[order.indexOf(tab)+delta];if(next)setTab(next);};window.addEventListener('keydown',handle);return()=>window.removeEventListener('keydown',handle);},[sheet,entry,tab,setTab,desktop]);
  useEffect(()=>{if(Platform.OS!=='web')return;const close=()=>dismissExpandedTransaction();window.addEventListener('wheel',close,{passive:true,capture:true});window.addEventListener('keydown',close,true);return()=>{window.removeEventListener('wheel',close,true);window.removeEventListener('keydown',close,true);};},[]);
+ // Router action is an external navigation event (widget/deep link).
+ // eslint-disable-next-line react-hooks/set-state-in-effect
  useEffect(()=>{if(!profile||!action)return;if(action==='expense')setEntry('EXPENSE');if(action==='qr'&&Platform.OS!=='web')setSheet('qr');router.setParams({action:undefined});},[action,profile,router]);
  const changeMonth=(delta:number)=>{const next=new Date(Date.UTC(year,monthNumber-1+delta,1));setMonth(`${next.getUTCFullYear()}-${String(next.getUTCMonth()+1).padStart(2,'0')}`);};
  const navigateNotice=(target:string)=>{setSheet(null);if(target==='checkin')setSheet('daily');else if(target==='goals')setSheet('goals');else if(target==='transactions')setTab('calendar');else setTab('profile');refresh();};
@@ -120,8 +121,9 @@ export default function MobileProvider({children}:{children:React.ReactNode}){
  useEffect(()=>{let active=true;void Promise.resolve().then(()=>{if(active)return restore();});return()=>{active=false;};},[restore]);
  useEffect(()=>{if(!sharedWeb)return;let active=true;const sync=()=>{if(loggingOut.current)return;const generation=sessionGeneration.current;void restoreSharedSession().then(next=>{if(active&&!loggingOut.current&&generation===sessionGeneration.current)setSession(current=>current?.user.id===next?.user.id?current:next);}).catch(()=>{});};window.addEventListener('focus',sync);const visible=()=>{if(document.visibilityState==='visible')sync();};document.addEventListener('visibilitychange',visible);return()=>{active=false;window.removeEventListener('focus',sync);document.removeEventListener('visibilitychange',visible);};},[]);
  // The expiry callback runs only after an HTTP response, never during render.
- // eslint-disable-next-line react-hooks/refs
  const renewSession=useCallback(async()=>{const next=await nativeSessions.refresh();if(next)setSession(next);return next?.token||null;},[nativeSessions]);
+ // createApi stores these callbacks; logout refs are read only after an HTTP response.
+ // eslint-disable-next-line react-hooks/refs
  const cached=useMemo(()=>createCachedApi(createApi(API_URL,session?.token||null,()=>{void logout();},fetch,Platform.OS==='web'?undefined:renewSession)),[session?.token,logout,renewSession]);const api=cached.api;
  const finance=useFinanceData(api,cached.clear,session?.token||'',month);
  const login=async(next:Session)=>{if(Platform.OS==='web')saveWebSession(localStorage,next);else await nativeSessions.save(next);setSession(next);};
