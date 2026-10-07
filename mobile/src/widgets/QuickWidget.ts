@@ -1,1 +1,1 @@
-export function updateQuickWidget(_props:{expense:string;scan:string;calendar:string;accent:string}){}
+export function updateQuickWidget(_props:{style?:'light'|'dark';expense:string;scan:string;calendar:string;accent:string}){}

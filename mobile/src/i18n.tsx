@@ -6,6 +6,14 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+["Chọn giao diện widget","Choose a widget design"],
+["Xem trước trên màn hình chính","Home Screen preview"],
+["Nhỏ","Small"],
+["Vừa","Medium"],
+["Widget sáng","Light widget"],
+["Widget tối","Dark widget"],
+["Chọn mẫu ở đây, sau đó thêm Widget từ màn hình chính iPhone. Kích thước thật được chọn trong bảng thêm widget của iOS.","Choose a design here, then add Widget from the iPhone Home Screen. Choose the actual size in the iOS widget gallery."],
+
 ["Hiện không hỗ trợ platform này","This platform is currently not supported","目前不支持此平台","このプラットフォームは現在サポートされていません","현재 이 플랫폼은 지원되지 않습니다","Эта платформа пока не поддерживается"],
 ["Thêm widget trên Android","Add an Android widget"],
 ["2. Nhấn giữ vùng trống trên màn hình chính → Widget → tìm Peacee1.","2. Touch and hold an empty area on the Home Screen → Widgets → find Peacee1."],
