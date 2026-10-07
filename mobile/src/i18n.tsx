@@ -6,6 +6,7 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+['Chi tiêu hôm nay','Today’s spending','今日支出','今日の支出','오늘 지출','Сегодняшние расходы'],
 ["Lớn","Large"],
 ["Chọn kích thước widget để xem trước cách hiển thị.","Choose a widget size to preview its layout."],
 ["Thêm khoản chi nhanh","Quick expense entry"],
