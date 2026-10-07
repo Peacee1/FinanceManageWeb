@@ -1,3 +1,4 @@
+import WidgetSetup from './src/WidgetSetup';
 import IphoneSetup from './src/IphoneSetup';
 import {updateQuickWidget} from './src/widgets/QuickWidget';
 import ExpensePreference from './src/ExpensePreference';
@@ -101,7 +102,8 @@ export function Main(){
   {sheet==='categories'&&<CategoriesScreen onClose={()=>setSheet(null)}/>}
   {(sheet==='appearance'||sheet==='language')&&<PreferencesScreen kind={sheet} onClose={()=>setSheet(null)}/>} 
   {sheet==='advanced'&&<Sheet title="Cài đặt nâng cao" onClose={()=>setSheet(null)}><ExpensePreference/><Button secondary title="Ghi nhanh bằng 2 chạm" onPress={()=>setSheet('backtap')}/></Sheet>}
-  {(sheet==='backtap'||sheet==='widgets')&&<IphoneSetup kind={sheet} onClose={()=>setSheet(sheet==='backtap'?'advanced':null)}/>}
+  {sheet==='backtap'&&<IphoneSetup onClose={()=>setSheet('advanced')}/>}
+  {sheet==='widgets'&&<WidgetSetup onClose={()=>setSheet(null)}/>}
   {sheet==='account'&&<Sheet title="Thông tin tài khoản" onClose={()=>setSheet(null)}><Card><Label large>{profile?.name}</Label><Label>{profile?.email}</Label><Label muted>{profile?.finance_mode==='family'?'Đang sử dụng sổ Gia đình':'Đang sử dụng sổ Cá nhân'}</Label></Card><Label muted translateContent={false}>{t('Ngôn ngữ')}: {languages.find(item=>item.value===language)?.label}</Label></Sheet>}
  </SafeAreaView>;
 }
@@ -133,6 +135,7 @@ export default function MobileProvider({children}:{children:React.ReactNode}){
  const themed={...palettes[selected],...appearanceColors(selected,effectiveAccent)};
  return <SafeAreaProvider><LanguageContext.Provider value={language}><ThemeContext.Provider value={themed}><WalletPreloader/><StatusBar style={selected==='dark'?'light':'dark'}/>{boot?<SafeAreaView style={{flex:1,backgroundColor:themed.bg,justifyContent:'center'}}><LoadingScreen/></SafeAreaView>:bootError?<SafeAreaView style={{flex:1,padding:24,gap:20,backgroundColor:themed.bg}}><Label>{bootError}</Label><Button title="Thử lại" onPress={needsClear?logout:restore}/></SafeAreaView>:<MobileContext.Provider value={{api,session,login,logout,toggleTheme,month,setMonth,appearance:theme==='monochrome'?'light':theme,accent:effectiveAccent,language,changeAppearance,changeAccent,changeLanguage,...reminders,finance}}>{session&&!finance.data?<LoadingScreen error={finance.error} onRetry={()=>{void finance.refresh();}} onLogout={()=>{void logout();}}/>:children}</MobileContext.Provider>}</ThemeContext.Provider></LanguageContext.Provider></SafeAreaProvider>;
 }
+
 
 
 

@@ -6,6 +6,12 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+["Hiện không hỗ trợ platform này","This platform is currently not supported","目前不支持此平台","このプラットフォームは現在サポートされていません","현재 이 플랫폼은 지원되지 않습니다","Эта платформа пока не поддерживается"],
+["Thêm widget trên Android","Add an Android widget"],
+["2. Nhấn giữ vùng trống trên màn hình chính → Widget → tìm Peacee1.","2. Touch and hold an empty area on the Home Screen → Widgets → find Peacee1."],
+["3. Nhấn giữ widget Peacee1 và kéo ra màn hình chính.","3. Touch and hold the Peacee1 widget and drag it onto the Home Screen."],
+["Widget Android đang được phát triển. Nếu chưa thấy Peacee1 trong danh sách, bản app hiện tại chưa có widget Android.","The Android widget is in development. If Peacee1 is missing from the list, your current app build does not include the Android widget yet."],
+
 ["Ghi nhanh bằng 2 chạm","Back Tap quick entry"],
 ["Widget iPhone","iPhone widgets"],
 ["Từ thông báo ngân hàng","From bank notifications"],
