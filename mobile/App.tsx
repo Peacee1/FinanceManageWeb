@@ -3,6 +3,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {createNativeSessionClient} from './src/nativeSession';
 import CategoriesScreen from './src/CategoriesScreen';
 import {Text,LanguageContext,languages,useTranslate,type Language} from './src/i18n';
+import {createWebPreferenceStore,loadPreferences,preferenceKeys} from './src/localPreferences';
 import {accents,appearanceColors,type Appearance} from './src/appearance';
 import PreferencesScreen from './src/PreferencesScreen';
 import React,{createContext,useContext,useLayoutEffect,useCallback,useEffect,useMemo,useRef,useState} from 'react';
@@ -100,13 +101,14 @@ export function Main(){
 }
 export default function MobileProvider({children}:{children:React.ReactNode}){
  const [month,setMonth]=useState(()=>today().slice(0,7));
- const [accent,setAccent]=useState('purple'),[language,setLanguage]=useState<Language>('vi');
- const system=useColorScheme(),[session,setSession]=useState<Session|null>(null),[boot,setBoot]=useState(true),[bootError,setBootError]=useState(''),[needsClear,setNeedsClear]=useState(false),[theme,setTheme]=useState<Appearance>('system');
+ const [accent,setAccent]=useState('monochrome'),[language,setLanguage]=useState<Language>('en');
+ const system=useColorScheme(),[session,setSession]=useState<Session|null>(null),[boot,setBoot]=useState(true),[bootError,setBootError]=useState(''),[needsClear,setNeedsClear]=useState(false),[theme,setTheme]=useState<Appearance>('light');
  const reminders=useReminders(session?.user.id,language);
+ const preferenceStore=useMemo(()=>Platform.OS==='web'?createWebPreferenceStore(document,localStorage,location.protocol==='https:'):SecureStore,[]);
  const nativeSessions=useMemo(()=>createNativeSessionClient(API_URL,SecureStore),[]);
  const loggingOut=useRef(false),sessionGeneration=useRef(0);
  const logout=useCallback(async()=>{if(loggingOut.current)return;loggingOut.current=true;sessionGeneration.current++;try{if(Platform.OS==='web'){if(sharedWeb){const result=await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'});if(!result.ok)throw Error('Không đăng xuất được.');}clearWebSession(localStorage);}else { await nativeSessions.logout(); }setSession(null);setBootError('');setNeedsClear(false);}catch{setNeedsClear(true);setBootError('Không xóa được phiên trên thiết bị. Hãy thử lại trước khi đóng app.');}finally{loggingOut.current=false;}},[nativeSessions]);
- const restore=useCallback(async()=>{setBoot(true);setBootError('');try{if(Platform.OS==='web'){setSession(sharedWeb?await restoreSharedSession():readWebSession(localStorage));const savedTheme=localStorage.getItem('peacee1.theme')||localStorage.getItem('theme');if(['light','dark','system','monochrome'].includes(savedTheme||''))setTheme(savedTheme as Appearance);const savedLanguage=localStorage.getItem('peacee1.language');if(['vi','en','zh','ja','ko','ru'].includes(savedLanguage||''))setLanguage(savedLanguage as Language);}if(Platform.OS!=='web'){const [stored,appearance]=await Promise.all([nativeSessions.load(),SecureStore.getItemAsync('peacee1.theme')]);if(stored){const parsed=stored;if(typeof parsed.token==='string'&&parsed.user?.role==='owner')setSession(await nativeSessions.upgrade(parsed));else { await nativeSessions.logout(); }}if(appearance==='light'||appearance==='dark'||appearance==='system'||appearance==='monochrome')setTheme(appearance);const savedLanguage=await SecureStore.getItemAsync('peacee1.language');if(['vi','en','zh','ja','ko','ru'].includes(savedLanguage||''))setLanguage(savedLanguage as Language);}}catch{setBootError('Không đọc được phiên đăng nhập trên thiết bị. Hãy thử lại.');}finally{setBoot(false);}},[nativeSessions]);
+ const restore=useCallback(async()=>{setBoot(true);setBootError('');try{const saved=await loadPreferences(preferenceStore);setTheme(saved.appearance);setAccent(saved.accent);setLanguage(saved.language);if(Platform.OS==='web'){setSession(sharedWeb?await restoreSharedSession():readWebSession(localStorage));}else{const stored=await nativeSessions.load();if(stored){if(typeof stored.token==='string'&&stored.user?.role==='owner')setSession(await nativeSessions.upgrade(stored));else await nativeSessions.logout();}}}catch{setBootError('Không đọc được phiên đăng nhập trên thiết bị. Hãy thử lại.');}finally{setBoot(false);}},[nativeSessions,preferenceStore]);
  useEffect(()=>{let active=true;void Promise.resolve().then(()=>{if(active)return restore();});return()=>{active=false;};},[restore]);
  useEffect(()=>{if(!sharedWeb)return;let active=true;const sync=()=>{if(loggingOut.current)return;const generation=sessionGeneration.current;void restoreSharedSession().then(next=>{if(active&&!loggingOut.current&&generation===sessionGeneration.current)setSession(current=>current?.user.id===next?.user.id?current:next);}).catch(()=>{});};window.addEventListener('focus',sync);const visible=()=>{if(document.visibilityState==='visible')sync();};document.addEventListener('visibilitychange',visible);return()=>{active=false;window.removeEventListener('focus',sync);document.removeEventListener('visibilitychange',visible);};},[]);
  // The expiry callback runs only after an HTTP response, never during render.
@@ -114,12 +116,11 @@ export default function MobileProvider({children}:{children:React.ReactNode}){
  const renewSession=useCallback(async()=>{const next=await nativeSessions.refresh();if(next)setSession(next);return next?.token||null;},[nativeSessions]);
  const cached=useMemo(()=>createCachedApi(createApi(API_URL,session?.token||null,()=>{void logout();},fetch,Platform.OS==='web'?undefined:renewSession)),[session?.token,logout,renewSession]);const api=cached.api;
  const finance=useFinanceData(api,cached.clear,session?.token||'',month);
- useEffect(()=>{let active=true;const selectedAccent=finance.data?.profile.personal_accent;void Promise.resolve().then(()=>{if(active&&accents.some(item=>item.value===selectedAccent))setAccent(selectedAccent!);});return()=>{active=false;};},[finance.data?.profile.personal_accent]);
  const login=async(next:Session)=>{if(Platform.OS==='web')saveWebSession(localStorage,next);else await nativeSessions.save(next);setSession(next);};
- const toggleTheme=async()=>{const next=(theme==='system'?system:theme)==='dark'?'light':'dark';setTheme(next);if(Platform.OS!=='web')try{await SecureStore.setItemAsync('peacee1.theme',next);}catch{Alert.alert('Giao diện','Đã đổi giao diện nhưng chưa lưu được tùy chọn.');}};
- const changeAppearance=async(value:Appearance)=>{if(theme==='monochrome'){await api('/users/settings','POST',{personalAccent:'monochrome'});setAccent('monochrome');}if(Platform.OS==='web')localStorage.setItem('peacee1.theme',value);else await SecureStore.setItemAsync('peacee1.theme',value);setTheme(value);};
- const changeLanguage=async(value:Language)=>{if(Platform.OS==='web')localStorage.setItem('peacee1.language',value);else await SecureStore.setItemAsync('peacee1.language',value);setLanguage(value);};
- const changeAccent=async(value:string)=>{if(!accents.some(item=>item.value===value))return;await api('/users/settings','POST',{personalAccent:value});setAccent(value);if(theme==='monochrome'){if(Platform.OS==='web')localStorage.setItem('peacee1.theme','light');else await SecureStore.setItemAsync('peacee1.theme','light');setTheme('light');}};
+ const toggleTheme=async()=>{try{await changeAppearance((theme==='system'?system:theme)==='dark'?'light':'dark');}catch{Alert.alert('Giao diện','Không lưu được cài đặt trên thiết bị.');}};
+ const changeAppearance=async(value:Appearance)=>{await preferenceStore.setItemAsync(preferenceKeys.appearance,value);setTheme(value);};
+ const changeLanguage=async(value:Language)=>{await preferenceStore.setItemAsync(preferenceKeys.language,value);setLanguage(value);};
+ const changeAccent=async(value:string)=>{if(!accents.some(item=>item.value===value))return;await preferenceStore.setItemAsync(preferenceKeys.accent,value);setAccent(value);};
  const selected=(theme==='system'?system:theme)==='dark'?'dark':'light';
  const effectiveAccent=theme==='monochrome'?'monochrome':accent;
  const themed={...palettes[selected],...appearanceColors(selected,effectiveAccent)};

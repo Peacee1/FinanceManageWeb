@@ -1,4 +1,4 @@
-import {Text} from './i18n';
+import {Text,useTranslate} from './i18n';
 import {useCaptcha} from './useCaptcha';
 import React,{useRef,useState} from 'react';
 import {View,ScrollView,Pressable,KeyboardAvoidingView,Platform,TextInput} from 'react-native';
@@ -15,7 +15,7 @@ import type {Session} from './types';
 export default function AuthScreen({api,onLogin,register,onSwitch}:{api:Api;onLogin:(session:Session)=>Promise<void>;register:boolean;onSwitch:()=>void}){
 
  const {verify,captchaView}=useCaptcha();
- const desktop=useDesktop();const c=useTheme(),[name,setName]=useState(''),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState(''),[show,setShow]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');const pending=useRef(false);
+ const t=useTranslate();const desktop=useDesktop();const c=useTheme(),[name,setName]=useState(''),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState(''),[show,setShow]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');const pending=useRef(false);
  const switchMode=()=>{if(pending.current)return;onSwitch();setError('');setNotice('');setPassword('');setConfirm('');};
  const submit=async()=>{
   if(pending.current)return;setError('');setNotice('');
@@ -36,7 +36,7 @@ export default function AuthScreen({api,onLogin,register,onSwitch}:{api:Api;onLo
   <View style={[mintStyles.authCard,{backgroundColor:c.card}]}><View style={{alignItems:'center',gap:6,marginBottom:8}}><Label large>{register?'Tạo tài khoản':'Chào bạn quay lại'}</Label><Label muted>{register?'Bắt đầu hành trình tiết kiệm':'Đăng nhập để quản lý chi tiêu'}</Label></View>
    {register&&<Field label="Họ và tên" value={name} onChange={setName} placeholder="Họ và tên của bạn"/>}
    <Field label="Email" value={email} onChange={setEmail} placeholder="Email" autoCapitalize="none"/>
-   <View style={{gap:7}}><Label muted>Mật khẩu</Label><View style={{flexDirection:'row',backgroundColor:c.bg,borderRadius:14,overflow:'hidden',borderWidth:1,borderColor:c.border,alignItems:'center'}}><TextInput accessibilityLabel="Mật khẩu" autoCapitalize="none" autoCorrect={false} secureTextEntry={!show} value={password} onChangeText={setPassword} placeholder="Mật khẩu" placeholderTextColor={c.muted} style={{flex:1,minWidth:0,padding:15,fontSize:16,color:c.text,backgroundColor:c.bg,borderTopLeftRadius:14,borderBottomLeftRadius:14,borderWidth:0}}/><Pressable accessibilityRole="button" accessibilityLabel={show?'Ẩn mật khẩu':'Hiện mật khẩu'} onPress={()=>setShow(!show)} style={{padding:14}}><Feather name={show?'eye-off':'eye'} size={18} color={c.muted}/></Pressable></View></View>
+   <View style={{gap:7}}><Label muted>Mật khẩu</Label><View style={{flexDirection:'row',backgroundColor:c.bg,borderRadius:14,overflow:'hidden',borderWidth:1,borderColor:c.border,alignItems:'center'}}><TextInput accessibilityLabel={t('Mật khẩu')} autoCapitalize="none" autoCorrect={false} secureTextEntry={!show} value={password} onChangeText={setPassword} placeholder={t('Mật khẩu')} placeholderTextColor={c.muted} style={{flex:1,minWidth:0,padding:15,fontSize:16,color:c.text,backgroundColor:c.bg,borderTopLeftRadius:14,borderBottomLeftRadius:14,borderWidth:0}}/><Pressable accessibilityRole="button" accessibilityLabel={t(show?'Ẩn mật khẩu':'Hiện mật khẩu')} onPress={()=>setShow(!show)} style={{padding:14}}><Feather name={show?'eye-off':'eye'} size={18} color={c.muted}/></Pressable></View></View>
    {register&&<Field label="Nhập lại mật khẩu" value={confirm} onChange={setConfirm} secure={!show} autoCapitalize="none"/>}
    {!!error&&<Text accessibilityRole="alert" style={{color:c.expense,fontSize:13,lineHeight:20}}>{error}</Text>}{!!notice&&<Text style={{color:c.income,fontSize:13}}>{notice}</Text>}
    <Button title={busy?'Đang xử lý…':register?'Đăng ký ngay':'Tiếp tục'} onPress={submit} disabled={busy}/>

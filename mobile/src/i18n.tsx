@@ -3,9 +3,21 @@ import { Text as NativeText, type TextProps } from 'react-native';
 import {categoryLabel,monthLabel} from './localizedLabels';
 export type Language = 'vi' | 'en' | 'zh' | 'ja' | 'ko' | 'ru';
 export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:'English'},{value:'zh',label:'中文'},{value:'ja',label:'日本語'},{value:'ko',label:'한국어'},{value:'ru',label:'Русский'}];
-export const LanguageContext = createContext<Language>('vi');
+export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+['Đen trắng','Black & white'],
+['Chi tiêu tháng này','Spending this month'],
+['Phân tích chi tiêu','Spending analysis'],
+['Chi tiêu theo thành viên','Spending by member'],
+['Chi tiêu lũy kế trong tháng','Cumulative spending this month'],
+['Chưa có khoản chi. Thêm khoản chi để bắt đầu.','No expenses yet. Add an expense to get started.'],
+['Chỉ quản lý khoản chi','Track expenses only'],
+['Quản lý thu chi','Income and expense tracking'],
+['Đang bật · Chỉ hiển thị khoản chi trong trang chủ, lịch và báo cáo.','Enabled · Only expenses appear on Home, Calendar and Reports.'],
+['Đang tắt · Có thể thêm cả khoản thu và khoản chi.','Disabled · Track both income and expenses.'],
+['Khoản thu đã ghi vẫn được lưu. Tắt tùy chọn này để xem và quản lý lại khoản thu.','Existing income is saved. Disable this option to view and manage it again.'],
+['Màu chủ đạo áp dụng cho nền, nút và điểm nhấn. Màu danh mục, thu chi và biểu đồ được giữ riêng.','The accent applies to backgrounds, buttons and highlights. Categories, income, expenses and charts keep their own colors.'],
 ["Sửa giao dịch","Edit transaction","编辑交易","取引を編集","거래 수정","Изменить транзакцию"],
 ["Xoá giao dịch","Delete transaction","删除交易","取引を削除","거래 삭제","Удалить транзакцию"],
 ["Xoá giao dịch?","Delete this transaction?","删除这笔交易？","この取引を削除しますか？","이 거래를 삭제할까요?","Удалить эту транзакцию?"],

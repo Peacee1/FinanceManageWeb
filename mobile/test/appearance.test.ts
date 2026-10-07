@@ -14,8 +14,8 @@ test('all dark accents have distinct themed cards rather than a fixed green surf
 test('light mode keeps neutral readable cards and uses the selected accent', () => {
   for (const accent of accents) {
     const colors = appearanceColors('light', accent.value);
-    assert.equal(colors.card, '#ffffff');
+    assert.equal(colors.card.toLowerCase(), '#ffffff');
     assert.equal(colors.primary, accent.color);
-    assert.equal(colors.text, '#24242C');
+    assert.equal(colors.text, accent.value === 'monochrome' ? '#191918' : '#24242C');
   }
 });
