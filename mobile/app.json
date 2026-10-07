@@ -66,32 +66,7 @@
                   "systemSmall",
                   "systemMedium"
                 ],
-                "contentMarginsDisabled": true,
-                "configuration": {
-                  "title": "Widget style",
-                  "description": "Choose a Peacee1 widget design",
-                  "parameters": {
-                    "style": {
-                      "title": "Style",
-                      "type": "enum",
-                      "default": "app",
-                      "values": [
-                        {
-                          "name": "Use app selection",
-                          "value": "app"
-                        },
-                        {
-                          "name": "Light",
-                          "value": "light"
-                        },
-                        {
-                          "name": "Dark",
-                          "value": "dark"
-                        }
-                      ]
-                    }
-                  }
-                }
+                "contentMarginsDisabled": true
               }
             }
           ]
