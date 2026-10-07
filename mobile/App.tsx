@@ -3,7 +3,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {createNativeSessionClient} from './src/nativeSession';
 import CategoriesScreen from './src/CategoriesScreen';
 import {Text,LanguageContext,languages,useTranslate,type Language} from './src/i18n';
-import {accents,appearanceColors,monochromeColors,type Appearance} from './src/appearance';
+import {accents,appearanceColors,type Appearance} from './src/appearance';
 import PreferencesScreen from './src/PreferencesScreen';
 import React,{createContext,useContext,useLayoutEffect,useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {AccessibilityInfo,Animated,Easing,Alert,Platform,PanResponder,Pressable,RefreshControl,ScrollView,View,useColorScheme} from 'react-native';
@@ -117,12 +117,13 @@ export default function MobileProvider({children}:{children:React.ReactNode}){
  useEffect(()=>{let active=true;const selectedAccent=finance.data?.profile.personal_accent;void Promise.resolve().then(()=>{if(active&&accents.some(item=>item.value===selectedAccent))setAccent(selectedAccent!);});return()=>{active=false;};},[finance.data?.profile.personal_accent]);
  const login=async(next:Session)=>{if(Platform.OS==='web')saveWebSession(localStorage,next);else await nativeSessions.save(next);setSession(next);};
  const toggleTheme=async()=>{const next=(theme==='system'?system:theme)==='dark'?'light':'dark';setTheme(next);if(Platform.OS!=='web')try{await SecureStore.setItemAsync('peacee1.theme',next);}catch{Alert.alert('Giao diện','Đã đổi giao diện nhưng chưa lưu được tùy chọn.');}};
- const changeAppearance=async(value:Appearance)=>{if(Platform.OS==='web')localStorage.setItem('peacee1.theme',value);else await SecureStore.setItemAsync('peacee1.theme',value);setTheme(value);};
+ const changeAppearance=async(value:Appearance)=>{if(theme==='monochrome'){await api('/users/settings','POST',{personalAccent:'monochrome'});setAccent('monochrome');}if(Platform.OS==='web')localStorage.setItem('peacee1.theme',value);else await SecureStore.setItemAsync('peacee1.theme',value);setTheme(value);};
  const changeLanguage=async(value:Language)=>{if(Platform.OS==='web')localStorage.setItem('peacee1.language',value);else await SecureStore.setItemAsync('peacee1.language',value);setLanguage(value);};
- const changeAccent=async(value:string)=>{if(!accents.some(item=>item.value===value))return;await api('/users/settings','POST',{personalAccent:value});setAccent(value);};
+ const changeAccent=async(value:string)=>{if(!accents.some(item=>item.value===value))return;await api('/users/settings','POST',{personalAccent:value});setAccent(value);if(theme==='monochrome'){if(Platform.OS==='web')localStorage.setItem('peacee1.theme','light');else await SecureStore.setItemAsync('peacee1.theme','light');setTheme('light');}};
  const selected=(theme==='system'?system:theme)==='dark'?'dark':'light';
- const themed=theme==='monochrome'?monochromeColors:{...palettes[selected],...appearanceColors(selected,accent)};
- return <SafeAreaProvider><LanguageContext.Provider value={language}><ThemeContext.Provider value={themed}><WalletPreloader/><StatusBar style={selected==='dark'?'light':'dark'}/>{boot?<SafeAreaView style={{flex:1,backgroundColor:themed.bg,justifyContent:'center'}}><LoadingScreen/></SafeAreaView>:bootError?<SafeAreaView style={{flex:1,padding:24,gap:20,backgroundColor:themed.bg}}><Label>{bootError}</Label><Button title="Thử lại" onPress={needsClear?logout:restore}/></SafeAreaView>:<MobileContext.Provider value={{api,session,login,logout,toggleTheme,month,setMonth,appearance:theme,accent,language,changeAppearance,changeAccent,changeLanguage,...reminders,finance}}>{session&&!finance.data?<LoadingScreen error={finance.error} onRetry={()=>{void finance.refresh();}} onLogout={()=>{void logout();}}/>:children}</MobileContext.Provider>}</ThemeContext.Provider></LanguageContext.Provider></SafeAreaProvider>;
+ const effectiveAccent=theme==='monochrome'?'monochrome':accent;
+ const themed={...palettes[selected],...appearanceColors(selected,effectiveAccent)};
+ return <SafeAreaProvider><LanguageContext.Provider value={language}><ThemeContext.Provider value={themed}><WalletPreloader/><StatusBar style={selected==='dark'?'light':'dark'}/>{boot?<SafeAreaView style={{flex:1,backgroundColor:themed.bg,justifyContent:'center'}}><LoadingScreen/></SafeAreaView>:bootError?<SafeAreaView style={{flex:1,padding:24,gap:20,backgroundColor:themed.bg}}><Label>{bootError}</Label><Button title="Thử lại" onPress={needsClear?logout:restore}/></SafeAreaView>:<MobileContext.Provider value={{api,session,login,logout,toggleTheme,month,setMonth,appearance:theme==='monochrome'?'light':theme,accent:effectiveAccent,language,changeAppearance,changeAccent,changeLanguage,...reminders,finance}}>{session&&!finance.data?<LoadingScreen error={finance.error} onRetry={()=>{void finance.refresh();}} onLogout={()=>{void logout();}}/>:children}</MobileContext.Provider>}</ThemeContext.Provider></LanguageContext.Provider></SafeAreaProvider>;
 }
 
 

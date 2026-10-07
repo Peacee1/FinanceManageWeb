@@ -121,7 +121,7 @@ const updateSettings = async (req, res) => {
   if(currency !== undefined && (!require('../utils/currency').currencies.includes(currency)||req.user.role!=='owner')) return res.status(400).json({message:'Đơn vị tiền tệ không hợp lệ.'});
   if (mapsEnabled !== undefined && typeof mapsEnabled !== 'boolean') return res.status(400).json({ message: 'Tuỳ chọn bản đồ không hợp lệ.' });
   if (mapsEnabled !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn bản đồ dành cho sổ Cá nhân và Gia đình.' });
-  if (personalAccent !== undefined && !['purple','pink','green','blue','yellow'].includes(personalAccent)) return res.status(400).json({ message: 'Màu giao diện không hợp lệ.' });
+  if (personalAccent !== undefined && !['purple','pink','green','blue','yellow','monochrome'].includes(personalAccent)) return res.status(400).json({ message: 'Màu giao diện không hợp lệ.' });
   if (personalAccent !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn màu này dành cho tài khoản cá nhân.' });
   if (separatePersonalWallets !== undefined && typeof separatePersonalWallets !== 'boolean') return res.status(400).json({ message: 'Tuỳ chọn phân biệt tiền phải là bật hoặc tắt.' });
   if (separatePersonalWallets !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn này chỉ dành cho tài chính cá nhân.' });

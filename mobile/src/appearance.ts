@@ -1,4 +1,5 @@
 export const accents = [
+  {value:'monochrome',label:'Đen trắng',color:'#191918',dark:'#64645E'},
   {value:'purple',label:'Tím',color:'#7C3AED',dark:'#A78BFA'},
   {value:'pink',label:'Hồng',color:'#DB2777',dark:'#F472B6'},
   {value:'green',label:'Xanh lá',color:'#059669',dark:'#34D399'},
@@ -9,7 +10,7 @@ export type Appearance = 'light' | 'dark' | 'system' | 'monochrome';
 
 export const monochromeColors = {
   primary: '#191918', bg: '#F1F0EC', card: '#FFFFFF', border: '#E2E1DC',
-  text: '#191918', muted: '#6B6B65', income: '#454541', expense: '#191918',
+  text: '#191918', muted: '#6B6B65',
 };
 
 function mix(base: string, accent: string, weight: number) {
@@ -20,8 +21,9 @@ function mix(base: string, accent: string, weight: number) {
   }).join('');
 }
 export function appearanceColors(mode: 'light' | 'dark', accent: string) {
-  const color = accents.find(item => item.value === accent) || accents[0];
+  const color = accents.find(item => item.value === accent) || accents.find(item => item.value === 'purple')!;
   const dark = mode === 'dark';
+  if (accent === 'monochrome') return dark ? {primary:'#64645E',bg:'#171716',card:'#242423',border:'#41413D',text:'#F5F5F2',muted:'#B0B0A8'} : monochromeColors;
   return {
     primary: dark ? color.dark : color.color,
     bg: mix(dark ? '#101116' : '#FFFFFF', color.color, dark ? 0.04 : 0.06),
