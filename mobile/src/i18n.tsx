@@ -6,6 +6,23 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+["Lớn","Large"],
+["Chọn kích thước widget để xem trước cách hiển thị.","Choose a widget size to preview its layout."],
+["Thêm khoản chi nhanh","Quick expense entry"],
+["Mở app để ghi khoản chi chỉ với 1 chạm.","Open the app to add an expense with one tap."],
+["Mở camera để quét QR và giao dịch.","Open the camera to scan a payment QR code."],
+["Lịch chi tiêu","Expense calendar"],
+["Xem lịch và tổng hợp giao dịch theo ngày.","View your calendar and daily transaction totals."],
+["Hướng dẫn thêm widget trên iPhone","Add an iPhone widget"],
+["Thực hiện theo các bước sau để thêm widget Peacee1:","Follow these steps to add the Peacee1 widget:"],
+["Cài đặt ứng dụng","Install the app"],
+["Cài bản Peacee1 có widget và mở app một lần.","Install the Peacee1 build with widgets and open it once."],
+["Nhấn giữ màn hình chính","Touch and hold the Home Screen"],
+["Nhấn và giữ vùng trống trên màn hình chính.","Touch and hold an empty area on your Home Screen."],
+["Thêm widget","Add widget"],
+["Chọn Sửa → Thêm widget → tìm và chọn Peacee1.","Choose Edit → Add Widget → find and select Peacee1."],
+["Chọn kích thước","Choose a size"],
+["Chọn kích thước nhỏ, vừa hoặc lớn rồi bấm Thêm widget.","Choose small, medium or large, then tap Add Widget."],
 ['Theo giao diện đang dùng','Matches your current theme'],
 ['Xem trước widget iPhone','iPhone widget preview'],
 ['Đây là bản xem trước giao diện và hướng dẫn. Để thêm widget vào màn hình chính, cần cài app Peacee1 trên iPhone.','This previews the design and setup instructions. Install the Peacee1 iPhone app to add a Home Screen widget.'],

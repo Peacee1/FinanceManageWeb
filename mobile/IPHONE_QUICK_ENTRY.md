@@ -4,7 +4,7 @@ Back Tap setup: Profile → App → Advanced settings → Back Tap quick entry.
 Create an Apple shortcut with Take Screenshot → Extract Text from Image → URL Encode → Text (peacee1:///bank-record?text= + encoded text variable) → Open URLs.
 Assign it in iOS Settings → Accessibility → Touch → Back Tap → Double Tap. Expand the bank notification before running. OCR executes in Apple Shortcuts on the device. Raw notification text is not uploaded; only the confirmed amount/category/note become a transaction. Unknown or ambiguous amounts require manual input.
 
-Widget setup: Profile → App → iPhone widgets. The small widget opens expense entry; medium links to expense entry, QR scan and calendar. No balance or credentials are copied into the widget. Language/accent are updated when the app opens or preferences change.
+Widget setup: Profile → App → Widget. The small widget opens expense entry; medium and large link to expense entry, QR scan and calendar. No balance or credentials are copied into the widget. Language/accent are updated when the app opens or preferences change.
 
 Required signing identifiers:
 - Main app: com.peacee1.mobile
