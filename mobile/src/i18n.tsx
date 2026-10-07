@@ -6,6 +6,7 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+['Cài đặt nâng cao','Advanced settings','高级设置','詳細設定','고급 설정','Расширенные настройки'],
 ['Đen trắng','Black & white'],
 ['Chi tiêu tháng này','Spending this month'],
 ['Phân tích chi tiêu','Spending analysis'],
@@ -1782,7 +1783,7 @@ export function translate(text: string, language: Language): string {
   const month = /^Tháng (\d+), (\d+)$/.exec(text);
   if (month) return monthLabel(Number(month[1]),Number(month[2]),language);
   const amountLabel=/^Số tiền \((VND|USD|CNY|JPY|KRW|RUB)\)$/.exec(text);if(amountLabel)return `${translate('Số tiền',language)} (${amountLabel[1]})`;
-  const coins = /^(\d+) xu$/.exec(text);
+  const coins = /^([\d.]+) xu$/.exec(text);
   if (coins) return `${coins[1]} ${translate('xu',language)}`;
   const status = /^(\d+)% · (Hoàn thành|Tạm dừng|Đang thực hiện)$/.exec(text);
   if (status) return `${status[1]}% · ${translate(status[2],language)}`;
