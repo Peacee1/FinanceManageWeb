@@ -2,7 +2,7 @@
   "expo": {
     "name": "Peacee1 Money",
     "slug": "peacee1-mobile",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/app-logo-minimal-purple-v2.png",
     "userInterfaceStyle": "automatic",
@@ -23,7 +23,7 @@
       "permissions": [
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/app-logo-minimal-purple-v2.png",
@@ -32,6 +32,7 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      ["expo-camera", {"cameraPermission":"Cho phép Peacee1 quét mã QR thanh toán.","recordAudioAndroid":false,"barcodeScannerEnabled":true}],
       "expo-font",
       "expo-notifications",
       [

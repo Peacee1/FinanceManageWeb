@@ -4,7 +4,7 @@ const { sharedFields, familySettings } = require('../utils/familySettings');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, (email_verified_at IS NOT NULL) AS email_verified, (phone_verified_at IS NOT NULL) AS phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, currency, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings, separate_personal_wallets, personal_accent, maps_enabled FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, (email_verified_at IS NOT NULL) AS email_verified, (phone_verified_at IS NOT NULL) AS phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, currency, expense_only, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings, separate_personal_wallets, personal_accent, maps_enabled FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     
     let userProfile = result.rows[0];
@@ -116,7 +116,8 @@ const updateCategories = async (req, res, next) => {
 // Cập nhật cài đặt (budgets, goals...)
 const updateSettings = async (req, res) => {
   const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos, budgetSettings, separatePersonalWallets, personalAccent } = req.body;
-  const { mapsEnabled, currency } = req.body;
+  const { mapsEnabled, currency, expenseOnly } = req.body;
+  if (expenseOnly !== undefined && typeof expenseOnly !== 'boolean') return res.status(400).json({message:'Tùy chọn thu chi không hợp lệ.'});
   if(currency !== undefined && (!require('../utils/currency').currencies.includes(currency)||req.user.role!=='owner')) return res.status(400).json({message:'Đơn vị tiền tệ không hợp lệ.'});
   if (mapsEnabled !== undefined && typeof mapsEnabled !== 'boolean') return res.status(400).json({ message: 'Tuỳ chọn bản đồ không hợp lệ.' });
   if (mapsEnabled !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn bản đồ dành cho sổ Cá nhân và Gia đình.' });
@@ -128,6 +129,7 @@ const updateSettings = async (req, res) => {
     const fields = [];
     const values = [];
     let count = 1;
+    if(expenseOnly !== undefined) { fields.push(`expense_only = $${count++}`); values.push(expenseOnly); }
     if(currency !== undefined) { fields.push(`currency = $${count++}`); values.push(currency); }
     if (mapsEnabled !== undefined) { fields.push(`maps_enabled = $${count++}`); values.push(mapsEnabled); }
 

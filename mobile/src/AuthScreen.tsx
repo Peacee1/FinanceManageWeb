@@ -26,7 +26,7 @@ export default function AuthScreen({api,onLogin,register,onSwitch}:{api:Api;onLo
   try{
    const captchaToken=await verify(register?'register':'login');
    if(register){await api('/auth/register','POST',{name:name.trim(),email:email.trim(),password,captchaToken});onSwitch();setPassword('');setConfirm('');setNotice('Tạo tài khoản thành công. Đăng nhập để bắt đầu.');}
-   else{const {data}=await api<Session>('/auth/login','POST',{email:email.trim(),password,loginType:'owner',captchaToken});if(data.user.role!=='owner'){setError('Bản app đầu tiên dành cho tài khoản cá nhân và gia đình.');return;}await onLogin(data);setPassword('');}
+   else{const {data}=await api<Session>('/auth/login','POST',{email:email.trim(),password,loginType:'owner',captchaToken,...(Platform.OS!=='web'?{clientType:'native'}:{})});if(data.user.role!=='owner'){setError('Bản app đầu tiên dành cho tài khoản cá nhân và gia đình.');return;}await onLogin(data);setPassword('');}
   }catch(failure){setError(failure instanceof Error?failure.message:'Không thể đăng nhập.');}finally{pending.current=false;setBusy(false);}
  };
  return <LinearGradient colors={[c.bg,c.bg,c.card]} style={{flex:1}}><SafeAreaView style={{flex:1}}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}><ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{flexGrow:1,justifyContent:'center',padding:24,gap:28,maxWidth:desktop?1200:460,width:'100%',alignSelf:'center'}}>

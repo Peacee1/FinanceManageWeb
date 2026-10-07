@@ -5,7 +5,12 @@ export const accents = [
   {value:'blue',label:'Xanh dương',color:'#2563EB',dark:'#60A5FA'},
   {value:'yellow',label:'Vàng',color:'#B45309',dark:'#F59E0B'},
 ];
-export type Appearance = 'light' | 'dark' | 'system';
+export type Appearance = 'light' | 'dark' | 'system' | 'monochrome';
+
+export const monochromeColors = {
+  primary: '#191918', bg: '#F1F0EC', card: '#FFFFFF', border: '#E2E1DC',
+  text: '#191918', muted: '#6B6B65', income: '#454541', expense: '#191918',
+};
 
 function mix(base: string, accent: string, weight: number) {
   return '#' + [1, 3, 5].map(start => {

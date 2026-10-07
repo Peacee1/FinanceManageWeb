@@ -39,6 +39,7 @@ app.use('/api', (req, res, next) => { res.setHeader('Cache-Control', 'no-store')
 app.use(express.json({ limit: '100kb' }));
 const limiter = (limit, windowMs) => rateLimit({ limit, windowMs, standardHeaders: 'draft-8', legacyHeaders: false, message: { message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.' } });
 app.use(['/api/auth/login','/api/auth/register','/api/auth/change-password','/api/auth/web-session'], limiter(30, 15 * 60 * 1000));
+app.use(['/api/auth/native-refresh','/api/auth/native-logout','/api/auth/native-session'], limiter(120, 15 * 60 * 1000));
 app.use(['/api/ai/analyze','/api/ai/chat-transaction'], limiter(5, 60 * 1000));
 app.use('/api/uploads', (req, res, next) => {
   res.setHeader('Content-Security-Policy', "default-src 'none'");

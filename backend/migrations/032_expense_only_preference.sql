@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN expense_only BOOLEAN NOT NULL DEFAULT true;

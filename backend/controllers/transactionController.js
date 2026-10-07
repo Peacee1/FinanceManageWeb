@@ -68,7 +68,7 @@ const getSummary = async (req, res, next) => {
 
 const addTransaction = async (req, res, next) => {
   req.body ||= {};
-  if (req.user.role === 'employee' && (typeof req.body.requestId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(req.body.requestId))) return res.status(400).json({ message: 'Mã yêu cầu không hợp lệ.' });
+  if ((req.user.role === 'employee'||req.body.requestId!==undefined) && (typeof req.body.requestId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(req.body.requestId))) return res.status(400).json({ message: 'Mã yêu cầu không hợp lệ.' });
   if (req.user.role === 'employee' && !['CASH', 'TRANSFER'].includes(req.body.paymentMethod)) return res.status(400).json({ message: 'Vui lòng chọn tiền mặt hoặc chuyển khoản.' });
   if (req.body.paymentMethod !== undefined && !['CASH', 'TRANSFER'].includes(req.body.paymentMethod)) return res.status(400).json({ message: 'Hình thức thanh toán không hợp lệ.' });
   if(req.body.currency!==undefined&&!currencies.includes(req.body.currency))return res.status(400).json({message:'Đơn vị tiền tệ không hợp lệ.'});
@@ -91,9 +91,9 @@ const addTransaction = async (req, res, next) => {
       for await (const chunk of createReadStream(req.file.path)) digest.update(chunk);
       imageHash = digest.digest('hex');
     }
-    const fingerprint = createHash('sha256').update(JSON.stringify({ type, amount: Number(amount), category, date, description: description || '', paymentMethod: req.body.paymentMethod || null, imageHash, businessId: scope.businessId })).digest('hex');
+    const fingerprint = createHash('sha256').update(JSON.stringify({ type, amount: Number(amount), category, date, description: description || '', paymentMethod: req.body.paymentMethod || null, currency, imageHash, businessId: scope.businessId })).digest('hex');
     const result = await db.transaction(async client => {
-      if (req.user.role === 'employee') {
+      if (req.body.requestId) {
         await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`submission:${req.user.userId}:${req.body.requestId}`]);
         const previous = (await client.query('SELECT * FROM transactions WHERE user_id=$1 AND submission_request_id=$2', [req.user.userId,req.body.requestId])).rows[0];
         if (previous) {
@@ -102,7 +102,7 @@ const addTransaction = async (req, res, next) => {
         }
       }
       const row = (await client.query(`INSERT INTO transactions(user_id,business_id,type,amount,category,date,description,payment_method,submission_request_id,submission_request_hash,evidence_filename,evidence_mime,evidence_expires_at,location,currency)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,(SELECT expires_at FROM transaction_evidence_files WHERE filename=$11),$13,$14) RETURNING *`, [req.user.userId,scope.businessId,type,amount,category,saleDate,description || '',req.body.paymentMethod || null,req.user.role === 'employee' ? req.body.requestId : null,fingerprint,req.file?.filename || null,req.file?.mimetype || null,scope.businessId === null && req.body.location ? JSON.stringify(req.body.location) : null,currency])).rows[0];
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,(SELECT expires_at FROM transaction_evidence_files WHERE filename=$11),$13,$14) RETURNING *`, [req.user.userId,scope.businessId,type,amount,category,saleDate,description || '',req.body.paymentMethod || null,req.body.requestId || null,fingerprint,req.file?.filename || null,req.file?.mimetype || null,scope.businessId === null && req.body.location ? JSON.stringify(req.body.location) : null,currency])).rows[0];
       return { row, bankPayment: await prepareBankPayment(client, row), replayed: false };
     });
     if (result.conflict) return res.status(409).json({ message: 'Mã yêu cầu đã được dùng cho khoản thu chi khác.' });

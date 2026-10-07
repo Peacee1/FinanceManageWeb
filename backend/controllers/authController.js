@@ -78,10 +78,13 @@ const login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    const refreshToken = req.body.clientType === 'native' ? await require('../services/nativeSessionService').createNativeSession(user) : undefined;
+    res.setHeader('Cache-Control','no-store');
     if(safeOrigin(req))setSession(res,token);
     res.json({ 
       message: 'Dang nhap thanh cong.', 
-      token, 
+      token,
+      ...(refreshToken ? {refreshToken} : {}),
       user: { 
         id: user.id, name: user.name, email: user.email, 
         plan: user.plan, role: user.role || 'owner',
