@@ -6,6 +6,8 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+['Xem trước widget iPhone','iPhone widget preview'],
+['Đây là bản xem trước giao diện và hướng dẫn. Để thêm widget vào màn hình chính, cần cài app Peacee1 trên iPhone.','This previews the design and setup instructions. Install the Peacee1 iPhone app to add a Home Screen widget.'],
 ["Chọn giao diện widget","Choose a widget design"],
 ["Xem trước trên màn hình chính","Home Screen preview"],
 ["Nhỏ","Small"],
