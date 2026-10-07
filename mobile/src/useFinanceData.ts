@@ -11,10 +11,10 @@ export function useFinanceData(api:Api,clear:()=>void,owner:string,month:string)
   const current=++version.current;clear();
   try{
    setLoading(true);setError('');await api(`/users/bootstrap?month=${encodeURIComponent(month)}`);
-   const {data:profile}=await api<Profile>('/users/me');if(current!==version.current)return;setLoading(true);setError('');const [year,monthNumber]=month.split('-');
+   const {data:profile}=await api<Profile>('/users/me');if(current!==version.current)return;const [year,monthNumber]=month.split('-');
    const scope=`scope=${profile.finance_mode}&year=${year}&month=${monthNumber}`;
    const list=async()=>{const rows:Transaction[]=[];let cursor:string|null=null;do{const response:{data:Transaction[];nextCursor:string|null}=await api<Transaction[]>(`/transactions?${scope}&limit=500${cursor?`&cursor=${encodeURIComponent(cursor)}`:''}`);rows.push(...response.data);if(response.nextCursor===cursor&&cursor)throw new Error('Không tải được trang giao dịch tiếp theo.');cursor=response.nextCursor;if(current!==version.current)return [];}while(cursor);return rows;};
-   const [transactions,{data:summary},{data:notices}]=await Promise.all([list(),api<Summary>(`/transactions/summary?${scope}`),api<{unread:number}>('/users/notifications'),api('/users/family'),api('/users/goals'),api('/ai/reviews')]);
+   const [transactions,{data:summary},{data:notices}]=await Promise.all([list(),api<Summary>(`/transactions/summary?${scope}`),api<{unread:number}>('/users/notifications')]);
    if(current===version.current)setData({owner,month,profile,summary,transactions,unread:notices.unread});
   }catch(failure){if(current===version.current)setError(failure instanceof Error?failure.message:'Không tải được dữ liệu.');}finally{if(current===version.current)setLoading(false);}
  },[api,clear,owner,month]);
