@@ -1,0 +1,11 @@
+import React from 'react';
+import {Platform,Linking} from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import {Button,Card,Label,Sheet} from './ui';
+export default function IphoneSetup({kind,onClose}:{kind:'backtap'|'widgets';onClose:()=>void}){
+ return <Sheet title={kind==='backtap'?'Ghi nhanh bằng 2 chạm':'Widget iPhone'} onClose={onClose}>{kind==='backtap'?<>
+ <Card><Label large>Từ thông báo ngân hàng</Label><Label>Mở rộng thông báo ngân hàng để thấy toàn bộ nội dung trước khi chạm hai lần. Phím tắt lấy chữ từ ảnh màn hình ngay trên iPhone rồi mở bản nháp để bạn kiểm tra và chọn danh mục.</Label></Card>
+ <Card><Label large>Tạo phím tắt Peacee1 ghi nhanh</Label><Label>1. Mở Phím tắt, tạo phím tắt mới và đặt tên Peacee1 ghi nhanh.</Label><Label>2. Thêm các tác vụ theo thứ tự: Chụp ảnh màn hình → Trích xuất văn bản từ hình ảnh → Mã hóa URL.</Label><Label>3. Thêm tác vụ Văn bản: dán địa chỉ bên dưới và nối biến Văn bản đã mã hóa vào cuối.</Label><Label translateContent={false}>peacee1:///bank-record?text=</Label><Button secondary title="Sao chép địa chỉ" onPress={()=>{void Clipboard.setStringAsync('peacee1:///bank-record?text=');}}/><Label>4. Thêm tác vụ Mở URL với văn bản ở bước 3.</Label></Card>
+ <Card><Label large>Bật Chạm vào mặt sau</Label><Label>Cài đặt → Trợ năng → Cảm ứng → Chạm vào mặt sau → Chạm hai lần → Peacee1 ghi nhanh.</Label><Label>Lần đầu chạy, cho phép Phím tắt truy cập ảnh màn hình và mở Peacee1. Kiểm tra số tiền trước khi lưu.</Label></Card>{Platform.OS==='ios'&&<Button title="Mở Phím tắt" onPress={()=>{void Linking.openURL('shortcuts://');}}/>}<Button secondary title="Thử ghi nhanh" onPress={()=>{void Linking.openURL(Platform.OS==='web'?'https://finance.peacee1.io.vn/bank-record':'peacee1:///bank-record');}}/>
+ </>:<><Card><Label large>Peacee1 trên màn hình chính</Label><Label>Widget nhỏ mở ghi khoản chi. Widget vừa có Ghi khoản chi, Quét QR và Lịch. Widget dùng ngôn ngữ và màu chủ đạo đã chọn trong app.</Label></Card><Card><Label large>Thêm widget trên iPhone</Label><Label>1. Cài bản Peacee1 có widget và mở app một lần.</Label><Label>2. Nhấn giữ màn hình chính → Sửa → Thêm widget → tìm Peacee1.</Label><Label>3. Chọn kích thước nhỏ hoặc vừa rồi bấm Thêm widget.</Label></Card><Label muted>Widget cần bản app iOS đã cài. Bản web và Expo Go không thêm được widget hệ thống.</Label></>}</Sheet>;
+}

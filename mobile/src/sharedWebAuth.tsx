@@ -18,6 +18,6 @@ export async function restoreSharedSession():Promise<Session|null>{
  return {token:SHARED_SESSION+user.id,user};
 }
 export function CentralLogin({register=false}:{register?:boolean}){
- useEffect(()=>{const current=new URL(window.location.href);const target=['/home','/analytics','/calendar','/profile'].includes(current.pathname)?current.href:'https://finance.peacee1.io.vn/home';window.location.replace(`https://peacee1.io.vn/${register?'register':'login'}?returnTo=${encodeURIComponent(target)}`);},[register]);
+ useEffect(()=>{const current=new URL(window.location.href);const target=['/home','/analytics','/calendar','/profile','/bank-record'].includes(current.pathname)?current.href:'https://finance.peacee1.io.vn/home';window.location.replace(`https://peacee1.io.vn/${register?'register':'login'}?returnTo=${encodeURIComponent(target)}`);},[register]);
  return <LoadingScreen/>;
 }

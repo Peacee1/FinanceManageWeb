@@ -2,7 +2,7 @@
   "expo": {
     "name": "Peacee1 Money",
     "slug": "peacee1-mobile",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/app-logo-minimal-purple-v2.png",
     "userInterfaceStyle": "automatic",
@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.peacee1.mobile",
       "config": {
         "usesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "7"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +24,7 @@
       "permissions": [
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
-      "versionCode": 6
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/app-logo-minimal-purple-v2.png",
@@ -32,7 +33,14 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["expo-camera", {"cameraPermission":"Cho phép Peacee1 quét mã QR thanh toán.","recordAudioAndroid":false,"barcodeScannerEnabled":true}],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép Peacee1 quét mã QR thanh toán.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
       "expo-font",
       "expo-notifications",
       [
@@ -41,6 +49,26 @@
           "photosPermission": "Cho phép Peacee1 chọn ảnh đại diện của bạn.",
           "cameraPermission": false,
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "com.peacee1.mobile.widgets",
+          "groupIdentifier": "group.com.peacee1.mobile",
+          "widgets": [
+            {
+              "name": "Peacee1QuickWidget",
+              "displayName": "Peacee1",
+              "description": "Quick expense, QR payment and calendar",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ]
+              }
+            }
+          ]
         }
       ]
     ],
