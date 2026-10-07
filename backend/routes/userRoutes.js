@@ -31,6 +31,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+router.get('/bootstrap', protect, require('../controllers/bootstrapController').bootstrap);
 router.get('/me', protect, getProfile);
 const goals = require('../controllers/savingsGoalController');
 router.get('/goals', protect, goals.list);
@@ -63,4 +64,5 @@ router.post('/init-goal', protect, initGoal);
 router.post('/update-categories', protect, updateCategories);
 router.post('/settings', protect, updateSettings);
 
+router.post('/categories/change',protect,require('../controllers/categoryController').changeCategory);
 module.exports = router;

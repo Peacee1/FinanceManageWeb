@@ -17,13 +17,6 @@ async function generateScheduledNotifications(at = new Date(), userId = null) {
       FROM users WHERE role='owner' AND is_active IS DISTINCT FROM false AND ($2::int IS NULL OR id=$2)
       AND NOT has_used_family AND family_id IS NULL AND (created_at AT TIME ZONE 'UTC') + interval '3 days' <= $1::timestamptz
       ON CONFLICT(user_id,event_key) DO NOTHING`, params);
-    await client.query(`INSERT INTO notifications(user_id,kind,title,message,target,event_key,created_at)
-      SELECT id,'business_promo','Khám phá chế độ Doanh nghiệp','Quản lý bán hàng, nhân viên và thu chi cửa hàng ngay trên Peacee1.','business','promo:business',
-        ((created_at + interval '1 month') AT TIME ZONE 'UTC')
-      FROM users WHERE role='owner' AND is_active IS DISTINCT FROM false AND ($2::int IS NULL OR id=$2)
-      AND NOT has_created_business AND NOT EXISTS(SELECT 1 FROM businesses b WHERE b.owner_id=users.id)
-      AND ((created_at + interval '1 month') AT TIME ZONE 'UTC') <= $1::timestamptz
-      ON CONFLICT(user_id,event_key) DO NOTHING`, params);
     await client.query(`WITH clock AS (SELECT $1::timestamptz AT TIME ZONE 'Asia/Ho_Chi_Minh' AS local)
       INSERT INTO notifications(user_id,kind,title,message,target,event_key,created_at)
       SELECT u.id,'goal_reminder','Đến lịch góp cho mục tiêu',

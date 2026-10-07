@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Peacee1 Money",
+    "slug": "peacee1-mobile",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/app-logo-minimal-purple-v2.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.peacee1.mobile",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF7FF",
+        "foregroundImage": "./assets/app-logo-minimal-purple-v2.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.peacee1.mobile",
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
+      "versionCode": 5
+    },
+    "web": {
+      "favicon": "./assets/app-logo-minimal-purple-v2.png",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép Peacee1 chọn ảnh đại diện của bạn.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "scheme": "peacee1",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8ac437c5-eea8-4617-aba8-e1ded4ad3017"
+      }
+    },
+    "owner": "peacee1"
+  }
+}

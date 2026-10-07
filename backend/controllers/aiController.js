@@ -1,126 +1,21 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const db = require('../config/db');
-const { transactionScope } = require('../utils/transactionScope');
-
-/**
- * Phân tích tài chính bằng Google Gemini AI.
- * Lấy dữ liệu thu chi 30 ngày gần nhất của user, gửi cho AI để nhận gợi ý.
- * POST /api/ai/analyze
- */
-const analyzeFinances = async (req, res) => {
-  const userId = req.user.userId;
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ message: 'Chức năng AI chưa được cấu hình. Vui lòng liên hệ quản trị viên.' });
-  }
-
-  try {
-    // Lấy thông tin cơ bản của user
-    const userResult = await db.query(
-      'SELECT name, salary FROM users WHERE id = $1',
-      [userId]
-    );
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
-    }
-    const user = userResult.rows[0];
-
-    // Lấy giao dịch 30 ngày gần nhất
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const scope = await transactionScope(req);
-    if (scope.error) return res.status(scope.error).json({ message: scope.message });
-    const txResult = await db.query(
-      `SELECT type, amount, category, date
-       FROM transactions t
-       WHERE ${scope.clause} AND date >= $${scope.params.length + 1}
-       ORDER BY date DESC`,
-      [...scope.params, thirtyDaysAgo.toISOString()]
-    );
-
-    const transactions = txResult.rows;
-
-    if (transactions.length === 0) {
-      return res.status(200).json({
-        analysis: 'Bạn chưa có giao dịch nào trong 30 ngày qua. Hãy thêm thu chi để AI có thể phân tích và đưa ra gợi ý cho bạn nhé! 📊'
-      });
-    }
-
-    // Tổng hợp số liệu
-    const totalIncome = transactions
-      .filter(t => t.type === 'INCOME')
-      .reduce((sum, t) => sum + parseInt(t.amount), 0);
-
-    const totalExpense = transactions
-      .filter(t => t.type === 'EXPENSE')
-      .reduce((sum, t) => sum + parseInt(t.amount), 0);
-
-    // Gom theo danh mục chi tiêu
-    const expenseByCategory = {};
-    transactions
-      .filter(t => t.type === 'EXPENSE')
-      .forEach(t => {
-        if (!expenseByCategory[t.category]) {
-          expenseByCategory[t.category] = 0;
-        }
-        expenseByCategory[t.category] += parseInt(t.amount);
-      });
-
-    // Sắp xếp danh mục theo mức chi nhiều nhất
-    const topCategories = Object.entries(expenseByCategory)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([cat, amount]) => `- ${cat}: ${amount.toLocaleString('vi-VN')} VNĐ (${totalExpense > 0 ? Math.round((amount / totalExpense) * 100) : 0}%)`)
-      .join('\n');
-
-    const balance = totalIncome - totalExpense;
-    const savingRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
-
-    // Xây dựng prompt gửi cho Gemini
-    const prompt = `Bạn là một chuyên gia tư vấn tài chính cá nhân chuyên nghiệp và thân thiện, am hiểu về văn hóa chi tiêu của người Việt Nam. Hãy phân tích tình hình tài chính sau đây và đưa ra nhận xét, gợi ý cụ thể bằng tiếng Việt.
-
-**DỮ LIỆU TÀI CHÍNH 30 NGÀY GẦN NHẤT:**
-- Tổng thu nhập: ${totalIncome.toLocaleString('vi-VN')} VNĐ
-- Tổng chi tiêu: ${totalExpense.toLocaleString('vi-VN')} VNĐ
-- Số dư còn lại: ${balance.toLocaleString('vi-VN')} VNĐ
-- Tỷ lệ tiết kiệm: ${savingRate}%
-- Số giao dịch: ${transactions.length}
-
-**CHI TIÊU THEO DANH MỤC (Top 5):**
-${topCategories || 'Không có dữ liệu'}
-
-**YÊU CẦU:**
-Hãy viết một bản phân tích ngắn gọn, dễ hiểu với các phần sau:
-
-1. **Tổng quan** (1-2 câu nhận xét tổng thể về tình hình tài chính)
-2. **Điểm tốt** (nếu có - những gì đang làm đúng)
-3. **Điểm cần cải thiện** (nếu có - những danh mục chi tiêu bất thường hoặc quá cao)
-4. **Gợi ý cụ thể** (2-3 hành động thiết thực để cải thiện tài chính tháng tới)
-
-Lưu ý:
-- Sử dụng emoji phù hợp để bài viết sinh động
-- Tham chiếu quy tắc 50/30/20 khi phù hợp
-- Tông giọng thân thiện, tích cực, khích lệ
-- Không quá 300 từ`;
-
-    // Gọi Gemini API
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-pro-preview' });
-
-    const result = await model.generateContent(prompt, { timeout: 30000 });
-    const analysisText = result.response.text();
-
-    res.json({ analysis: analysisText });
-
-  } catch (error) {
-    console.error('Lỗi AI phân tích tài chính:', error.message);
-    if (error.message && error.message.includes('API_KEY_INVALID')) {
-      return res.status(503).json({ message: 'API Key Gemini không hợp lệ. Vui lòng kiểm tra lại cấu hình.' });
-    }
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi phân tích. Vui lòng thử lại sau.' });
-  }
-};
-
-module.exports = { analyzeFinances };
+const db=require('../config/db');
+const {transactionScope}=require('../utils/transactionScope');
+const {analysisPeriod,summarize,generateAnalysis,languages}=require('../utils/financialAnalysis');
+const {createHash}=require('crypto');
+const empty={vi:'Chưa có giao dịch trong tháng này. Hãy thêm thu chi để nhận xét dựa trên dữ liệu thật.',en:'No transactions this month. Add income or expenses to get a review based on your records.',zh:'本月暂无交易。添加收支后可获得基于真实记录的分析。',ja:'今月の取引はありません。収支を追加すると、記録に基づく分析を表示できます。',ru:'В этом месяце нет операций. Добавьте доходы или расходы для анализа по вашим записям.',ko:'이번 달 거래가 없습니다. 수입이나 지출을 추가하면 기록을 바탕으로 분석할 수 있습니다.'};
+function createAnalyzer({database=db,scopeFor=transactionScope,generate=generateAnalysis,sign=require('./aiReviewController').reviewToken,checkFunds=require('../services/analysisBilling').checkFunds,charge=require('../services/analysisBilling').chargeAnalysis}={}){
+ const cache=new Map(),pending=new Map();
+ return async(req,res)=>{try{
+  const requestId=req.body?.requestId;if(typeof requestId!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId))return res.status(400).json({message:'Mã yêu cầu không hợp lệ.'});
+  const period=analysisPeriod(req.body?.month),language=req.body?.language||'vi';if(!Object.hasOwn(languages,language))return res.status(400).json({message:'Ngôn ngữ không hợp lệ.',code:'INVALID_LANGUAGE'});
+  const scope=await scopeFor(req);if(scope.error)return res.status(scope.error).json({message:scope.message});
+  const params=[...scope.params,period.start,period.end,period.today],p=scope.params.length;
+  const rows=(await database.query(`SELECT t.currency,t.type,t.category,SUM(t.amount::numeric / CASE WHEN t.currency IN ('USD','CNY','RUB') THEN 100 ELSE 1 END) AS total,COUNT(*) AS count FROM transactions t WHERE ${scope.clause} AND t.date >= $${p+1}::date AND t.date < $${p+2}::date AND t.date <= $${p+3}::date AND t.approval_status='APPROVED' AND t.bank_payment_status IN ('MANUAL','VERIFIED') GROUP BY t.currency,t.type,t.category ORDER BY t.currency,t.type,t.category`,params)).rows;
+  const summary=summarize(rows),mode=scope.familyId?'family':scope.businessId?'business':'personal';const base={month:period.month,language,scope:mode,summary};
+  if(!summary.count)return res.json({...base,analysis:empty[language],empty:true});
+  const inputHash=createHash('sha256').update(JSON.stringify([req.user.userId,scope.familyId,scope.businessId,period,language,summary])).digest('hex');await checkFunds(req.user.userId,inputHash,requestId);const key=createHash('sha256').update(inputHash+requestId).digest('hex');const saved=cache.get(key);const respond=async(analysis,cached=false)=>{const payment=await charge(req.user.userId,inputHash,requestId);return res.json({...base,analysis,cached,payment,reviewToken:sign(req.user.userId,key,{month:period.month,language,ledger:mode,analysis})});};if(saved&&saved.expires>Date.now())return await respond(saved.analysis,true);
+  if(!pending.has(key))pending.set(key,generate(summary,period,language,mode).then(analysis=>{if(cache.size>=200)cache.delete(cache.keys().next().value);cache.set(key,{analysis,expires:Date.now()+5*60000});return analysis;}).finally(()=>pending.delete(key)));
+  return await respond(await pending.get(key));
+ }catch(error){console.error('AI analysis failure:',error.code||'INTERNAL');return res.status(error.status||500).json({message:error.status?error.message:'Không thể nhận xét lúc này. Vui lòng thử lại.',code:error.code||'AI_ERROR'});}};
+}
+module.exports={analyzeFinances:createAnalyzer(),createAnalyzer};

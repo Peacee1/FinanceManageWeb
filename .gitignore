@@ -10,3 +10,10 @@ backend/uploads/
 backend/private-evidence/
 .env.*
 !.env.example
+
+current-backend-source.tgz
+mobile/builds/
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/*.tsbuildinfo

@@ -4,7 +4,7 @@ const isPassword = value => typeof value === 'string' && Buffer.byteLength(value
 function transactionError(body, partial = false) {
   const check = field => !partial || body[field] !== undefined;
   if (check('type') && !['INCOME', 'EXPENSE'].includes(body.type)) return 'Loại giao dịch không hợp lệ.';
-  if (check('amount') && !isPositiveInteger(body.amount)) return 'Số tiền phải là số nguyên dương hợp lệ.';
+  if (check('amount') && require('./currency').minorAmount(body.amount,body.currency||'VND')===null) return 'Số tiền không hợp lệ với đơn vị tiền tệ này.';
   if (check('category') && (typeof body.category !== 'string' || !body.category.trim() || body.category.length > 100)) return 'Danh mục không hợp lệ.';
   if (check('date') && !isDate(body.date)) return 'Ngày giao dịch không hợp lệ.';
   if (body.description !== undefined && (typeof body.description !== 'string' || body.description.length > 2000)) return 'Mô tả tối đa 2000 ký tự.';

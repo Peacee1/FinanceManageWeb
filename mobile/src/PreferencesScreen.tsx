@@ -1,0 +1,19 @@
+import React,{useRef,useState} from 'react';
+import {Modal,Pressable,View} from 'react-native';
+import {useMobile} from '../App';
+import {accents,type Appearance} from './appearance';
+import {languages,type Language,Text,useTranslate} from './i18n';
+import {Button,Card,Choices,Label,Sheet,useTheme} from './ui';
+import {currencyItems,languageCurrency} from './currency';
+export default function PreferencesScreen({kind,onClose}:{kind:'appearance'|'language';onClose:()=>void}){
+ const c=useTheme(),settings=useMobile(),t=useTranslate(),currency=settings.finance.data?.profile.currency||'VND';
+ const [busy,setBusy]=useState(false),[error,setError]=useState(''),[offer,setOffer]=useState<string|null>(null);const pending=useRef(false);
+ const change=async(action:()=>Promise<void>)=>{if(pending.current)return;pending.current=true;setBusy(true);setError('');try{await action();}catch(failure){setError(failure instanceof Error?failure.message:'Không lưu được cài đặt.');}finally{pending.current=false;setBusy(false);}};
+ const saveCurrency=async(value:string)=>{await settings.api('/users/settings','POST',{currency:value});await settings.finance.refresh();setOffer(null);};
+ const chooseLanguage=(value:string)=>void change(async()=>{if(value===settings.language)return;await settings.changeLanguage(value as Language);const next=languageCurrency[value];if(next!==currency)setOffer(next);});
+ return <Sheet canClose={!busy} title={kind==='language'?'Ngôn ngữ':'Giao diện'} onClose={()=>{if(!pending.current)onClose();}}>{!!error&&<Text style={{color:c.expense}} accessibilityRole="alert">{error}</Text>}{kind==='language'?<>
+ <Card><Label>Ngôn ngữ</Label><Choices value={settings.language} items={languages} onChange={chooseLanguage}/></Card>
+ {!!offer&&<Modal transparent animationType="fade" onRequestClose={()=>{if(!busy)setOffer(null);}}><View style={{flex:1,backgroundColor:'#00000066',justifyContent:'center',alignItems:'center',padding:24}}><Card style={{width:'100%',maxWidth:440}}><Label large>Đổi đơn vị tiền tệ?</Label><Label translateContent={false}>{t('Đơn vị tiền tệ hiện tại')}: {currency} → {offer}</Label><Label muted>Giao dịch cũ giữ nguyên tiền tệ. Giao dịch mới dùng đơn vị tiền tệ đã chọn.</Label><Button title="Có, đổi tiền tệ" disabled={busy} onPress={()=>void change(()=>saveCurrency(offer))}/><Button secondary title="Không, giữ tiền tệ hiện tại" disabled={busy} onPress={()=>setOffer(null)}/>{!!error&&<Text accessibilityRole="alert" style={{color:c.expense}}>{error}</Text>}</Card></View></Modal>}
+ <Card><Label large>Đơn vị tiền tệ</Label><Choices value={currency} items={currencyItems} onChange={value=>void change(()=>saveCurrency(value))}/><Label muted>Tổng thu chi tách theo từng tiền tệ, không quy đổi.</Label></Card>
+ </>:<><Card><Label large>Chế độ hiển thị</Label><Choices value={settings.appearance} items={[{value:'light',label:'Sáng'},{value:'dark',label:'Tối'},{value:'system',label:'Hệ thống'}]} onChange={value=>void change(()=>settings.changeAppearance(value as Appearance))}/></Card><Card><Label large>Màu chủ đạo</Label><View style={{flexDirection:'row',flexWrap:'wrap',gap:12}}>{accents.map(item=><Pressable key={item.value} accessibilityRole="button" accessibilityLabel={item.label} accessibilityState={{selected:settings.accent===item.value,disabled:busy}} disabled={busy} onPress={()=>void change(()=>settings.changeAccent(item.value))} style={{width:'46%',padding:15,borderRadius:14,borderWidth:2,borderColor:settings.accent===item.value?c.primary:c.border,alignItems:'center',gap:8}}><View style={{width:32,height:32,borderRadius:16,backgroundColor:item.dark}}/><Text style={{color:c.text}}>{item.label}</Text></Pressable>)}</View></Card></>}</Sheet>;
+}

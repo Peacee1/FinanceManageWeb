@@ -18,7 +18,6 @@ const authRoutes = require('./routes/authRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const userRoutes = require('./routes/userRoutes');
 const aiRoutes = require('./routes/aiRoutes');
-const businessRoutes = require('./routes/businessRoutes');
 const { operations, metrics, stop: stopMetrics } = require('./middleware/operations');
 
 const app = express();
@@ -37,11 +36,10 @@ app.use((req, res, next) => {
 app.get('/internal/metrics', metrics);
 app.use('/api', operations);
 app.use('/api', (req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
-app.post('/api/payments/sepay/:id',express.raw({ type:'application/json',limit:'32kb' }),require('./controllers/bankController').webhook);
 app.use(express.json({ limit: '100kb' }));
 const limiter = (limit, windowMs) => rateLimit({ limit, windowMs, standardHeaders: 'draft-8', legacyHeaders: false, message: { message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.' } });
-app.use('/api/auth', limiter(30, 15 * 60 * 1000));
-app.use('/api/ai', limiter(5, 60 * 1000));
+app.use(['/api/auth/login','/api/auth/register','/api/auth/change-password','/api/auth/web-session'], limiter(30, 15 * 60 * 1000));
+app.use(['/api/ai/analyze','/api/ai/chat-transaction'], limiter(5, 60 * 1000));
 app.use('/api/uploads', (req, res, next) => {
   res.setHeader('Content-Security-Policy', "default-src 'none'");
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -50,15 +48,18 @@ app.use('/api/uploads', (req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/account', require('./routes/accountRoutes'));
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/business', businessRoutes);
-app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/tasks',require('./routes/tasksRoutes'));
+app.use('/api/boardgame',require('./routes/boardgameRoutes'));
+app.use('/api/salesmanager',require('./routes/salesmanagerRoutes'));
+app.use(['/api/business','/api/payments'], (req,res)=>res.status(410).json({code:'MODULE_RETIRED',message:'Business module has been retired.'}));
 
 const db = require('./config/db');
-const stopEvidenceCleanup = require('./services/evidenceService').startEvidenceCleanup();
 const stopNotifications = require('./services/notificationService').startNotificationScheduler();
+const stopBoardGame = require('./routes/boardgameRoutes').startScheduler();
 app.get('/api/health', async (req, res) => {
   try { await db.query('SELECT 1'); res.json({ status: 'ok' }); }
   catch { res.status(503).json({ status: 'unavailable' }); }
@@ -81,8 +82,8 @@ server.headersTimeout = 10000;
 server.keepAliveTimeout = 5000;
 const shutdown = () => {
   stopMetrics();
-  stopEvidenceCleanup();
   stopNotifications();
+  stopBoardGame();
   const timeout = setTimeout(() => process.exit(1), 10000).unref();
   server.close(async () => { await db.close(); clearTimeout(timeout); process.exit(0); });
 };

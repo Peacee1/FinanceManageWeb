@@ -37,8 +37,8 @@ const changeFamily = action => async (req, res, next) => {
         while (used.has(slot)) slot++;
         await client.query('UPDATE users SET family_id=$1,family_slot=$2 WHERE id=$3', [family.id, slot, req.user.userId]);
       }
-      if (req.body.syncPersonal === true) await client.query(`INSERT INTO transactions(user_id,type,amount,category,date,description,payment_method,location,sync_source_id)
-        SELECT user_id,type,amount,category,date,description,payment_method,location,id FROM transactions
+      if (req.body.syncPersonal === true) await client.query(`INSERT INTO transactions(user_id,type,amount,category,date,description,payment_method,location,actor_name,currency,sync_source_id)
+        SELECT user_id,type,amount,category,date,description,payment_method,location,actor_name,currency,id FROM transactions
         WHERE user_id=$1 AND family_id IS NULL AND business_id IS NULL
         AND NOT EXISTS (SELECT 1 FROM transactions f WHERE f.sync_source_id=transactions.id AND f.family_id=(SELECT family_id FROM users WHERE id=$1))`, [req.user.userId]);
     });
@@ -74,8 +74,8 @@ const resolveDissolution = async (req, res, next) => {
       if (!notice) fail(404, 'Không tìm thấy thông báo.');
       if (notice.resolved_at) return;
       if (user.family_id) fail(409, 'Bạn cần ở chế độ Cá nhân để đồng bộ.');
-      if (req.body.syncData) await client.query(`INSERT INTO transactions(user_id,type,amount,category,date,description,payment_method,location,sync_source_id)
-        SELECT user_id,type,amount,category,date,description,payment_method,location,id FROM transactions
+      if (req.body.syncData) await client.query(`INSERT INTO transactions(user_id,type,amount,category,date,description,payment_method,location,actor_name,currency,sync_source_id)
+        SELECT user_id,type,amount,category,date,description,payment_method,location,actor_name,currency,id FROM transactions
         WHERE family_id=$1 AND user_id=$2 AND business_id IS NULL AND sync_source_id IS NULL
         AND NOT EXISTS (SELECT 1 FROM transactions p WHERE p.sync_source_id=transactions.id AND p.family_id IS NULL)`, [notice.family_id, req.user.userId]);
       await client.query('UPDATE family_dissolution_notices SET resolved_at=now(),sync_data=$1 WHERE id=$2', [req.body.syncData, notice.id]);

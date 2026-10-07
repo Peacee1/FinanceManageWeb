@@ -4,7 +4,7 @@ const { sharedFields, familySettings } = require('../utils/familySettings');
 // Lấy thông tin profile
 const getProfile = async (req, res) => {
   try {
-    const result = await db.query('SELECT id, name, email, plan, phone, email_verified, phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings, separate_personal_wallets, personal_accent, maps_enabled FROM users WHERE id = $1', [req.user.userId]);
+    const result = await db.query('SELECT id, name, email, plan, phone, (email_verified_at IS NOT NULL) AS email_verified, (phone_verified_at IS NOT NULL) AS phone_verified, coin, last_checkin_date, checkin_streak, avatar_url, currency, salary, age, gender, is_goal_initialized, custom_categories, monthly_budgets, bank_saving, investment_income, custom_normal_saving, custom_bank_saving_total, user_goal, qa_pos, budget_settings, separate_personal_wallets, personal_accent, maps_enabled FROM users WHERE id = $1', [req.user.userId]);
     if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
     
     let userProfile = result.rows[0];
@@ -15,17 +15,7 @@ const getProfile = async (req, res) => {
       for (const field of sharedFields) userProfile[field] = shared[field] ?? (field === 'monthly_budgets' ? {} : field === 'separate_personal_wallets' ? false : null);
     }
     if (!userProfile.custom_categories) {
-      userProfile.custom_categories = [
-        { name: 'Ăn uống', type: 'EXPENSE', color: '#FB7185' },
-        { name: 'Mua sắm', type: 'EXPENSE', color: '#F472B6' },
-        { name: 'Di chuyển', type: 'EXPENSE', color: '#FBBF24' },
-        { name: 'Hoá đơn', type: 'EXPENSE', color: '#34D399' },
-        { name: 'Giải trí', type: 'EXPENSE', color: '#67E8F9' },
-        { name: 'Lương', type: 'INCOME', color: '#34D399' },
-        { name: 'Đầu tư', type: 'INCOME', color: '#7C3AED' },
-        { name: 'Khác', type: 'INCOME', color: '#9CA3AF' },
-        { name: 'Khác', type: 'EXPENSE', color: '#9CA3AF' }
-      ];
+      userProfile.custom_categories = require('../utils/defaultCategories').defaultCategories;
     }
     res.json(userProfile);
   } catch (err) {
@@ -33,38 +23,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Xác thực email (Mô phỏng)
-const verifyEmail = async (req, res) => {
-  try {
-    await db.query('UPDATE users SET email_verified = true WHERE id = $1', [req.user.userId]);
-    res.json({ message: 'Xác thực email thành công!' });
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
-
-// Cập nhật số điện thoại
-const updatePhone = async (req, res) => {
-  const { phone } = req.body;
-  if (!phone) return res.status(400).json({ message: 'Vui lòng nhập số điện thoại' });
-  
-  try {
-    await db.query('UPDATE users SET phone = $1, phone_verified = false WHERE id = $2', [phone, req.user.userId]);
-    res.json({ message: 'Đã thêm số điện thoại' });
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
-
-// Xác thực SĐT (Mô phỏng)
-const verifyPhone = async (req, res) => {
-  try {
-    await db.query('UPDATE users SET phone_verified = true WHERE id = $1', [req.user.userId]);
-    res.json({ message: 'Xác thực SĐT thành công!' });
-  } catch (err) {
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
+const {verifyEmail,updatePhone,verifyPhone}=require('./accountController');
 
 // Nâng cấp gói
 const upgradePlan = async (req, res, next) => {
@@ -138,9 +97,10 @@ const updateCategories = async (req, res, next) => {
       const membership = (await client.query('SELECT family_id FROM users WHERE id=$1 FOR UPDATE', [req.user.userId])).rows[0];
       const user = (await client.query('SELECT coin, custom_categories FROM users WHERE id = $1 FOR UPDATE', [req.user.userId])).rows[0];
       if (membership.family_id) user.custom_categories = (await client.query('SELECT settings FROM families WHERE id=$1 FOR UPDATE', [membership.family_id])).rows[0].settings.custom_categories;
-      const defaults = ['EXPENSE:Ăn uống', 'EXPENSE:Mua sắm', 'EXPENSE:Di chuyển', 'EXPENSE:Hoá đơn', 'EXPENSE:Giải trí', 'INCOME:Lương', 'INCOME:Đầu tư', 'INCOME:Khác', 'EXPENSE:Khác'];
-      const previous = new Set(user.custom_categories ? user.custom_categories.map(c => `${c.type}:${c.name.trim()}`) : defaults);
-      const cost = keys.filter(key => !previous.has(key)).length * 100;
+
+ 
+      const oldCategories=user.custom_categories||require('../utils/defaultCategories').defaultCategories;
+      const cost=categories.filter(category=>{const old=oldCategories.find(row=>row.type===category.type&&row.name.trim()===category.name.trim());return !old||old.color.toLowerCase()!==category.color.toLowerCase();}).length*100;
       if (user.coin < cost) return false;
       if (membership.family_id) {
         await client.query('UPDATE users SET coin=coin-$1 WHERE id=$2', [cost, req.user.userId]);
@@ -156,7 +116,8 @@ const updateCategories = async (req, res, next) => {
 // Cập nhật cài đặt (budgets, goals...)
 const updateSettings = async (req, res) => {
   const { monthlyBudgets, bankSaving, investmentIncome, customNormalSaving, customBankSavingTotal, userGoal, qaPos, budgetSettings, separatePersonalWallets, personalAccent } = req.body;
-  const { mapsEnabled } = req.body;
+  const { mapsEnabled, currency } = req.body;
+  if(currency !== undefined && (!require('../utils/currency').currencies.includes(currency)||req.user.role!=='owner')) return res.status(400).json({message:'Đơn vị tiền tệ không hợp lệ.'});
   if (mapsEnabled !== undefined && typeof mapsEnabled !== 'boolean') return res.status(400).json({ message: 'Tuỳ chọn bản đồ không hợp lệ.' });
   if (mapsEnabled !== undefined && req.user.role === 'employee') return res.status(403).json({ message: 'Tuỳ chọn bản đồ dành cho sổ Cá nhân và Gia đình.' });
   if (personalAccent !== undefined && !['purple','pink','green','blue','yellow'].includes(personalAccent)) return res.status(400).json({ message: 'Màu giao diện không hợp lệ.' });
@@ -167,6 +128,7 @@ const updateSettings = async (req, res) => {
     const fields = [];
     const values = [];
     let count = 1;
+    if(currency !== undefined) { fields.push(`currency = $${count++}`); values.push(currency); }
     if (mapsEnabled !== undefined) { fields.push(`maps_enabled = $${count++}`); values.push(mapsEnabled); }
 
     if (personalAccent !== undefined) { fields.push(`personal_accent = $${count++}`); values.push(personalAccent); }
