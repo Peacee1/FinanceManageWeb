@@ -1,0 +1,20 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const vm=require('node:vm');
+const fs=require('node:fs');
+const path=require('node:path');
+test('melody plays the correct pitch and swung duration, supports chords and mute',()=>{
+ const element=()=>({value:4,style:{},dataset:{},classList:{toggle(){}},replaceChildren(){},append(){},setAttribute(){},addEventListener(){}});
+ const elements=new Map();const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
+ const sandbox={document:{createElement:element,addEventListener(){},querySelectorAll(){return[];}},window:{},$:get,bpm:()=>120,structuredClone,Number,Math,status(){}};
+ vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../../beatmaker/melody.js'),'utf8'),sandbox);
+ const events=[];const parameter=()=>({value:0,setValueAtTime(v,t){events.push({v,t});},linearRampToValueAtTime(v,t){events.push({v,t});}});
+ const oscillators=[];const ctx={createOscillator(){const oscillator={frequency:parameter(),connect(){},disconnect(){},start(t){this.started=t;},stop(t){this.stopped=t;}};oscillators.push(oscillator);return oscillator;},createGain(){return{gain:parameter(),connect(){}};},createBiquadFilter(){return{frequency:parameter(),connect(){}};}};
+ const state={voice:'triangle',volume:.5,mute:false,notes:[{pitch:69,start:0,length:4},{pitch:72,start:0,length:2}]};
+ sandbox.window.Melody.load(state);sandbox.window.Melody.schedule(ctx,{},0,2,120,50);
+ assert.equal(oscillators.length,2);assert.equal(oscillators[0].frequency.value,440);assert.equal(oscillators[0].started,2);assert.ok(Math.abs(oscillators[0].stopped-2.59)<1e-9);assert.ok(Math.abs(oscillators[1].stopped-2.34)<1e-9);
+ sandbox.window.Melody.schedule(ctx,{},1,3,120,50);assert.equal(oscillators.length,2);
+ sandbox.window.Melody.load({...state,mute:true});sandbox.window.Melody.schedule(ctx,{},0,4);assert.equal(oscillators.length,2);
+ get('note-length').value=0;assert.equal(vm.runInContext('noteLength()',sandbox),1);
+ get('note-length').value=50;assert.equal(vm.runInContext('noteLength()',sandbox),16);
+});

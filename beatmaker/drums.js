@@ -1,0 +1,5 @@
+const padNames=['KICK','SNARE','CLAP','HI-HAT','OPEN HAT','BASS'];
+const padSymbols=['◉','◎','≋','✳','✴','∿'];
+async function hitPad(index){try{await initAudio();master.gain.setValueAtTime(Number($('master').value)/100,context.currentTime);sound(context,master,index,context.currentTime,tracks[index].volume);const pad=$('pads').children[index];pad.classList.add('hit');setTimeout(()=>pad.classList.remove('hit'),130);}catch{status('Không thể phát drum. Hãy thử lại trên Chrome hoặc Edge.');}}
+tracks.forEach((t,index)=>{const pad=document.createElement('button');pad.className='pad';pad.style.setProperty('--color',t.color);pad.setAttribute('aria-label',`Đánh ${t.name}, phím ${index+1}`);pad.innerHTML=`<kbd>${index+1}</kbd><span class="padsymbol">${padSymbols[index]}</span><span>${padNames[index]}</span>`;pad.onpointerdown=e=>{if(e.button===0){e.preventDefault();hitPad(index);}};pad.onclick=e=>{if(e.detail===0)hitPad(index);};$('pads').append(pad);});
+document.addEventListener('keydown',e=>{if(!e.repeat&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&/^[1-6]$/.test(e.key)){e.preventDefault();hitPad(Number(e.key)-1);}});

@@ -54,6 +54,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/tasks',require('./routes/tasksRoutes'));
+app.use('/api/beatmaker',require('./routes/beatmakerRoutes'));
 app.use('/api/boardgame',require('./routes/boardgameRoutes'));
 app.use('/api/salesmanager',require('./routes/salesmanagerRoutes'));
 app.use(['/api/business','/api/payments'], (req,res)=>res.status(410).json({code:'MODULE_RETIRED',message:'Business module has been retired.'}));

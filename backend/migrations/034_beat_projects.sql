@@ -1,0 +1,6 @@
+CREATE TABLE beat_projects (
+ user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ project JSONB NOT NULL,
+ revision INTEGER NOT NULL DEFAULT 1,
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

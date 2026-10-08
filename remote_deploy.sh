@@ -86,4 +86,5 @@ if [[ "$healthy" != true ]]; then
   exit 1
 fi
 pm2 save
+bash /home/ec2-user/FinanceManageWeb/beatmaker/deploy.sh "$release_dir"
 echo "DEPLOYED $expected_commit"
