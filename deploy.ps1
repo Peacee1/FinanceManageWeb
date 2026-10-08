@@ -1,7 +1,8 @@
 param(
   [string]$KeyPath = "C:/Users/Admin/Downloads/webquanlychitieu/peacee1_financial_management_key.pem",
   [string]$Server = "13.212.179.88",
-  [string]$SshUser = "ec2-user"
+  [string]$SshUser = "ec2-user",
+  [switch]$BeatmakerOnly
 )
 $ErrorActionPreference = "Stop"
 if (-not (Test-Path -LiteralPath $KeyPath)) { throw "SSH key not found" }
@@ -13,5 +14,6 @@ $commit = git rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw "Cannot resolve Git commit" }
 git push origin main
 if ($LASTEXITCODE -ne 0) { throw "Git push failed" }
-ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -i $KeyPath "${SshUser}@${Server}" "cd /home/ec2-user/FinanceManageWeb && git pull --ff-only origin main && bash remote_deploy.sh $commit"
+$releaseScript = if ($BeatmakerOnly) { 'beatmaker/release.sh' } else { 'remote_deploy.sh' }
+ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -i $KeyPath "${SshUser}@${Server}" "cd /home/ec2-user/FinanceManageWeb && git pull --ff-only origin main && bash $releaseScript $commit"
 if ($LASTEXITCODE -ne 0) { throw "Deployment failed; inspect server state" }
