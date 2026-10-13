@@ -2,6 +2,13 @@
   "cli": {
     "appVersionSource": "local"
   },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6822413407"
+      }
+    }
+  },
   "build": {
     "development": {
       "developmentClient": true,
