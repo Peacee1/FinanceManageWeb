@@ -25,7 +25,7 @@ export default function AuthScreen({api,onLogin,register,onSwitch}:{api:Api;onLo
   pending.current=true;setBusy(true);
   try{
    const captchaToken=await verify(register?'register':'login');
-   if(register){await api('/auth/register','POST',{name:name.trim(),email:email.trim(),password,captchaToken});onSwitch();setPassword('');setConfirm('');setNotice('Tạo tài khoản thành công. Đăng nhập để bắt đầu.');}
+   if(register){await api('/auth/register','POST',{name:name.trim(),email:email.trim(),password,captchaToken,...(Platform.OS!=='web'?{clientType:'native'}:{})});onSwitch();setPassword('');setConfirm('');setNotice('Tạo tài khoản thành công. Đăng nhập để bắt đầu.');}
    else{const {data}=await api<Session>('/auth/login','POST',{email:email.trim(),password,loginType:'owner',captchaToken,...(Platform.OS!=='web'?{clientType:'native'}:{})});if(data.user.role!=='owner'){setError('Bản app đầu tiên dành cho tài khoản cá nhân và gia đình.');return;}await onLogin(data);setPassword('');}
   }catch(failure){setError(failure instanceof Error?failure.message:'Không thể đăng nhập.');}finally{pending.current=false;setBusy(false);}
  };

@@ -6,6 +6,8 @@ function proof(req,action){try{const value=(req.headers?.cookie||'').split(';').
 function enabled(){return process.env.TURNSTILE_ENABLED==='true';}
 function config(req,res){res.json({enabled:enabled(),siteKey:enabled()?process.env.TURNSTILE_SITE_KEY:null});}
 const requireCaptcha=action=>async(req,res,next)=>{
+ // Native policy only; passwords and auth rate limits remain mandatory.
+ if(['login','register'].includes(action)&&req.body?.clientType==='native'&&!req.headers?.origin)return next();
  if(!enabled())return next();
  if(!process.env.TURNSTILE_SECRET_KEY||!process.env.TURNSTILE_SITE_KEY)return res.status(503).json({message:'Xác minh bảo mật chưa sẵn sàng.'});
  const existing=proof(req,action);
