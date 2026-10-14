@@ -12,7 +12,7 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "buildNumber": "10"
+      "buildNumber": "11"
     },
     "android": {
       "adaptiveIcon": {
@@ -72,7 +72,8 @@
             }
           ]
         }
-      ]
+      ],
+      "./plugins/withNativeQuickWidget"
     ],
     "scheme": "peacee1",
     "extra": {
