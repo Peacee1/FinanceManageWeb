@@ -51,6 +51,7 @@
           "microphonePermission": false
         }
       ],
+      "./plugins/withNativeQuickWidget",
       [
         "expo-widgets",
         {
@@ -72,8 +73,7 @@
             }
           ]
         }
-      ],
-      "./plugins/withNativeQuickWidget"
+      ]
     ],
     "scheme": "peacee1",
     "extra": {
