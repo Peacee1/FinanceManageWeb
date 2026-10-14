@@ -6,6 +6,14 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+['Chuyển khoản nhanh qua','Quick transfer via','通过以下银行快速转账','次の銀行でクイック送金','다음 은행으로 빠른 송금','Быстрый перевод через'],
+['lúc','at','时间','時刻','시간','в'],
+['Quét mã','Scan code'],
+['Tài khoản người nhận','Recipient account'],
+['Bằng ứng dụng','Using app'],
+['Chuyển khoản','Transfer'],
+['Không lấy được liên kết ngân hàng.','Unable to retrieve the bank app link.'],
+['Ngân hàng chưa cung cấp liên kết mở app trực tiếp.','This bank does not provide a direct app link.'],
 ["Hướng dẫn widget Android","Android widget guide"],
 ["Widget đặt trên màn hình chính để mở nhanh các chức năng của Peacee1.","Place a widget on your Home Screen to quickly open Peacee1 features."],
 ["Widget Android đang được phát triển.","The Android widget is in development."],
