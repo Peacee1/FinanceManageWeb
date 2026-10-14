@@ -6,6 +6,16 @@ export const languages = [{value:'vi',label:'Tiếng Việt'},{value:'en',label:
 export const LanguageContext = createContext<Language>('en');
 // Vietnamese source labels map to English, Chinese, Japanese and Korean.
 const rows = [
+["Ghi lại khoản chi nhỏ hôm nay để hiểu rõ thói quen của bạn.", "Record today’s small expenses to understand your habits.", "记录今天的小额支出，了解自己的习惯。", "今日の小さな支出を記録して、自分の習慣を知ろう。", "오늘의 작은 지출을 기록해 소비 습관을 이해하세요.", "Записывайте небольшие расходы сегодня, чтобы понять свои привычки."],
+["Trước khi mua, hãy hỏi: mình cần nó hay chỉ đang muốn nó?", "Before buying, ask: do I need this, or do I just want it?", "购买前问自己：这是需要，还是只是想要？", "買う前に、本当に必要か、ただ欲しいだけか考えよう。", "구매 전에 필요한 것인지, 단지 원하는 것인지 생각해 보세요.", "Перед покупкой спросите себя: мне это нужно или просто хочется?"],
+["Tiết kiệm một chút đều đặn cũng tạo nên thay đổi lớn.", "Saving a little consistently can make a big difference.", "坚持储蓄一点点，也能带来大改变。", "少しずつ続ける貯蓄が、大きな変化につながる。", "꾸준한 작은 저축이 큰 변화를 만듭니다.", "Регулярные небольшие сбережения могут многое изменить."],
+["Một kế hoạch chi tiêu tốt dành chỗ cho cả hiện tại và tương lai.", "A good spending plan makes room for today and tomorrow.", "好的支出计划兼顾现在与未来。", "良い支出計画は、今と未来の両方を大切にする。", "좋은 지출 계획은 현재와 미래를 함께 고려합니다.", "Хороший план расходов учитывает настоящее и будущее."],
+["Cho mình một ngày suy nghĩ trước một món đồ ngoài kế hoạch.", "Give yourself a day to think before an unplanned purchase.", "计划外购物前，给自己一天思考。", "予定外の買い物は、一日考えてから決めよう。", "계획에 없던 구매는 하루 더 생각해 보세요.", "Дайте себе день на размышление перед незапланированной покупкой."],
+["Thói quen chi tiêu", "Spending habit", "消费习惯", "支出の習慣", "소비 습관", "Привычки расходов"],
+["MB Bank chỉ nhận chữ không dấu, số và khoảng trắng, tối đa 50 ký tự.", "MB Bank accepts only unaccented letters, numbers and spaces, up to 50 characters."],
+["Nội dung chuyển khoản không hợp lệ với ngân hàng này.", "The transfer message is not valid for this bank."],
+["Không đọc được liên kết mở ngân hàng. Vui lòng thử lại.", "Unable to read the bank app link. Please try again."],
+
 ['Chuyển khoản nhanh qua','Quick transfer via','通过以下银行快速转账','次の銀行でクイック送金','다음 은행으로 빠른 송금','Быстрый перевод через'],
 ['lúc','at','时间','時刻','시간','в'],
 ['Quét mã','Scan code'],

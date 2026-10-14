@@ -66,6 +66,7 @@ struct Peacee1WidgetView: View {
   private var content: some View {
     VStack(alignment: .leading, spacing: 16) {
       heading
+      Spacer(minLength: 0)
       if family == .systemSmall {
         action("expense", "Add expense", "plus", "peacee1:///home?action=expense")
       } else if family == .systemLarge {
@@ -79,7 +80,7 @@ struct Peacee1WidgetView: View {
             VStack(spacing: 10) {
               Image(systemName: "chart.bar").font(.system(size: 24)).foregroundStyle(ink)
               Text(label("todayLabel", "Today’s spending")).font(.system(size: 12))
-              Text(label("todayAmount", "—")).font(.system(size: 20, weight: .bold)).minimumScaleFactor(0.6).lineLimit(1)
+              Text(label("todayAmount", "0 ₫")).font(.system(size: 26, weight: .bold)).minimumScaleFactor(0.6).lineLimit(1)
               Text(label("updatedDate", "")).font(.system(size: 10))
             }.foregroundStyle(text).padding(12).frame(maxWidth: .infinity).background(button, in: RoundedRectangle(cornerRadius: 18))
           }
@@ -90,6 +91,17 @@ struct Peacee1WidgetView: View {
           action("scan", "Scan QR", "qrcode.viewfinder", "peacee1:///home?action=qr")
           action("calendar", "Calendar", "calendar", "peacee1:///calendar")
         }
+      }
+      Spacer(minLength: 0)
+      if family == .systemLarge {
+        VStack(alignment: .leading, spacing: 8) {
+          HStack(spacing: 6) {
+            Image(systemName: "quote.bubble").foregroundStyle(ink)
+            Text(label("tipLabel", "Spending habit")).font(.system(size: 11, weight: .semibold)).foregroundStyle(color("muted", "#6B6B65"))
+          }
+          Text(label("tip", "Record today’s small expenses to understand your habits."))
+            .font(.system(size: 14, weight: .medium)).foregroundStyle(text).lineLimit(4).minimumScaleFactor(0.8)
+        }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(button, in: RoundedRectangle(cornerRadius: 18))
       }
     }.padding(16).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
   }
