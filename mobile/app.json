@@ -24,7 +24,7 @@
       "permissions": [
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
-      "versionCode": 9
+      "versionCode": 10
     },
     "web": {
       "favicon": "./assets/app-logo-minimal-purple-v2.png",
@@ -51,6 +51,7 @@
           "microphonePermission": false
         }
       ],
+      "./plugins/withNativeQuickWidget",
       [
         "expo-widgets",
         {

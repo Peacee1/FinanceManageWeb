@@ -33,5 +33,7 @@ test('creates only the trusted bank link and encodes transfer memo', () => {
   assert.equal(link.origin, 'https://dl.vietqr.io');
   assert.equal(link.searchParams.get('ba'), '00123456789@mb');
   assert.equal(link.searchParams.get('tn'), 'Lunch & tea');
+  // MB requires the callback URL to return a signed QRPay link instead of its home scheme.
+  assert.equal(link.searchParams.get('url'), 'https://finance.peacee1.io.vn');
   assert.throws(() => paymentLink('javascript:alert(1)', recipient, '40000', ''));
 });

@@ -45,7 +45,7 @@ export function parseVietQr(payload:string):Recipient {
 export function paymentLink(appId:string, recipient:Recipient, amount:string, memo:string) {
   if (!/^[a-zA-Z0-9_-]+$/.test(appId)) throw new Error('Ứng dụng ngân hàng không hợp lệ.');
   if (!/^\d+$/.test(String(amount)) || !Number.isSafeInteger(Number(amount)) || Number(amount) <= 0) throw new Error('Nhập số tiền VND hợp lệ.');
-  const params={ app: appId, ba: `${recipient.account}@${recipient.bankCode || recipient.bankBin}`, am: String(amount), tn: memo };
+  const params={ app: appId, ba: `${recipient.account}@${recipient.bankCode || recipient.bankBin}`, am: String(amount), tn: memo, url: 'https://finance.peacee1.io.vn' };
   const query=Object.entries(params).map(([key,value])=>`${key}=${encodeURIComponent(value)}`).join('&');
   return `https://dl.vietqr.io/pay?${query}`;
 }

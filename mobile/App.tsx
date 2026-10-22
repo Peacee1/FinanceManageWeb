@@ -1,3 +1,4 @@
+import {widgetTip} from './src/widgets/widgetTip';
 import {useWidgetSpending} from './src/useWidgetSpending';
 import WidgetSetup from './src/WidgetSetup';
 import IphoneSetup from './src/IphoneSetup';
@@ -132,7 +133,7 @@ export default function MobileProvider({children}:{children:React.ReactNode}){
  const changeLanguage=async(value:Language)=>{await preferenceStore.setItemAsync(preferenceKeys.language,value);setLanguage(value);};
  const changeAccent=async(value:string)=>{if(!accents.some(item=>item.value===value))return;await preferenceStore.setItemAsync(preferenceKeys.accent,value);setAccent(value);};
  const widgetSpending=useWidgetSpending(api,finance.data);
- useEffect(()=>{if(Platform.OS!=='ios'||boot)return;try{updateQuickWidget({todayLabel:translate('Chi tiêu hôm nay',language),todayAmount:widgetSpending.amount,updatedDate:widgetSpending.date,palette:appearanceColors((theme==='system'?system:theme)==='dark'?'dark':'light',theme==='monochrome'?'monochrome':accent),expense:translate('Thêm khoản chi',language),scan:translate('Quét QR thanh toán',language),calendar:translate('Lịch',language),accent:appearanceColors((theme==='system'?system:theme)==='dark'?'dark':'light',theme==='monochrome'?'monochrome':accent).primary});}catch{/* Widgets require a native build with the extension installed. */}},[accent,theme,system,language,boot,widgetSpending.amount,widgetSpending.date]);
+ useEffect(()=>{if(Platform.OS!=='ios'||boot)return;try{updateQuickWidget({tip:translate(widgetTip(widgetSpending.date),language),tipLabel:translate('Thói quen chi tiêu',language),todayLabel:translate('Chi tiêu hôm nay',language),todayAmount:widgetSpending.amount,updatedDate:widgetSpending.date,palette:appearanceColors((theme==='system'?system:theme)==='dark'?'dark':'light',theme==='monochrome'?'monochrome':accent),expense:translate('Thêm khoản chi',language),scan:translate('Quét QR thanh toán',language),calendar:translate('Lịch',language),accent:appearanceColors((theme==='system'?system:theme)==='dark'?'dark':'light',theme==='monochrome'?'monochrome':accent).primary});}catch{/* Widgets require a native build with the extension installed. */}},[accent,theme,system,language,boot,widgetSpending.amount,widgetSpending.date]);
  const selected=(theme==='system'?system:theme)==='dark'?'dark':'light';
  const effectiveAccent=theme==='monochrome'?'monochrome':accent;
  const themed={...palettes[selected],...appearanceColors(selected,effectiveAccent)};
