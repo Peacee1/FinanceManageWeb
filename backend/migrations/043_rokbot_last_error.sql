@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS rokbot_last_error (
+ agent_id UUID PRIMARY KEY REFERENCES rokbot_agents(id) ON DELETE CASCADE,
+ version VARCHAR(40) NOT NULL,stage VARCHAR(80) NOT NULL,
+ message VARCHAR(2000) NOT NULL,screenshot TEXT,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

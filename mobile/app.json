@@ -4,7 +4,7 @@
     "slug": "peacee1-mobile",
     "version": "1.0.4",
     "orientation": "portrait",
-    "icon": "./assets/app-logo-minimal-purple-v2.png",
+    "icon": "./assets/peacee1-money-app-icon-1024.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
@@ -12,7 +12,7 @@
       "config": {
         "usesNonExemptEncryption": false
       },
-      "buildNumber": "7"
+      "buildNumber": "14"
     },
     "android": {
       "adaptiveIcon": {

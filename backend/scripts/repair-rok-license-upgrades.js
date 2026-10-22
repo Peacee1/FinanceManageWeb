@@ -1,0 +1,7 @@
+require('dotenv').config({quiet:true});const db=require('../config/db'),fs=require('fs');
+(async()=>{try{const count=await db.transaction(async c=>{await c.query('SELECT pg_advisory_xact_lock(904207)');const licenses=(await c.query('SELECT * FROM rokbot_licenses FOR UPDATE')).rows;const changes=[];
+ for(const license of licenses){const codes=(await c.query('SELECT id,capacity,days,redeemed_at FROM rokbot_codes WHERE redeemed_by=$1 ORDER BY redeemed_at,id',[license.user_id])).rows;let plan=null;
+  for(const code of codes){const at=new Date(code.redeemed_at).getTime(),duration=code.days*86400000;if(!plan||plan.expires<=at||code.capacity>plan.capacity)plan={capacity:code.capacity,expires:at+duration,codeId:code.id};else if(code.capacity===plan.capacity)plan={capacity:code.capacity,expires:plan.expires+duration,codeId:code.id};}
+  if(plan&&(plan.capacity!==license.capacity||Math.abs(plan.expires-new Date(license.expires_at).getTime())>1000))changes.push({before:license,after:plan});
+ }
+ if(changes.length){fs.writeFileSync('/home/ec2-user/finance-releases/license-upgrades-'+Date.now()+'.json',JSON.stringify(changes),{mode:0o600});for(const {before,after} of changes)await c.query('UPDATE rokbot_licenses SET capacity=$1,expires_at=$2,code_id=$3 WHERE user_id=$4',[after.capacity,new Date(after.expires),after.codeId,before.user_id]);}return changes.length;});console.log('Corrected licenses:',count);}finally{await db.close();}})().catch(e=>{console.error(e.code||e.message);process.exitCode=1;});

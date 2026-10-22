@@ -1,6 +1,6 @@
 (() => {
  const params=new URLSearchParams(location.search);
- function destination(){try{const value=new URL(params.get('returnTo')||'/',location.origin);if(value.username||value.password||value.protocol!=='https:'||!['peacee1.io.vn','www.peacee1.io.vn','finance.peacee1.io.vn','salesmanager.peacee1.io.vn','tasks.peacee1.io.vn','boardgame.peacee1.io.vn','beatmaker.peacee1.io.vn'].includes(value.host))return '/';if(value.origin===location.origin&&['/login','/register'].includes(value.pathname))return '/';return value.href;}catch{return '/';}}
+ function destination(){try{const value=new URL(params.get('returnTo')||'/',location.origin);if(value.username||value.password||value.protocol!=='https:'||!['peacee1.io.vn','www.peacee1.io.vn','finance.peacee1.io.vn','salesmanager.peacee1.io.vn','tasks.peacee1.io.vn','boardgame.peacee1.io.vn','beatmaker.peacee1.io.vn','rokbot.peacee1.io.vn'].includes(value.host))return '/';if(value.origin===location.origin&&['/login','/register'].includes(value.pathname))return '/';return value.href;}catch{return '/';}}
  const target=destination(),register=location.pathname==='/register';
  document.getElementById('email').type=register?'email':'text';document.querySelector('label[for=email]').textContent=register?'Email':'Email hoặc tài khoản nhân viên';
  document.title=register?'Đăng ký — Peacee1':'Đăng nhập — Peacee1';

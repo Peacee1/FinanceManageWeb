@@ -1,0 +1,4 @@
+require('dotenv').config({quiet:true});const db=require('../config/db'),fs=require('fs'),{setUserRun}=require('../utils/rokUserRun');
+db.transaction(async c=>{await c.query('SELECT pg_advisory_xact_lock(904207)');const name='041_rokbot_user_run.sql';if(!(await c.query('SELECT 1 FROM schema_migrations WHERE name=$1',[name])).rows.length){await c.query(fs.readFileSync('migrations/'+name,'utf8'));await c.query('INSERT INTO schema_migrations(name) VALUES($1)',[name]);}
+ const users=(await c.query('SELECT user_id FROM rokbot_licenses WHERE auto_run=true AND expires_at>now()')).rows;for(const user of users){try{const result=await setUserRun(c,user.user_id,true);console.log('User',user.user_id,'registered governors enabled',result.count);}catch(e){if(e.status!==403)throw e;console.log('User exceeds capacity; retained prior enabled governors');}}
+}).catch(e=>{console.error(e.code||e.message);process.exitCode=1;}).finally(()=>db.close());
