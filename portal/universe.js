@@ -13,7 +13,7 @@
   function motion(){cancelAnimationFrame(frame);clockOrigin=performance.now()-orbitTime;scene.classList.toggle('paused',document.hidden);if(!document.hidden)frame=requestAnimationFrame(loop);}
   scene.addEventListener('pointermove',event=>{pointer={x:Math.max(-.5,Math.min(.5,event.clientX/width-.5)),y:Math.max(-.5,Math.min(.5,event.clientY/height-.5))};},{passive:true});
   scene.addEventListener('pointerleave',()=>{pointer={x:0,y:0};});
-  explore.addEventListener('click',()=>{const active=scene.classList.toggle('immersive');explore.setAttribute('aria-pressed',String(active));explore.querySelector('span:last-child').textContent=active?'Trở về':'Bước vào không gian';});
+  explore.addEventListener('click',()=>{if(scene.classList.contains('entering'))return;const active=!scene.classList.contains('immersive');if(active){scene.classList.add('entering');setTimeout(()=>{scene.classList.add('immersive');scene.classList.remove('entering');explore.setAttribute('aria-pressed','true');explore.querySelector('span:last-child').textContent='Trở về';},1000);}else{scene.classList.remove('immersive');explore.setAttribute('aria-pressed','false');explore.querySelector('span:last-child').textContent='Bước vào không gian';}});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&scene.classList.contains('immersive'))explore.click();});
   document.addEventListener('visibilitychange',motion);window.addEventListener('resize',resize);resize();motion();
 })();
