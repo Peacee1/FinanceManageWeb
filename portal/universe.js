@@ -36,14 +36,48 @@
   const stopScroll=()=>{cancelAnimationFrame(scrollFrame);scrollFrame=0;wind.style.opacity='0';document.body.classList.remove('auto-scrolling');};
   for(const event of ['wheel','touchstart'])window.addEventListener(event,stopScroll,{passive:true});
   document.addEventListener('keydown',event=>{if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(event.key))stopScroll();});
-  for(const link of document.querySelectorAll('a[href="#products"],a[href="#modules"],a[href="#money"]'))link.addEventListener('click',event=>{
+  for(const link of document.querySelectorAll('a[href="#products"],a[href="#modules"]'))link.addEventListener('click',event=>{
     if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     const target=document.querySelector(link.getAttribute('href'));if(!target)return;
+    if(link.getAttribute('href')==='#products'&&products.hidden){event.preventDefault();void switchProduct(false);return;}
     event.preventDefault();stopScroll();document.body.classList.add('auto-scrolling');
     const start=window.scrollY,end=Math.max(0,target.getBoundingClientRect().top+start),begin=performance.now(),duration=1300,scrollingDown=end>start;
     wind.classList.toggle('wind-down',!scrollingDown);history.replaceState(null,'',link.getAttribute('href'));
     function step(now){const t=Math.min(1,(now-begin)/duration),ease=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;window.scrollTo({top:start+(end-start)*ease,behavior:'instant'});wind.style.opacity=String(Math.pow(Math.sin(t*Math.PI),.55)*.85);Array.from(wind.children).forEach((streak,i)=>{const phase=((now-begin)/680+i*.151)%1;streak.style.transform=`translate3d(0,${scrollingDown?115-phase*160:-35+phase*160}vh,0) rotate(${i<6?5:-5}deg)`;});if(t<1)scrollFrame=requestAnimationFrame(step);else stopScroll();}
     scrollFrame=requestAnimationFrame(step);
   });
+
+  const products=document.getElementById('products'),money=document.getElementById('money'),stage=document.querySelector('.product-stage');
+  let changingProduct=false,productScroll=0;
+  async function switchProduct(showMoney,updateHistory=true){
+    if(changingProduct||showMoney===products.hidden)return;
+    changingProduct=true;stopScroll();
+    const outgoing=showMoney?products:money,incoming=showMoney?money:products;
+    if(showMoney)productScroll=window.scrollY;
+    const stageTop=stage.getBoundingClientRect().top+window.scrollY,outgoingTop=outgoing.getBoundingClientRect().top;
+    stage.style.height=outgoing.offsetHeight+'px';
+    const oldOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
+    incoming.hidden=false;
+    for(const node of [outgoing,incoming]){node.inert=true;node.style.position='fixed';node.style.left='0';node.style.width='100%';node.style.margin='0';node.style.zIndex='30';node.style.willChange='transform';}
+    outgoing.style.top=outgoingTop+'px';incoming.style.top=(showMoney?0:stageTop-productScroll)+'px';incoming.style.zIndex='31';
+    const direction=showMoney?-1:1,duration=1150,options={duration,easing:'cubic-bezier(.65,0,.25,1)',fill:'both'};
+    wind.classList.add('horizontal-wind');wind.style.opacity='0';
+    const windStart=performance.now();let windFrame;
+    function horizontalWind(now){const t=Math.min(1,(now-windStart)/duration);wind.style.opacity=String(Math.pow(Math.sin(t*Math.PI),.65)*.8);Array.from(wind.children).forEach((streak,index)=>{const phase=(t*1.8+index*.137)%1;streak.style.top=(8+(index%6)*15)+'%';streak.style.left='0';streak.style.right='auto';streak.style.transform=`translate3d(${direction>0?-30+phase*160:130-phase*160}vw,0,0)`;});if(t<1)windFrame=requestAnimationFrame(horizontalWind);}
+    windFrame=requestAnimationFrame(horizontalWind);
+    const animations=[outgoing.animate([{transform:'translateX(0)'},{transform:`translateX(${direction*100}%)`}],options),incoming.animate([{transform:`translateX(${-direction*100}%)`},{transform:'translateX(0)'}],options)];
+    try{await Promise.all(animations.map(animation=>animation.finished));}finally{
+      outgoing.hidden=true;for(const node of [outgoing,incoming]){node.removeAttribute('style');node.inert=false;}stage.style.height='';document.body.style.overflow=oldOverflow;
+      window.scrollTo({top:showMoney?stageTop:productScroll,behavior:'instant'});
+      animations.forEach(animation=>animation.cancel());cancelAnimationFrame(windFrame);wind.style.opacity='0';wind.classList.remove('horizontal-wind');for(const streak of wind.children)streak.removeAttribute('style');Array.from(wind.children).forEach((streak,i)=>streak.style.setProperty('--lane',String(i)));
+      if(updateHistory)history.pushState(null,'',showMoney?'#money':'#products');changingProduct=false;
+    }
+  }
+  for(const link of document.querySelectorAll('a[href="#money"]'))link.addEventListener('click',event=>{if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();void switchProduct(true);});
+  document.querySelector('.money-back').addEventListener('click',()=>void switchProduct(false));
+  window.addEventListener('popstate',()=>void switchProduct(location.hash==='#money',false));
+  if(location.hash==='#money'){productScroll=stage.offsetTop;products.hidden=true;money.hidden=false;requestAnimationFrame(()=>window.scrollTo({top:stage.offsetTop,behavior:'instant'}));}
 })();
+
+
 
