@@ -31,7 +31,7 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&scene.classList.contains('immersive'))explore.click();});
   document.addEventListener('visibilitychange',motion);window.addEventListener('resize',resize);resize();motion();
   const wind=document.createElement('div');wind.className='scroll-wind';wind.setAttribute('aria-hidden','true');
-  for(let i=0;i<8;i++){const streak=document.createElement('i');streak.style.setProperty('--lane',String(i));wind.append(streak);}document.body.append(wind);
+  for(let i=0;i<12;i++){const streak=document.createElement('i');streak.style.setProperty('--lane',String(i));wind.append(streak);}document.body.append(wind);
   let scrollFrame=0;
   const stopScroll=()=>{cancelAnimationFrame(scrollFrame);scrollFrame=0;wind.style.opacity='0';document.body.classList.remove('auto-scrolling');};
   for(const event of ['wheel','touchstart'])window.addEventListener(event,stopScroll,{passive:true});
@@ -42,7 +42,7 @@
     event.preventDefault();stopScroll();document.body.classList.add('auto-scrolling');
     const start=window.scrollY,end=Math.max(0,target.getBoundingClientRect().top+start),begin=performance.now(),duration=1300;
     history.replaceState(null,'',link.getAttribute('href'));
-    function step(now){const t=Math.min(1,(now-begin)/duration),ease=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;window.scrollTo({top:start+(end-start)*ease,behavior:'instant'});wind.style.opacity=String(Math.sin(t*Math.PI)*.42);Array.from(wind.children).forEach((streak,i)=>{const phase=((now-begin)/680+i*.151)%1;streak.style.transform=`translate3d(0,${-phase*155}vh,0) rotate(${i<4?8:-8}deg)`;});if(t<1)scrollFrame=requestAnimationFrame(step);else stopScroll();}
+    function step(now){const t=Math.min(1,(now-begin)/duration),ease=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;window.scrollTo({top:start+(end-start)*ease,behavior:'instant'});wind.style.opacity=String(Math.pow(Math.sin(t*Math.PI),.55)*.85);Array.from(wind.children).forEach((streak,i)=>{const phase=((now-begin)/680+i*.151)%1;streak.style.transform=`translate3d(0,${115-phase*160}vh,0) rotate(${i<6?5:-5}deg)`;});if(t<1)scrollFrame=requestAnimationFrame(step);else stopScroll();}
     scrollFrame=requestAnimationFrame(step);
   });
 })();
