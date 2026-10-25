@@ -10,7 +10,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.peacee1.task",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false
