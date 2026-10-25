@@ -1,0 +1,17 @@
+{
+  "cli": {
+    "appVersionSource": "local"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "credentialsSource": "local"
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  }
+}

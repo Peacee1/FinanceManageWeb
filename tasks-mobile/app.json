@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Peacee1 Task",
+    "slug": "peacee1-task",
+    "owner": "peacee12",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "peacee1task",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.peacee1.task",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9a556094-84fc-40c4-8dcd-f3672bcef9ca"
+      }
+    }
+  }
+}
