@@ -14,7 +14,7 @@ if /I "%~1"=="OFFLINE" goto offline
 echo Usage: build.bat PC ^| LD ^| OFFLINE
 exit /b 0
 :pc
-.venv\Scripts\python.exe -m PyInstaller --noconfirm ROKFarmBotFleet_v52.spec
+.venv\Scripts\python.exe -m PyInstaller --noconfirm ROKFarmBotFleet_v53.spec
 exit /b %errorlevel%
 :ld
 .venv\Scripts\python.exe -m PyInstaller --noconfirm ROKFarmBotLDPlayer_v18.spec

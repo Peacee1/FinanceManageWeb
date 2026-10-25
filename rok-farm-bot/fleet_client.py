@@ -52,7 +52,7 @@ class FleetClient:
         while not self.closed.is_set():
             heartbeat_delay=15
             try:
-                d=self.request('heartbeat',{'version':'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v52','status':'loading' if getattr(self.app,'vision',None) is None else 'running' if self.current else 'idle'})
+                d=self.request('heartbeat',{'version':'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v53','status':'loading' if getattr(self.app,'vision',None) is None else 'running' if self.current else 'idle'})
                 if not self.last_ok and hasattr(self.app,'log'):self.app.log('Đã kết nối server — sẵn sàng nhận lệnh từ web.')
                 with self.lock:
                     self.tasks=[t for t in d.get('tasks',[]) if t['lease_id'] not in self.completed_leases];self.desired=d['desired'];self.last_ok=time.monotonic()
@@ -166,7 +166,7 @@ class FleetClient:
         if hasattr(self.app,'root') and not getattr(self.app,'input_diagnostics',None):
             from input_diagnostics import InputDiagnostics
             self.app.input_diagnostics=InputDiagnostics(self.app);self.app.input_diagnostics.install()
-        self.app.error_reporter=ErrorReporter(self.app,self.server,self.token,'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v52',self.closed)
+        self.app.error_reporter=ErrorReporter(self.app,self.server,self.token,'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v53',self.closed)
         self.app.error_reporter.start()
         try:
             import ctypes,platform

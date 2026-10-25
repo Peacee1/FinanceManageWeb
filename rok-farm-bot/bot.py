@@ -944,6 +944,9 @@ class App:
 
 
 if __name__ == '__main__':
+    if '--check-https' in sys.argv:
+        from startup_diagnostics import check_https
+        sys.exit(check_https(ROOT))
     if '--check-ocr' in sys.argv:
         from startup_diagnostics import check_ocr
         sys.exit(check_ocr(ASSETS, ROOT))

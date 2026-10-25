@@ -25,3 +25,16 @@ def check_ocr(assets, root):
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf8')
     return 0 if report['ok'] else 1
+
+def check_https(root):
+    report = {'ok': False}
+    try:
+        import urllib.request
+        with urllib.request.urlopen('https://rokbot.peacee1.io.vn', timeout=15) as response:
+            report.update(ok=response.status == 200, status=response.status)
+    except Exception as error:
+        report.update(error=type(error).__name__, message=str(error)[:1000])
+    output = Path(root)/'https-startup-check.json'
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf8')
+    return 0 if report['ok'] else 1

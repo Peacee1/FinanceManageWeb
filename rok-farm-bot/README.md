@@ -1,6 +1,6 @@
 # ROK Farm Bot
 
-Mã nguồn client Windows cho Rise of Kingdoms: PC online v52, LDPlayer v18 và PC offline v1.
+Mã nguồn client Windows cho Rise of Kingdoms: PC online v53, LDPlayer v18 và PC offline v1.
 
 ## Chạy và build
 
