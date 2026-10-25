@@ -13,7 +13,21 @@
   function motion(){cancelAnimationFrame(frame);clockOrigin=performance.now()-orbitTime;scene.classList.toggle('paused',document.hidden);if(!document.hidden)frame=requestAnimationFrame(loop);}
   scene.addEventListener('pointermove',event=>{pointer={x:Math.max(-.5,Math.min(.5,event.clientX/width-.5)),y:Math.max(-.5,Math.min(.5,event.clientY/height-.5))};},{passive:true});
   scene.addEventListener('pointerleave',()=>{pointer={x:0,y:0};});
-  explore.addEventListener('click',()=>{if(scene.classList.contains('entering'))return;const active=!scene.classList.contains('immersive');if(active){scene.classList.add('entering');setTimeout(()=>{scene.classList.add('immersive');scene.classList.remove('entering');explore.setAttribute('aria-pressed','true');explore.querySelector('span:last-child').textContent='Trở về';},1000);}else{scene.classList.remove('immersive');explore.setAttribute('aria-pressed','false');explore.querySelector('span:last-child').textContent='Bước vào không gian';}});
+  let cameraRunning=false;
+  explore.addEventListener('click',()=>{
+    if(cameraRunning)return;
+    cameraRunning=true;
+    const active=!scene.classList.contains('immersive'),world=scene.querySelector('.celestial');
+    const before=getComputedStyle(world),from={left:before.left,top:before.top,transform:before.transform};
+    scene.classList.toggle('immersive',active);
+    const after=getComputedStyle(world),to={left:after.left,top:after.top,transform:after.transform};
+    const options={duration:2800,easing:'cubic-bezier(.22,.61,.36,1)'};
+    world.animate([from,to],options).finished.finally(()=>{cameraRunning=false;});
+    canvas.animate([{transform:active?'translate(0,0) scale(1)':'translate(-12%,3%) scale(1.28)'},{transform:active?'translate(-12%,3%) scale(1.28)':'translate(0,0) scale(1)'}],{...options,fill:'forwards'});
+    for(const layer of scene.querySelectorAll('.space-mist,.cosmic-haze'))layer.animate([{transform:active?'translateX(0) scale(1)':'translateX(-8%) scale(1.15)'},{transform:active?'translateX(-8%) scale(1.15)':'translateX(0) scale(1)'}],{...options,fill:'forwards'});
+    for(const text of scene.querySelectorAll('.intro>:not(#explore)'))text.animate([{opacity:active?1:0,transform:active?'translate(0,0)':'translate(100px,-20px)'},{opacity:active?0:1,transform:active?'translate(100px,-20px)':'translate(0,0)'}],{duration:active?1600:2200,easing:'ease-in-out'});
+    explore.setAttribute('aria-pressed',String(active));explore.querySelector('span:last-child').textContent=active?'Trở về':'Bước vào không gian';
+  });
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&scene.classList.contains('immersive'))explore.click();});
   document.addEventListener('visibilitychange',motion);window.addEventListener('resize',resize);resize();motion();
 })();
