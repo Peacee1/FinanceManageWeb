@@ -2,11 +2,14 @@ import type {Session} from './types';
 
 export const apiUrl = 'https://tasks.peacee1.io.vn/api';
 export async function authenticate(register: boolean, input: {email: string; password: string; name?: string}, fetcher: typeof fetch = fetch): Promise<Session | null> {
-  const response = await fetcher(`${apiUrl}/auth/${register ? 'register' : 'login'}`, {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetcher(`${apiUrl}/auth/${register ? 'register' : 'login'}`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json', Accept: 'application/json'},
     body: JSON.stringify({...input, email: input.email.trim(), clientType: 'native', loginType: 'owner'}),
-    signal: AbortSignal.timeout(15000),
+    signal: controller.signal,
   });
   const data = await response.json();
   if (!response.ok) {
@@ -17,5 +20,6 @@ export async function authenticate(register: boolean, input: {email: string; pas
   if (typeof data.token !== 'string' || !Number.isSafeInteger(data.user?.id) || data.user?.role !== 'owner') {
     throw new Error('Vui lòng sử dụng tài khoản cá nhân Peacee1.');
   }
-  return data as Session;
+    return data as Session;
+  } finally {clearTimeout(timer);}
 }
