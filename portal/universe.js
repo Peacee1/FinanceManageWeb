@@ -36,7 +36,7 @@
   const stopScroll=()=>{cancelAnimationFrame(scrollFrame);scrollFrame=0;wind.style.opacity='0';document.body.classList.remove('auto-scrolling');};
   for(const event of ['wheel','touchstart'])window.addEventListener(event,stopScroll,{passive:true});
   document.addEventListener('keydown',event=>{if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(event.key))stopScroll();});
-  for(const link of document.querySelectorAll('a[href="#products"],a[href="#modules"]'))link.addEventListener('click',event=>{
+  for(const link of document.querySelectorAll('a[href="#products"],a[href="#modules"],a[href="#money"]'))link.addEventListener('click',event=>{
     if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     const target=document.querySelector(link.getAttribute('href'));if(!target)return;
     event.preventDefault();stopScroll();document.body.classList.add('auto-scrolling');
