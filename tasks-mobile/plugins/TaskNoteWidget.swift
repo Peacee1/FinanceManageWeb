@@ -77,8 +77,6 @@ struct TaskNoteWidget: Widget {
     }.configurationDisplayName("Tờ note").description("Những việc cần làm trên một tờ ghi chú.")
       .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
-  @WidgetConfigurationBuilder var body: some WidgetConfiguration {
-    if #available(iOS 17.0, *) {configuration.contentMarginsDisabled()}
-    else {configuration}
-  }
+  var body: some WidgetConfiguration {configuration}
 }
+
