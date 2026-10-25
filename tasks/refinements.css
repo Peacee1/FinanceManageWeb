@@ -31,3 +31,23 @@ input,select,textarea{font-size:16px}
  .day button{font-size:10px;height:25px;padding:4px 3px;border:0;background:var(--bg)}
  .profile-card{box-shadow:none}
 }
+.month-card{padding:22px;background:var(--panel);border-radius:24px;border:1px solid var(--line)}
+.month-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:20px}
+.month-heading h2{font-size:20px;white-space:nowrap;letter-spacing:-.5px}.month-heading h2 span{color:var(--muted);font-weight:400;font-size:15px}
+.month-heading>div{display:flex;align-items:center;gap:2px}.month-heading button{background:transparent;border:0;padding:6px;min-width:36px;min-height:36px;border-radius:10px;font-size:24px;line-height:1}
+.month-heading [data-calendar-today]{font-size:11px;font-weight:600;min-width:54px}
+.month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:center}
+.weekday{text-align:center;font-size:11px;font-weight:500;color:var(--muted);padding-bottom:10px}
+.month-day{height:52px;min-width:0;min-height:44px;padding:6px 0 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--text);font-size:15px;font-weight:500}
+.month-day.today:not(.selected){border-color:var(--line);font-weight:750}.month-day.selected{background:var(--accent);color:var(--on-accent)}
+.day-markers{display:flex;gap:3px;height:4px}.day-markers i{display:block;width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.65}
+.day-agenda{margin-top:26px}.agenda-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.agenda-heading h2{font-size:19px}.agenda-heading>span{font-size:12px;color:var(--muted)}
+.agenda-empty{padding:28px 18px;color:var(--muted);text-align:center;font-size:13px;border:1px dashed var(--line);border-radius:18px}
+.day-agenda .task h3{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:15px}
+@media(max-width:1023px){
+ .month-card{padding:18px 12px;border-radius:22px}.month-heading{padding:0 4px;margin-bottom:16px}.month-heading h2{font-size:19px}
+ .month-grid{gap:4px}.month-day{height:44px;border-radius:12px}.weekday{padding-bottom:6px}
+ .tabbar{bottom:max(8px,calc(env(safe-area-inset-bottom) - 18px));height:72px;padding:6px 8px;left:14px;right:14px;border-radius:26px}
+ .tabbar .create{flex-basis:52px;width:52px;height:52px;border-radius:17px}.tabbar svg{width:22px;height:22px}.tabbar button{font-size:10px;gap:3px}
+ .workspace{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+}
