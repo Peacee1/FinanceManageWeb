@@ -40,9 +40,9 @@
     if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     const target=document.querySelector(link.getAttribute('href'));if(!target)return;
     event.preventDefault();stopScroll();document.body.classList.add('auto-scrolling');
-    const start=window.scrollY,end=Math.max(0,target.getBoundingClientRect().top+start),begin=performance.now(),duration=1300;
-    history.replaceState(null,'',link.getAttribute('href'));
-    function step(now){const t=Math.min(1,(now-begin)/duration),ease=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;window.scrollTo({top:start+(end-start)*ease,behavior:'instant'});wind.style.opacity=String(Math.pow(Math.sin(t*Math.PI),.55)*.85);Array.from(wind.children).forEach((streak,i)=>{const phase=((now-begin)/680+i*.151)%1;streak.style.transform=`translate3d(0,${115-phase*160}vh,0) rotate(${i<6?5:-5}deg)`;});if(t<1)scrollFrame=requestAnimationFrame(step);else stopScroll();}
+    const start=window.scrollY,end=Math.max(0,target.getBoundingClientRect().top+start),begin=performance.now(),duration=1300,scrollingDown=end>start;
+    wind.classList.toggle('wind-down',!scrollingDown);history.replaceState(null,'',link.getAttribute('href'));
+    function step(now){const t=Math.min(1,(now-begin)/duration),ease=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;window.scrollTo({top:start+(end-start)*ease,behavior:'instant'});wind.style.opacity=String(Math.pow(Math.sin(t*Math.PI),.55)*.85);Array.from(wind.children).forEach((streak,i)=>{const phase=((now-begin)/680+i*.151)%1;streak.style.transform=`translate3d(0,${scrollingDown?115-phase*160:-35+phase*160}vh,0) rotate(${i<6?5:-5}deg)`;});if(t<1)scrollFrame=requestAnimationFrame(step);else stopScroll();}
     scrollFrame=requestAnimationFrame(step);
   });
 })();
