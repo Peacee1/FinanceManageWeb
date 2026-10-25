@@ -1,0 +1,8 @@
+pyautogui>=0.9.54
+opencv-python>=4.10
+Pillow>=10
+keyboard>=0.13.5
+rapidocr-onnxruntime==1.4.4
+
+# Packaging: build.bat replaces RapidOCR desktop OpenCV with
+# opencv-python-headless==5.0.0.93 to avoid Windows Server Media Foundation DLLs.
