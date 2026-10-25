@@ -1,10 +1,10 @@
 # ROK Bot — PC
 
-Phiên bản: v51. Dành cho Windows 64-bit; đã đóng kèm Python và OCR, không cần cài Python riêng.
+Phiên bản: v52. Dành cho Windows 64-bit; đã đóng kèm Python và OCR, không cần cài Python riêng.
 
 1. Giải nén ZIP vào một thư mục riêng.
 2. Mở Rise of Kingdoms bản PC, dùng giao diện tiếng Việt.
-3. Mở `ROKFarmBotFleet_v51.exe`.
+3. Mở `ROKFarmBotFleet_v52.exe`.
 4. Lần đầu, bấm **Kết nối web / VPS** và chọn file ghép nối client được tải từ trang quản trị. Mỗi máy dùng file ghép nối riêng.
 5. Bấm Khởi chạy trên web để giao việc. Giữ game hiển thị, không thu nhỏ cửa sổ. F8 hoặc nút Dừng để ngừng bot.
 

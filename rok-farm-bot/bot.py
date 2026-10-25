@@ -141,7 +141,7 @@ class App:
         self.refresh_progress()
         self.root.after(100, self.drain_messages)
         if '--offline' not in sys.argv and '--smoke-test' not in sys.argv and (ROOT/'first-client.json').is_file():
-            self.root.after(1500, self.connect_fleet)
+            self.root.after(1500, lambda: self.connect_fleet(use_saved=True))
         if '--smoke-test' in sys.argv:
             self.root.after(1200, self.smoke_test)
         self.root.mainloop()
@@ -337,7 +337,7 @@ class App:
         if getattr(self, 'fleet', None):
             self.fleet.closed.set()
 
-    def connect_fleet(self):
+    def connect_fleet(self, use_saved=False):
         if '--offline' in sys.argv:
             self.log('Bản PC Offline không kết nối server; dùng nút Bắt đầu để chạy tại máy.')
             return
@@ -346,12 +346,14 @@ class App:
             return
         from tkinter import filedialog
         saved=ROOT/'first-client.json'
-        path = str(saved) if saved.is_file() else filedialog.askopenfilename(title='Chọn file ghép nối từ web', filetypes=[('JSON','*.json')])
+        path = str(saved) if use_saved and saved.is_file() else filedialog.askopenfilename(title='Chọn file ghép nối từ web', filetypes=[('JSON','*.json')])
         if not path:
             return
         try:
             from fleet_client import FleetClient
-            pairing=json.loads(Path(path).read_text('utf-8-sig'))
+            from pairing import load_pairing
+            pairing=load_pairing(path)
+            self.log('Đã đọc JSON ghép nối: '+Path(path).name+'; client '+pairing['botId'])
             self.fleet=FleetClient(self,pairing,ROOT)
             if Path(path).resolve()!=saved.resolve():saved.write_text(json.dumps(pairing),'utf-8')
             self.stop.clear()

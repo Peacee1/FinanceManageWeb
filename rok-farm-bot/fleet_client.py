@@ -52,7 +52,7 @@ class FleetClient:
         while not self.closed.is_set():
             heartbeat_delay=15
             try:
-                d=self.request('heartbeat',{'version':'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v51','status':'loading' if getattr(self.app,'vision',None) is None else 'running' if self.current else 'idle'})
+                d=self.request('heartbeat',{'version':'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v52','status':'loading' if getattr(self.app,'vision',None) is None else 'running' if self.current else 'idle'})
                 if not self.last_ok and hasattr(self.app,'log'):self.app.log('Đã kết nối server — sẵn sàng nhận lệnh từ web.')
                 with self.lock:
                     self.tasks=[t for t in d.get('tasks',[]) if t['lease_id'] not in self.completed_leases];self.desired=d['desired'];self.last_ok=time.monotonic()
@@ -64,7 +64,11 @@ class FleetClient:
                 if self.current_governor and not any(str(t['id'])==str(self.current) and
                     any(g['id']==self.current_governor and g.get('enabled') for g in t.get('governors',[])) for t in self.tasks):
                     self.app.stop.set()
-            except Exception:
+            except Exception as error:
+                if time.monotonic()-last_error_log>=30:
+                    message=str(error).replace(self.token,'[token]')[:400]
+                    if hasattr(self.app,'log'):self.app.log('Chưa gửi được heartbeat: '+type(error).__name__+': '+message)
+                    last_error_log=time.monotonic()
                 heartbeat_delay=3
                 if time.monotonic()-self.last_ok>45:self.app.stop.set()
             self.closed.wait(heartbeat_delay)
@@ -162,7 +166,7 @@ class FleetClient:
         if hasattr(self.app,'root') and not getattr(self.app,'input_diagnostics',None):
             from input_diagnostics import InputDiagnostics
             self.app.input_diagnostics=InputDiagnostics(self.app);self.app.input_diagnostics.install()
-        self.app.error_reporter=ErrorReporter(self.app,self.server,self.token,'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v51',self.closed)
+        self.app.error_reporter=ErrorReporter(self.app,self.server,self.token,'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v52',self.closed)
         self.app.error_reporter.start()
         try:
             import ctypes,platform
