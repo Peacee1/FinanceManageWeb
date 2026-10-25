@@ -74,6 +74,10 @@
     }
   }
   for(const link of document.querySelectorAll('a[href="#money"]'))link.addEventListener('click',event=>{if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();void switchProduct(true);});
+  const moneyCard=document.querySelector('.money-card');
+  moneyCard.tabIndex=0;moneyCard.setAttribute('aria-label','Explore Peacee1 Money');
+  moneyCard.addEventListener('click',event=>{if(event.target.closest('a,button,.product-platforms')||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;void switchProduct(true);});
+  moneyCard.addEventListener('keydown',event=>{if(event.target!==moneyCard||!['Enter',' '].includes(event.key))return;event.preventDefault();void switchProduct(true);});
   document.querySelector('.money-back').addEventListener('click',()=>void switchProduct(false));
   window.addEventListener('popstate',()=>void switchProduct(location.hash==='#money',false));
   if(location.hash==='#money'){productScroll=stage.offsetTop;products.hidden=true;money.hidden=false;requestAnimationFrame(()=>window.scrollTo({top:stage.offsetTop,behavior:'instant'}));}
