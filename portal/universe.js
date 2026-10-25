@@ -12,8 +12,9 @@
   function loop(time){if(time-last>32){orbitTime+=Math.min(time-last,80);draw();last=time;}frame=requestAnimationFrame(loop);}
   function motion(){cancelAnimationFrame(frame);last=performance.now();scene.classList.toggle('paused',document.hidden);if(!document.hidden)frame=requestAnimationFrame(loop);}
   scene.addEventListener('pointermove',event=>{pointer={x:Math.max(-.5,Math.min(.5,event.clientX/width-.5)),y:Math.max(-.5,Math.min(.5,event.clientY/height-.5))};scene.style.setProperty('--scene-x',`${-pointer.x*44}px`);scene.style.setProperty('--scene-y',`${-pointer.y*30}px`);scene.style.setProperty('--px',`${pointer.x*5}deg`);scene.style.setProperty('--py',`${-pointer.y*5}deg`);},{passive:true});
-  scene.addEventListener('pointerleave',()=>{pointer={x:0,y:0};for(const name of ['--scene-x','--scene-y'])scene.style.setProperty(name,'0px');scene.style.setProperty('--px','0deg');scene.style.setProperty('--py','0deg');});
+  scene.addEventListener('pointerleave',()=>{pointer={x:0,y:0};});
   explore.addEventListener('click',()=>{const active=scene.classList.toggle('immersive');explore.setAttribute('aria-pressed',String(active));explore.querySelector('span:last-child').textContent=active?'Trở về':'Bước vào không gian';});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&scene.classList.contains('immersive'))explore.click();});
   document.addEventListener('visibilitychange',motion);window.addEventListener('resize',resize);resize();motion();
 })();
+
