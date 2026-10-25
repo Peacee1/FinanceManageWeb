@@ -942,4 +942,7 @@ class App:
 
 
 if __name__ == '__main__':
+    if '--check-ocr' in sys.argv:
+        from startup_diagnostics import check_ocr
+        sys.exit(check_ocr(ASSETS, ROOT))
     App()

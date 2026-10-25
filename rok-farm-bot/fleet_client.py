@@ -48,10 +48,11 @@ class FleetClient:
         self.app.game=GameWindow.find();self.app.game.focus()
 
     def heartbeat(self):
+        last_error_log=float('-inf')
         while not self.closed.is_set():
             heartbeat_delay=15
             try:
-                d=self.request('heartbeat',{'version':'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v50','status':'running' if self.current else 'idle'})
+                d=self.request('heartbeat',{'version':'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v51','status':'loading' if getattr(self.app,'vision',None) is None else 'running' if self.current else 'idle'})
                 if not self.last_ok and hasattr(self.app,'log'):self.app.log('Đã kết nối server — sẵn sàng nhận lệnh từ web.')
                 with self.lock:
                     self.tasks=[t for t in d.get('tasks',[]) if t['lease_id'] not in self.completed_leases];self.desired=d['desired'];self.last_ok=time.monotonic()
@@ -143,12 +144,25 @@ class FleetClient:
         self.app.log('Chưa đọc đủ số dư tài nguyên; giữ số liệu lần trước trên web.')
         return None
 
+    def initialize_vision(self):
+        while self.app.vision is None and not self.closed.is_set():
+            try:
+                from vision import Vision
+                self.app.vision=Vision(Path(__file__).parent/'assets',self.root/'vision-cache')
+                self.app.log('OCR đã sẵn sàng.')
+            except Exception as error:
+                self.app.stop.set()
+                message=str(error).replace(self.token,'[token]')[:700]
+                self.app.log('Không khởi tạo được OCR: '+type(error).__name__+': '+message+' — chưa thao tác game; thử lại sau 10 giây.')
+                self.closed.wait(10)
+        return self.app.vision is not None and not self.closed.is_set()
+
     def run(self):
         from error_reporter import ErrorReporter
         if hasattr(self.app,'root') and not getattr(self.app,'input_diagnostics',None):
             from input_diagnostics import InputDiagnostics
             self.app.input_diagnostics=InputDiagnostics(self.app);self.app.input_diagnostics.install()
-        self.app.error_reporter=ErrorReporter(self.app,self.server,self.token,'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v50',self.closed)
+        self.app.error_reporter=ErrorReporter(self.app,self.server,self.token,'ldplayer-v18' if '--ldplayer' in sys.argv else 'fleet-v51',self.closed)
         self.app.error_reporter.start()
         try:
             import ctypes,platform
@@ -157,12 +171,11 @@ class FleetClient:
             admin=bool(ctypes.windll.shell32.IsUserAnAdmin())
             self.app.log('Môi trường Windows: '+platform.release()+'; màn hình '+str(size.width)+'x'+str(size.height)+'; phiên RDP='+str(remote)+'; quyền admin='+str(admin))
         except Exception:pass
-        if self.app.vision is None:
-            from vision import Vision
-            self.app.vision=Vision(Path(__file__).parent/'assets',self.root/'vision-cache')
         hb=threading.Thread(target=self.heartbeat,daemon=True);hb.start()
         current_email=None
         try:
+            self.app.log('Đang khởi tạo OCR; heartbeat web đã chạy độc lập.')
+            if not self.initialize_vision():return
             while not self.closed.is_set():
                 with self.lock:tasks=list(self.tasks);desired=self.desired;last=self.last_ok
                 if desired!='run' or time.monotonic()-last>45:

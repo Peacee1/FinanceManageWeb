@@ -1,10 +1,10 @@
 # ROK Bot — PC
 
-Phiên bản: v50. Dành cho Windows 64-bit; đã đóng kèm Python và OCR, không cần cài Python riêng.
+Phiên bản: v51. Dành cho Windows 64-bit; đã đóng kèm Python và OCR, không cần cài Python riêng.
 
 1. Giải nén ZIP vào một thư mục riêng.
 2. Mở Rise of Kingdoms bản PC, dùng giao diện tiếng Việt.
-3. Mở `ROKFarmBotFleet_v50.exe`.
+3. Mở `ROKFarmBotFleet_v51.exe`.
 4. Lần đầu, bấm **Kết nối web / VPS** và chọn file ghép nối client được tải từ trang quản trị. Mỗi máy dùng file ghép nối riêng.
 5. Bấm Khởi chạy trên web để giao việc. Giữ game hiển thị, không thu nhỏ cửa sổ. F8 hoặc nút Dừng để ngừng bot.
 
@@ -73,3 +73,5 @@ PC v48: nhận hồ sơ qua bánh răng khớp rõ và bảng xanh khi cả nhã
 PC v49: chữ Tìm kiếm khớp chính xác trên nền nút màu được nhận từ độ tin cậy 55%; ưu tiên bảng tìm kiếm trước các nhãn hành động bị đoán sai. Giữ hạ cấp khi tìm không phản hồi và đổi tài nguyên khi cấp 1 thất bại.
 
 PC v50: nhận diện danh sách nhân vật khi OCR thiếu dấu # trước vương quốc và đọc sai nhẹ tiêu đề. Giữ đối chiếu số F để không chọn nhầm nhân vật.
+
+PC v51: heartbeat khởi động độc lập trước OCR. Khi OCR đang tải, client báo loading; chỉ farm sau khi OCR sẵn sàng. Lỗi khởi tạo OCR và heartbeat được ghi rõ trong nhật ký. Có thể chạy EXE với --check-ocr để kiểm tra OCR đóng gói mà không thao tác game; kết quả lưu tại %LOCALAPPDATA%\ROKFarmBot\ocr-startup-check.json.
