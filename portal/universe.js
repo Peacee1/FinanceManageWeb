@@ -25,7 +25,7 @@
     world.animate([from,to],options).finished.finally(()=>{cameraRunning=false;});
     canvas.animate([{transform:active?'translate(0,0) scale(1)':'translate(-12%,3%) scale(1.28)'},{transform:active?'translate(-12%,3%) scale(1.28)':'translate(0,0) scale(1)'}],{...options,fill:'forwards'});
     for(const layer of scene.querySelectorAll('.space-mist,.cosmic-haze'))layer.animate([{transform:active?'translateX(0) scale(1)':'translateX(-8%) scale(1.15)'},{transform:active?'translateX(-8%) scale(1.15)':'translateX(0) scale(1)'}],{...options,fill:'forwards'});
-    for(const text of scene.querySelectorAll('.intro>:not(#explore)'))text.animate([{opacity:active?1:0,transform:active?'translate(0,0)':'translate(100px,-20px)'},{opacity:active?0:1,transform:active?'translate(100px,-20px)':'translate(0,0)'}],{duration:active?1600:2200,easing:'ease-in-out'});
+    for(const text of scene.querySelectorAll('.intro>:not(#explore)'))text.animate([{opacity:active?1:0,transform:active?'translate(0,0)':'translate(-130px,-12px)'},{opacity:active?0:1,transform:active?'translate(-130px,-12px)':'translate(0,0)'}],{duration:active?1600:2200,easing:'ease-in-out'});
     explore.setAttribute('aria-pressed',String(active));explore.querySelector('span:last-child').textContent=active?'Trở về':'Bước vào không gian';
   });
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&scene.classList.contains('immersive'))explore.click();});
