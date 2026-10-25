@@ -1,4 +1,5 @@
 const router=require('express').Router();
+router.use(require('../middleware/englishResponse'));
 const {rateLimit}=require('express-rate-limit');
 const {protect}=require('../middleware/authMiddleware');
 const account=require('../controllers/accountController');

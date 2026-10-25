@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+router.use(require('../middleware/englishResponse'));
 const { register, login, changePassword } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
