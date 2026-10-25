@@ -26,3 +26,11 @@ export function parseFocusMessage(raw: string): boolean | null {
     return data.type === 'task-focus' && typeof data.active === 'boolean' ? data.active : null;
   } catch {return null;}
 }
+export function parseTaskItemsMessage(raw: string): unknown[] | null {
+  try {
+    const data = JSON.parse(raw);
+    if (data?.type !== 'task-note-items' || !Array.isArray(data.items) || data.items.length > 500) return null;
+    if (!data.items.every((item: unknown) => item && typeof item === 'object' && typeof (item as {title?: unknown}).title === 'string')) return null;
+    return data.items;
+  } catch {return null;}
+}

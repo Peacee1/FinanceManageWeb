@@ -24,50 +24,59 @@ struct TaskNoteProvider: TimelineProvider {
 struct TaskNoteView: View {
   @Environment(\.widgetFamily) private var family
   let entry: TaskNoteEntry
-  private let ink = Color(red: 0.098, green: 0.098, blue: 0.094)
-  private let paper = Color(red: 0.945, green: 0.941, blue: 0.925)
-  private let muted = Color(red: 0.42, green: 0.42, blue: 0.40)
+  private let ink = Color(red: 0.10, green: 0.10, blue: 0.095)
+  private let paper = Color(red: 0.97, green: 0.96, blue: 0.93)
+  private let muted = Color(red: 0.48, green: 0.47, blue: 0.43)
   private var items: [[String: Any]] {entry.props["items"] as? [[String: Any]] ?? []}
   private var signedIn: Bool {entry.props["signedIn"] as? Bool ?? false}
   private var limit: Int {family == .systemSmall ? 2 : family == .systemMedium ? 3 : 7}
+  private var total: Int {entry.props["total"] as? Int ?? items.count}
   private var content: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(alignment: .center) {
-        VStack(alignment: .leading, spacing: 3) {
-          Text("VIỆC CẦN LÀM").font(.system(size: 10, weight: .semibold)).tracking(1.4)
-          Text(entry.date, format: .dateTime.day().month()).font(.system(size: 12, design: .serif)).foregroundStyle(muted)
+    VStack(alignment: .leading, spacing: family == .systemLarge ? 12 : 8) {
+      HStack(alignment: .firstTextBaseline) {
+        Text("Việc cần làm").font(.system(size: family == .systemSmall ? 16 : 18, weight: .semibold, design: .rounded))
+        Spacer(minLength: 4)
+        if family != .systemSmall {
+          Text(entry.date, format: .dateTime.day().month()).font(.system(size: 11, weight: .medium)).foregroundStyle(muted)
         }
-        Spacer(minLength: 0)
-        Image(systemName: "paperclip").font(.system(size: 22, weight: .light)).rotationEffect(.degrees(-18))
       }
-      Rectangle().fill(ink.opacity(0.2)).frame(height: 1)
+      Rectangle().fill(ink.opacity(0.16)).frame(height: 1)
       if items.isEmpty {
-        Text(signedIn ? "Một ngày nhẹ nhàng.\nThêm việc mới trong app." : "Mở Peacee1 Task\nđể đồng bộ công việc.")
-          .font(.system(size: 13, design: .serif)).foregroundStyle(muted).lineSpacing(5)
+        VStack(alignment: .leading, spacing: 6) {
+          Text(signedIn ? "Đã xong mọi việc?" : "Ghi chú của bạn")
+            .font(.system(size: 14, weight: .medium, design: .rounded))
+          Text(signedIn ? "Thêm công việc để bắt đầu." : "Mở app một lần để\nđồng bộ danh sách.")
+            .font(.system(size: 12)).foregroundStyle(muted).lineSpacing(3)
+        }.padding(.top, 4)
       } else {
         ForEach(Array(items.prefix(limit).enumerated()), id: \.offset) {_, item in
-          VStack(alignment: .leading, spacing: 7) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-              Image(systemName: (item["done"] as? Bool ?? false) ? "checkmark.circle.fill" : "circle").font(.system(size: 10, weight: .light))
-              Text(item["title"] as? String ?? "").font(.system(size: 13, design: .serif)).lineLimit(1)
-                .strikethrough(item["done"] as? Bool ?? false, color: muted)
-                .foregroundStyle((item["done"] as? Bool ?? false) ? muted : ink)
+          let done = item["done"] as? Bool ?? false
+          VStack(alignment: .leading, spacing: family == .systemLarge ? 10 : 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 9) {
+              Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 13, weight: .regular)).foregroundStyle(done ? muted : ink)
+              Text(item["title"] as? String ?? "")
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .strikethrough(done, color: muted).foregroundStyle(done ? muted : ink)
+                .lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
             }
-            Rectangle().fill(ink.opacity(0.09)).frame(height: 0.5)
+            Rectangle().fill(ink.opacity(0.08)).frame(height: 0.5)
           }
         }
       }
       Spacer(minLength: 0)
       HStack {
-        Text("Peacee1 Task").font(.system(size: 9, weight: .medium)).foregroundStyle(muted)
+        Text("PEACEE1 TASK").font(.system(size: 8, weight: .semibold)).tracking(1)
         Spacer(minLength: 0)
-        if let total = entry.props["total"] as? Int, total > limit {Text("+\(total - limit) việc khác").font(.system(size: 10)).foregroundStyle(muted)}
-      }
-    }.padding(16).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).foregroundStyle(ink)
+        if total > limit {
+          Text("+\(total - limit) việc").font(.system(size: 10, weight: .medium))
+        }
+      }.foregroundStyle(muted)
+    }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).foregroundStyle(ink)
   }
   @ViewBuilder var body: some View {
     if #available(iOS 17.0, *) {content.containerBackground(paper, for: .widget)}
-    else {content.background(paper)}
+    else {content.padding(14).background(paper)}
   }
 }
 struct TaskNoteWidget: Widget {
@@ -79,4 +88,5 @@ struct TaskNoteWidget: Widget {
   }
   var body: some WidgetConfiguration {configuration}
 }
+
 

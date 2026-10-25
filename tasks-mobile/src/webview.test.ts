@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {parseFocusMessage, parseThemeMessage, viewportScript} from './webview.ts';
+import {parseFocusMessage, parseTaskItemsMessage, parseThemeMessage, viewportScript} from './webview.ts';
 import vm from 'node:vm';
 
 test('rotation is requested only by valid focus-state messages', () => {
@@ -23,3 +23,10 @@ test('locks viewport scale and suppresses pinch gestures without blocking scroll
   assert.equal(prevented, 3);
   assert.equal(listeners.has('touchmove'), false);
 });
+
+test('widget accepts task snapshots including empty and group lists, but rejects malformed data', () => {
+  assert.deepEqual(parseTaskItemsMessage(JSON.stringify({type:'task-note-items',items:[{title:'Group task',status:'TODO'}]})), [{title:'Group task',status:'TODO'}]);
+  assert.deepEqual(parseTaskItemsMessage('{"type":"task-note-items","items":[]}'), []);
+  for (const data of [null, {}, {type:'task-note-items',items:{}}, {type:'task-note-items',items:[null]}, {type:'task-note-items',items:Array(501).fill({title:'Task'})}]) assert.equal(parseTaskItemsMessage(JSON.stringify(data)), null);
+});
+

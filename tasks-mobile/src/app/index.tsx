@@ -9,7 +9,7 @@ import AuthScreen from '../AuthScreen';
 import {apiUrl} from '../auth';
 import {createNativeSessionClient} from '../nativeSession';
 import type {Session} from '../types';
-import {parseFocusMessage, parseThemeMessage, viewportScript} from '../webview';
+import {parseFocusMessage, parseTaskItemsMessage, parseThemeMessage, viewportScript} from '../webview';
 import {focusOrientation} from '../orientation.native';
 import {updateTaskNote} from '../TaskNoteWidget';
 import {emptyNote, noteSnapshot} from '../noteSnapshot';
@@ -55,29 +55,11 @@ function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Pro
   const [theme, setTheme] = useState({background: '#F1F0EC', dark: false});
   const [isFocus, setIsFocus] = useState(false);
   const [rotationError, setRotationError] = useState(false);
-  const [widgetRevision, setWidgetRevision] = useState(0);
   useEffect(() => {
-    let active = true, pending = false;
-    let controller: AbortController | null = null;
-    const sync = async () => {
-      if (pending || !active) return;
-      pending = true; controller = new AbortController();
-      const timeout = setTimeout(() => controller?.abort(), 15000);
-      try {
-        const response = await fetch(`${apiUrl}/tasks/items`, {headers: {Authorization: `Bearer ${session.token}`}, signal: controller.signal});
-        if (!active) return;
-        if (response.status === 401) {updateTaskNote(emptyNote); return;}
-        if (!response.ok) return;
-        const items: unknown = await response.json();
-        if (active) updateTaskNote(noteSnapshot(items));
-      } catch {/* Keep the last snapshot during a temporary network outage. */}
-      finally {clearTimeout(timeout); pending = false;}
-    };
-    void sync();
-    const timer = setInterval(() => {if (AppState.currentState === 'active') void sync();}, 60000);
-    const listener = AppState.addEventListener('change', state => {if (state === 'active') void sync();});
-    return () => {active = false; controller?.abort(); clearInterval(timer); listener.remove();};
-  }, [session.token, widgetRevision]);
+    const publish = () => browser.current?.injectJavaScript('window.publishTaskNote?.();true;');
+    const listener = AppState.addEventListener('change', state => {if (state === 'active') publish();});
+    return () => listener.remove();
+  }, []);
   useEffect(() => {
     void focusOrientation.setFocus(isFocus).then(() => setRotationError(false)).catch(() => setRotationError(true));
   }, [isFocus]);
@@ -106,7 +88,8 @@ function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Pro
         if (next) setTheme(next);
         const focus = parseFocusMessage(event.nativeEvent.data);
         if (focus !== null) setIsFocus(focus);
-        try {if (JSON.parse(event.nativeEvent.data).type === 'task-data-changed') setWidgetRevision(value => value + 1);} catch {/* Non-JSON bridge messages are ignored. */}
+        const taskItems = parseTaskItemsMessage(event.nativeEvent.data);
+        if (taskItems !== null) updateTaskNote(noteSnapshot(taskItems));
       }}
       sharedCookiesEnabled thirdPartyCookiesEnabled startInLoadingState
       allowsBackForwardNavigationGestures setSupportMultipleWindows={false}
@@ -147,3 +130,4 @@ const styles = StyleSheet.create({
   title: {fontSize: 20, fontWeight: '700', color: '#191918', textAlign: 'center'},
   retry: {backgroundColor: '#191918', paddingVertical: 15, paddingHorizontal: 28, borderRadius: 14},
 });
+
