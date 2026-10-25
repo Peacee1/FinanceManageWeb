@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import * as SecureStore from 'expo-secure-store';
 import {StatusBar} from 'expo-status-bar';
+import {Stack} from 'expo-router';
 import {ActivityIndicator, Linking, Pressable, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {WebView} from 'react-native-webview';
@@ -9,7 +10,7 @@ import AuthScreen from '../AuthScreen';
 import {apiUrl} from '../auth';
 import {createNativeSessionClient} from '../nativeSession';
 import type {Session} from '../types';
-import {parseThemeMessage, viewportScript} from '../webview';
+import {parseFocusMessage, parseThemeMessage, viewportScript} from '../webview';
 
 export default function TaskApp() {
   const sessions = useMemo(() => createNativeSessionClient(apiUrl, SecureStore), []);
@@ -48,12 +49,14 @@ function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Pro
   const [url, setUrl] = useState(tasksUrl);
   const [bridging, setBridging] = useState(true);
   const [theme, setTheme] = useState({background: '#F1F0EC', dark: false});
+  const [isFocus, setIsFocus] = useState(false);
   const source = useMemo(() => ({uri: `${apiUrl}/auth/web-session`, method: 'POST', body: '{}', headers: {
     Authorization: `Bearer ${session.token}`, Origin: new URL(tasksUrl).origin, 'Content-Type': 'application/json',
   }}), [session.token]);
   const retry = () => {setFailed(false); browser.current?.reload();};
 
   return <View style={[styles.page, {backgroundColor: theme.background}]}>
+    <Stack.Screen options={{orientation: isFocus ? 'default' : 'portrait'}}/>
     <StatusBar style={theme.dark ? 'light' : 'dark'}/>
     {url !== tasksUrl && url !== `${apiUrl}/auth/web-session` && <View style={[styles.toolbar, {paddingTop: insets.top}]}>
       {canGoBack && <Pressable accessibilityRole="button" onPress={() => browser.current?.goBack()} style={styles.button}><Text>← Quay lại</Text></Pressable>}
@@ -69,11 +72,13 @@ function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Pro
         if (!event.nativeEvent.url.startsWith(tasksUrl)) return;
         const next = parseThemeMessage(event.nativeEvent.data);
         if (next) setTheme(next);
+        const focus = parseFocusMessage(event.nativeEvent.data);
+        if (focus !== null) setIsFocus(focus);
       }}
       sharedCookiesEnabled thirdPartyCookiesEnabled startInLoadingState
       allowsBackForwardNavigationGestures setSupportMultipleWindows={false}
       originWhitelist={['https://*']} mixedContentMode="never"
-      onNavigationStateChange={state => {setCanGoBack(state.canGoBack); setUrl(state.url);}}
+      onNavigationStateChange={state => {setCanGoBack(state.canGoBack); setUrl(state.url); if (!state.url.startsWith(tasksUrl)) setIsFocus(false);}}
       onShouldStartLoadWithRequest={request => {
         if (isInternalUrl(request.url) && ['/login', '/register'].includes(new URL(request.url).pathname)) {
           void onLogout().catch(() => setFailed(true));

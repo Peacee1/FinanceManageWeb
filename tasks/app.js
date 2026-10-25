@@ -22,7 +22,7 @@ Object.keys(palettes).forEach(name=>{const image=new Image();image.src=name==='m
 
 
 
-function render(){
+function render(){FocusPresentation.notify(view==='focus');
  wakeFocusUI();
  document.body.classList.toggle('settings-view',view==='settings');
  const group=spaces.find(s=>s.id===spaceId);$('settings-panel').hidden=view!=='settings';$('content').hidden=view==='settings';
@@ -40,7 +40,7 @@ function render(){
  if(view==='focus')drawFocus();if(view==='settings')renderMobileSettings();
 }
 let focusDisplay=localStorage.getItem('peacee1-focus-display')==='flip'?'flip':'circle';
-let focusDuration=25*60,focusLeft=focusDuration,focusEnd=null,focusTask='tag',focusCompleted=Number(localStorage.getItem('peacee1-focus-completed')||0);
+let focusDragging=false;let focusDuration=25*60,focusLeft=focusDuration,focusEnd=null,focusTask='tag',focusCompleted=Number(localStorage.getItem('peacee1-focus-completed')||0);
 function drawFocus(){
  wakeFocusUI();
  $('content').innerHTML=`<section class="focus-card card"><span class="focus-label">THỜI GIAN DÀNH CHO BẠN</span><h2>Tập trung vào một việc</h2><p class="muted">Đặt điện thoại xuống, bắt đầu từng bước nhỏ.</p><input id="focus-task" class="focus-tag" aria-label="Tag" placeholder="tag" maxlength="100" value="${esc(focusTask)}"><div class="focus-dial ${focusDisplay==='flip'?'flip-mode':''}"><div id="focus-clock" role="timer"></div><button type="button" id="focus-handle" role="slider" aria-label="Thời gian tập trung" aria-valuemin="1" aria-valuemax="1440" aria-valuenow="25"></button><div class="focus-display-options"><button type="button" id="display-circle" aria-label="Đồng hồ vòng tròn" aria-pressed="${focusDisplay==='circle'}" class="${focusDisplay==='circle'?'active':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="4" r="2" fill="currentColor"/></svg></button><button type="button" id="display-flip" aria-label="Đồng hồ lịch lật" aria-pressed="${focusDisplay==='flip'}" class="${focusDisplay==='flip'?'active':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 12h16"/></svg></button><button type="button" id="focus-music" aria-label="Nhạc tập trung" class="${musicPlaying?'active':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/></svg></button></div></div><p id="focus-status" class="muted"></p><div class="focus-actions"><button id="focus-start" class="primary" aria-label="${focusLeft<focusDuration?'Tiếp tục':'Bắt đầu'}" ${focusEnd?'disabled':''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" fill="currentColor"/></svg></button><button id="focus-pause" aria-label="Tạm dừng" ${focusEnd?'':'disabled'}><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor"/></svg></button><button id="focus-reset" aria-label="Đặt lại"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a9 9 0 1 1 2.7 7M3 5v6h6"/></svg></button></div><small>${focusCompleted} phiên tập trung đã hoàn thành trên thiết bị này</small></section>`;
@@ -51,7 +51,8 @@ function drawFocus(){
  document.querySelectorAll('[data-focus-min]').forEach(b=>b.onclick=()=>{focusDuration=Number(b.dataset.focusMin)*60;focusLeft=focusDuration;drawFocus();});setupFocusDial();updateFocus();
 }
 function updateFocus(){if(focusEnd){focusLeft=Math.max(0,Math.ceil((focusEnd-Date.now())/1000));if(focusLeft===0){focusEnd=null;focusCompleted++;localStorage.setItem('peacee1-focus-completed',focusCompleted);if(view==='focus')drawFocus();}}
- if($('focus-handle')){const handle=$('focus-handle'),a=(focusDuration/3600)*Math.PI*2;handle.style.left=(50+50*Math.sin(a))+'%';handle.style.top=(50-50*Math.cos(a))+'%';handle.disabled=!!focusEnd;handle.setAttribute('aria-valuenow',Math.round(focusDuration/60));handle.setAttribute('aria-valuetext',formatFocusDuration(focusDuration));}if($('focus-clock')){updateFocusDisplay((focusLeft>=3600?String(Math.floor(focusLeft/3600)).padStart(2,'0')+':':'')+String(Math.floor(focusLeft/60)%60).padStart(2,'0')+':'+String(focusLeft%60).padStart(2,'0'));$('focus-status').textContent=focusLeft===0?'Hoàn thành! Nghỉ ngơi một chút nhé.':focusEnd?'Đang tập trung…':'Sẵn sàng khi bạn muốn';}}
+ if($('focus-handle')){const handle=$('focus-handle'),a=(focusDuration/3600)*Math.PI*2;if(!focusDragging){handle.style.left=(50+50*Math.sin(a))+'%';handle.style.top=(50-50*Math.cos(a))+'%';}handle.disabled=!!focusEnd;handle.setAttribute('aria-valuenow',Math.round(focusDuration/60));handle.setAttribute('aria-valuetext',formatFocusDuration(focusDuration));}if($('focus-clock')){updateFocusDisplay((focusLeft>=3600?String(Math.floor(focusLeft/3600)).padStart(2,'0')+':':'')+String(Math.floor(focusLeft/60)%60).padStart(2,'0')+':'+String(focusLeft%60).padStart(2,'0'));$('focus-status').textContent=focusLeft===0?'Hoàn thành! Nghỉ ngơi một chút nhé.':focusEnd?'Đang tập trung…':'Sẵn sàng khi bạn muốn';}}
+const updateFocusClock=updateFocus;updateFocus=function(){updateFocusClock();FocusPresentation.sync(view==='focus'&&(!!focusEnd||focusLeft>0&&focusLeft<focusDuration),focusDuration-focusLeft);};
 setInterval(updateFocus,1000);
 
 const tabOrder=['list','calendar','focus','settings'];let changingTab=false;
@@ -73,8 +74,7 @@ function settingRow(label,icon,action,detail='',color='var(--accent)'){return `<
 function renderMobileSettings(){const group=spaces.find(s=>s.id===spaceId),lang=$('language');$('mobile-settings').innerHTML=`<p class="section-label">${taskLabel('CÀI ĐẶT CÁ NHÂN')}</p><div class="settings-group">${settingRow('Thông tin tài khoản','user','account','','#5B8CFF')}${settingRow('Chế độ sử dụng','users','mode',group?taskLabel('Nhóm'):taskLabel('Cá nhân'))}${spaceId?settingRow('Chat nhóm','chat','chat')+settingRow('Thành viên','users','members'):''}${settingRow('Thói quen','habit','habits')}</div><p class="section-label">${taskLabel('ỨNG DỤNG')}</p><div class="settings-group">${settingRow('Giao diện','sun','theme')}${settingRow('Ngôn ngữ','globe','language',lang.options[lang.selectedIndex].text)}${settingRow('Đăng xuất','logout','logout','','#EF6776')}</div>`;}
 document.addEventListener('click',e=>{const row=e.target.closest('[data-setting]');if(!row)return;const action=row.dataset.setting;if(action==='mode')settingsSheet(taskLabel('Chế độ sử dụng'),'workspace-settings');if(action==='theme')settingsSheet(taskLabel('Giao diện'),'theme-controls');if(action==='language')settingsSheet(taskLabel('Ngôn ngữ'),'language-control');if(action==='account')location.href='https://peacee1.io.vn/account.html';if(action==='logout')$('logout').click();if(action==='members')$('members').click();if(['chat','habits'].includes(action))void switchView(action);});
 
-function setupFocusDial(){const handle=$('focus-handle'),dial=handle.parentElement;let lastAngle=null,total=0,startSeconds=0;const angle=e=>{const r=dial.getBoundingClientRect();return Math.atan2(e.clientX-r.left-r.width/2,-(e.clientY-r.top-r.height/2));};const setTime=seconds=>{focusDuration=Math.max(60,Math.min(86400,Math.round(seconds/60)*60));focusLeft=focusDuration;updateFocus();document.querySelectorAll('[data-focus-min]').forEach(b=>b.classList.toggle('active',Number(b.dataset.focusMin)*60===focusDuration));};
-handle.onpointerdown=e=>{if(focusEnd)return;e.preventDefault();handle.setPointerCapture(e.pointerId);lastAngle=angle(e);total=0;startSeconds=focusDuration;};handle.onpointermove=e=>{if(lastAngle===null)return;const next=angle(e);let delta=next-lastAngle;if(delta>Math.PI)delta-=Math.PI*2;if(delta<-Math.PI)delta+=Math.PI*2;total+=delta;lastAngle=next;setTime(startSeconds+total/(Math.PI*2)*3600);};handle.onpointerup=handle.onpointercancel=()=>{lastAngle=null;};handle.onkeydown=e=>{if(focusEnd)return;if(['ArrowRight','ArrowUp','ArrowLeft','ArrowDown','PageUp','PageDown','Home'].includes(e.key)){e.preventDefault();setTime(e.key==='Home'?60:focusDuration+(e.key==='PageUp'?3600:e.key==='PageDown'?-3600:['ArrowRight','ArrowUp'].includes(e.key)?60:-60));}};}
+function setupFocusDial(){FocusDial.attach($('focus-handle'),{readSeconds:()=>focusDuration,isRunning:()=>!!focusEnd,onDragging:active=>{focusDragging=active;clearTimeout(focusIdleTimeout);},onTime:seconds=>{focusDuration=seconds;focusLeft=seconds;updateFocus();}});}
 
 function formatFocusDuration(seconds){const minutes=Math.round(seconds/60),hours=Math.floor(minutes/60),rest=minutes%60;const locale=document.documentElement.lang||'vi';const units=({vi:['giờ','phút'],en:['hr','min'],zh:['小时','分钟'],ja:['時間','分'],ko:['시간','분'],ru:['ч','мин']})[locale]||['hr','min'];return hours?hours+' '+units[0]+(rest?' '+rest+' '+units[1]:''):minutes+' '+units[1];}
 
@@ -92,23 +92,23 @@ let musicBusy=false;document.addEventListener('click',e=>{const button=e.target.
 function renderTaskAvatar(){const host=$('profile-avatar');host.replaceChildren();if(user.avatar_url&&/^\/uploads\/[a-zA-Z0-9._-]+$/.test(user.avatar_url)){const img=document.createElement('img');img.src='/api'+user.avatar_url;img.alt=user.name;img.onerror=()=>{host.textContent=user.name.slice(0,1).toUpperCase();};host.appendChild(img);}else host.textContent=user.name.slice(0,1).toUpperCase();}
 
 let focusIdleTimeout=null,focusFadeTimeout=null,focusUIAnimations=[],focusDialHome=null;
-function wakeFocusUI(){
+function wakeFocusUI(event){if(focusDragging||event?.target?.closest?.('#focus-handle'))return;
  clearTimeout(focusIdleTimeout);clearTimeout(focusFadeTimeout);
  const wasQuiet=document.body.classList.contains('focus-idle')||document.body.classList.contains('focus-fading');
  focusUIAnimations.forEach(a=>a.cancel());focusUIAnimations=[];
  document.body.classList.remove('focus-fading','focus-idle');
- if(focusDialHome){const dial=document.querySelector('body>.focus-dial');if(dial){dial.getAnimations().forEach(a=>a.cancel());focusDialHome.replaceWith(dial);dial.removeAttribute('style');}focusDialHome=null;}
+ if(focusDialHome){const dial=document.querySelector('body>.focus-dial');if(dial){dial.getAnimations().forEach(a=>a.cancel());focusDialHome.replaceWith(dial);dial.removeAttribute('style');}focusDialHome=null;}FocusPresentation.active(false);
  if(wasQuiet){focusUIAnimations=[...document.querySelectorAll('body>.brand,body>.tabbar,body>.workspace')].map(node=>node.animate([{opacity:0},{opacity:1}],{duration:400,easing:'ease-out'}));if($('focus-clock')){delete $('focus-clock').dataset.time;updateFocus();}}
  if(view==='focus'&&focusEnd&&!$('modal').open){
  focusIdleTimeout=setTimeout(()=>{
   if(view!=='focus'||!focusEnd||$('modal').open)return;
-  const dial=document.querySelector('.focus-dial'),rect=dial.getBoundingClientRect(),size=Math.min(innerWidth*.7,360),reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const dial=document.querySelector('.focus-dial'),rect=dial.getBoundingClientRect(),box=FocusPresentation.layout(innerWidth,innerHeight),size=box.size,reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
   focusDialHome=document.createElement('div');focusDialHome.style.height=rect.height+'px';dial.replaceWith(focusDialHome);document.body.appendChild(dial);
-  Object.assign(dial.style,{position:'fixed',left:(innerWidth-size)/2+'px',top:(innerHeight-size)/2+'px',width:size+'px',height:size+'px',margin:'0',transform:'none',zIndex:'30',pointerEvents:'none'});
+  Object.assign(dial.style,{position:'fixed',left:box.x+'px',top:box.y+'px',width:size+'px',height:size+'px',margin:'0',transform:'none',zIndex:'30',pointerEvents:'none'});
   document.body.classList.add('focus-fading');
   focusUIAnimations=[...document.querySelectorAll('body>.brand,body>.tabbar,body>.workspace')].map(node=>node.animate([{opacity:1},{opacity:0}],{duration:reduced?0:650,easing:'ease-in-out',fill:'forwards'}));
-  dial.animate([{left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px'},{left:(innerWidth-size)/2+'px',top:(innerHeight-size)/2+'px',width:size+'px',height:size+'px'}],{duration:reduced?0:650,easing:'cubic-bezier(.22,1,.36,1)'});
-  focusFadeTimeout=setTimeout(()=>{document.body.classList.remove('focus-fading');document.body.classList.add('focus-idle');focusUIAnimations.forEach(a=>a.cancel());focusUIAnimations=[];if(document.activeElement instanceof HTMLElement)document.activeElement.blur();},reduced?0:650);
+  dial.animate([{left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px'},{left:box.x+'px',top:box.y+'px',width:size+'px',height:size+'px'}],{duration:reduced?0:650,easing:'cubic-bezier(.22,1,.36,1)'});
+  focusFadeTimeout=setTimeout(()=>{document.body.classList.remove('focus-fading');document.body.classList.add('focus-idle');FocusPresentation.active(true);focusUIAnimations.forEach(a=>a.cancel());focusUIAnimations=[];if(document.activeElement instanceof HTMLElement)document.activeElement.blur();},reduced?0:650);
  },2000);
  }
 }
@@ -116,7 +116,7 @@ function wakeFocusUI(){
 $('modal').addEventListener('close',wakeFocusUI);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)wakeFocusUI();});
 
-function keepFocusUIWhileActive(){if(!document.body.classList.contains('focus-idle'))wakeFocusUI();}
+function keepFocusUIWhileActive(){if(focusDragging)return;if(!document.body.classList.contains('focus-idle'))wakeFocusUI();}
 ['wheel','scroll','keydown','input','touchmove'].forEach(type=>document.addEventListener(type,keepFocusUIWhileActive,{passive:true,capture:true}));
 
 document.addEventListener('click',event=>{

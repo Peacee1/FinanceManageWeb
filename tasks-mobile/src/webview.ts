@@ -19,3 +19,10 @@ export function parseThemeMessage(raw: string): {background: string; dark: boole
     return {background: data.background, dark: data.dark};
   } catch {return null;}
 }
+
+export function parseFocusMessage(raw: string): boolean | null {
+  try {
+    const data = JSON.parse(raw);
+    return data.type === 'task-focus' && typeof data.active === 'boolean' ? data.active : null;
+  } catch {return null;}
+}

@@ -3,6 +3,7 @@ import {Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, S
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {authenticate} from './auth';
 import type {Session} from './types';
+import {Stack} from 'expo-router';
 
 export default function AuthScreen({onLogin}: {onLogin: (session: Session) => Promise<void>}) {
   const [register, setRegister] = useState(false), [name, setName] = useState('');
@@ -24,7 +25,7 @@ export default function AuthScreen({onLogin}: {onLogin: (session: Session) => Pr
     } catch (failure) {setError(failure instanceof Error ? failure.message : 'Không kết nối được máy chủ.');}
     finally {pending.current = false; setBusy(false);}
   };
-  return <SafeAreaView style={styles.page}><KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+  return <SafeAreaView style={styles.page}><Stack.Screen options={{orientation: 'portrait'}}/><KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
       <View style={styles.brand}><Image source={require('../assets/icon.png')} style={styles.logo} resizeMode="contain"/><Text style={styles.brandName}>Peacee1 Task</Text></View>
       <View style={styles.card}>

@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {parseThemeMessage, viewportScript} from './webview.ts';
+import {parseFocusMessage, parseThemeMessage, viewportScript} from './webview.ts';
 import vm from 'node:vm';
+
+test('rotation is requested only by valid focus-state messages', () => {
+  assert.equal(parseFocusMessage('{"type":"task-focus","active":true}'), true);
+  assert.equal(parseFocusMessage('{"type":"task-focus","active":false}'), false);
+  for (const raw of ['{}', 'null', '{"type":"task-focus","active":"yes"}']) assert.equal(parseFocusMessage(raw), null);
+});
 
 test('accepts validated theme colors and rejects malformed bridge messages', () => {
   assert.deepEqual(parseThemeMessage('{"type":"task-theme","background":"#171716","dark":true}'), {background:'#171716',dark:true});

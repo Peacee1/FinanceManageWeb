@@ -4,17 +4,18 @@
     "slug": "peacee1-task",
     "owner": "peacee12",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "peacee1task",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.peacee1.task",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false
-      }
+      },
+      "requireFullScreen": true
     },
     "plugins": [
       "expo-router",
