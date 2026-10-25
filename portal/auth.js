@@ -22,3 +22,23 @@
  form.onsubmit=async event=>{event.preventDefault();if(submit.disabled)return;$('error').hidden=true;const password=$('password').value;if(register&&password!==$('confirm').value){$('error').textContent='Mật khẩu xác nhận chưa khớp.';$('error').hidden=false;return;}submit.disabled=true;submit.textContent='Đang xử lý…';try{const body={email:$('email').value.trim(),password,loginType:register||$('email').value.includes('@')?'owner':'employee'};if(register){await request('register',{...body,name:$('name').value.trim()});location.replace('/login?returnTo='+encodeURIComponent(target));return;}await request('login',body);$('password').value='';$('confirm').value='';location.replace(target);}catch(error){if(error.code==='EMAIL_VERIFICATION_REQUIRED'){sessionStorage.setItem('peacee1-verification-email',$('email').value.trim());location.assign('/recover.html?mode=verify');return;}$('error').textContent=error.message||'Không kết nối được máy chủ.';$('error').hidden=false;submit.disabled=false;submit.textContent=register?'Tạo tài khoản':'Đăng nhập';}};
  fetch('/api/auth/session',{credentials:'same-origin'}).then(response=>{if(response.ok)location.replace(target);}).catch(()=>{});
 })();
+
+// Run the decorative orbit independently of authentication and form state.
+(() => {
+ const world=document.querySelector('.auth-cosmos'),moon=world?.querySelector('.auth-moon');
+ if(!world||!moon)return;
+ let frame=0,origin=performance.now(),elapsed=0;
+ const render=now=>{
+  elapsed=now-origin;
+  const angle=elapsed*Math.PI*2/30000+2.5;
+  const x=Math.cos(angle)*.5,y=Math.sin(angle)*.5;
+  // Match the ring's -28 degree tilt, using a dimensionless ellipse.
+  const tilt=-28*Math.PI/180,rx=x,ry=y*.2833;
+  const px=rx*Math.cos(tilt)-ry*Math.sin(tilt),py=rx*Math.sin(tilt)+ry*Math.cos(tilt);
+  moon.style.transform=`translate(-50%,-50%) translate3d(${px*world.clientWidth}px,${py*world.clientWidth}px,0) scale(${.88+Math.sin(angle)*.12})`;
+  moon.style.zIndex=Math.sin(angle)>0?'3':'0';
+  frame=requestAnimationFrame(render);
+ };
+ const resume=()=>{cancelAnimationFrame(frame);if(!document.hidden){origin=performance.now()-elapsed;frame=requestAnimationFrame(render);}};
+ document.addEventListener('visibilitychange',resume);resume();
+})();
