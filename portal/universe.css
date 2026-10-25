@@ -38,3 +38,8 @@ html{scroll-behavior:smooth}.portal-nav{display:flex;gap:30px;font-size:12px;col
 .product-stage{position:relative;isolation:isolate}.money-back{display:inline-flex;align-items:center;gap:10px;margin:0 0 32px;border:1px solid #ffffff20;background:#ffffff03;border-radius:25px;padding:10px 17px;font-size:11px;color:#b7c5ba}.money-back:hover{background:#ffffff08}.scroll-wind.horizontal-wind{z-index:60}.scroll-wind.horizontal-wind i,.scroll-wind.horizontal-wind i:nth-child(n){width:clamp(100px,19vw,310px);height:2px;max-height:2px;translate:none;animation:none!important;background:linear-gradient(90deg,transparent,#c5ddff9c,transparent);border-radius:100%;opacity:.8}
 
 .money-card{cursor:pointer}.money-card:hover{border-color:#b6cdb34f;background:#ffffff04}.money-card:focus-visible{outline:2px solid #b6cdb3;outline-offset:5px}
+
+/* One continuous starfield beneath every section and horizontal view. */
+body{isolation:isolate;background:#070a12}#stars{position:fixed;inset:0;z-index:-1;width:100vw;height:100vh;pointer-events:none}.universe{background:transparent}.products,.money-story{background:transparent}.product-stage{background:transparent}.money-gallery figure:last-child{background:#ffffff03}.product-card{background:#0b1016a8;backdrop-filter:blur(8px)}
+/* Fade decorative atmosphere into the shared sky without a visible seam. */
+.cosmic-haze{-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 60%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0%,#000 60%,transparent 100%)}.money-story{border-top:0}.products-end{border-top:0}.universe{border:0;box-shadow:none}.products,.money-story,.product-stage{box-shadow:none}

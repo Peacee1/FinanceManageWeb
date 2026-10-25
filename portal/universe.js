@@ -1,8 +1,9 @@
 (() => {
   const scene=document.querySelector('.universe'),canvas=document.getElementById('stars'),ctx=canvas.getContext('2d'),explore=document.getElementById('explore'),moons=Array.from(scene.querySelectorAll('.moon'));
   const orbits=[{radius:37,speed:.00022,phase:2.5,tilt:.46},{radius:47,speed:-.00014,phase:-.8,tilt:.46},{radius:55,speed:.000105,phase:3.5,tilt:.48},{radius:29,speed:-.0003,phase:.9,tilt:.6},{radius:63,speed:.000085,phase:-2.2,tilt:.42}];
+  document.body.prepend(canvas);
   let width=0,height=0,stars=[],frame=0,pointer={x:0,y:0},clockOrigin=performance.now(),orbitTime=0,orbitSize=0;
-  function resize(){width=scene.clientWidth;height=scene.clientHeight;orbitSize=scene.querySelector(".celestial").clientWidth;const ratio=Math.min(devicePixelRatio||1,2);canvas.width=width*ratio;canvas.height=height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);let seed=41;const random=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};stars=Array.from({length:Math.min(340,Math.floor(width*height/2600))},()=>({x:random()*width,y:random()*height,r:random()*1.1+.25,a:random()*.55+.2,phase:random()*6.28,depth:random(),speed:random()*.001+.0005}));draw();}
+  function resize(){width=window.innerWidth;height=window.innerHeight;orbitSize=scene.querySelector(".celestial").clientWidth;const ratio=Math.min(devicePixelRatio||1,2);canvas.width=width*ratio;canvas.height=height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);let seed=41;const random=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};stars=Array.from({length:Math.min(340,Math.floor(width*height/2600))},()=>({x:random()*width,y:random()*height,r:random()*1.1+.25,a:random()*.55+.2,phase:random()*6.28,depth:random(),speed:random()*.001+.0005}));draw();}
   function draw(){
     moons.forEach((moon,index)=>{const orbit=orbits[index],angle=orbitTime*orbit.speed+orbit.phase,depth=Math.sin(angle);moon.style.transform=`translate3d(${Math.cos(angle)*orbit.radius*orbitSize/100}px,${depth*orbit.radius*orbit.tilt*orbitSize/100}px,0) translate(-50%,-50%) scale(${.86+depth*.14})`;moon.style.zIndex=depth>0?'3':'0';});
     ctx.clearRect(0,0,width,height);
