@@ -11,7 +11,15 @@
       "credentialsSource": "local"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "credentialsSource": "local"
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6826757223"
+      }
     }
   }
 }
