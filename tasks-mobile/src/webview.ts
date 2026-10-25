@@ -1,0 +1,21 @@
+export const viewportScript = `
+(function(){
+  function configure(){
+    var meta=document.querySelector('meta[name="viewport"]');
+    if(!meta){meta=document.createElement('meta');meta.name='viewport';document.head.appendChild(meta);}
+    meta.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover';
+  }
+  if(document.head)configure();
+  document.addEventListener('DOMContentLoaded',configure,{once:true});
+  ['gesturestart','gesturechange','gestureend'].forEach(function(name){
+    document.addEventListener(name,function(event){event.preventDefault();},{passive:false});
+  });
+})();true;`;
+
+export function parseThemeMessage(raw: string): {background: string; dark: boolean} | null {
+  try {
+    const data = JSON.parse(raw);
+    if (data.type !== 'task-theme' || !/^#[0-9a-f]{6}$/i.test(data.background) || typeof data.dark !== 'boolean') return null;
+    return {background: data.background, dark: data.dark};
+  } catch {return null;}
+}

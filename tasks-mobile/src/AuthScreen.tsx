@@ -44,13 +44,13 @@ export default function AuthScreen({onLogin}: {onLogin: (session: Session) => Pr
   </KeyboardAvoidingView></SafeAreaView>;
 }
 const styles = StyleSheet.create({
-  page: {flex: 1, backgroundColor: '#FAF9FF'},
+  page: {flex: 1, backgroundColor: '#F1F0EC'},
   content: {flexGrow: 1, justifyContent: 'center', padding: 24, gap: 28, maxWidth: 460, width: '100%', alignSelf: 'center'},
-  brand: {alignItems: 'center', gap: 14}, logo: {width: 100, height: 88}, brandName: {fontSize: 22, fontWeight: '800', color: '#181525'},
-  card: {padding: 28, borderRadius: 32, gap: 18, backgroundColor: '#FFFFFF', boxShadow: '0px 12px 36px rgba(124,58,237,.04)'},
-  heading: {alignItems: 'center', gap: 6, marginBottom: 8}, title: {fontSize: 24, fontWeight: '700', color: '#181525'}, muted: {color: '#716B7A', fontSize: 14, lineHeight: 21, textAlign: 'center'},
-  field: {gap: 7}, label: {fontSize: 14, color: '#716B7A'}, input: {backgroundColor: '#FAF9FF', borderWidth: 1, borderColor: '#E9E5F3', borderRadius: 14, padding: 15, fontSize: 16, minHeight: 50, color: '#181525'},
-  password: {flexDirection: 'row', borderWidth: 1, borderColor: '#E9E5F3', borderRadius: 14, overflow: 'hidden', backgroundColor: '#FAF9FF'}, passwordInput: {flex: 1, minWidth: 0, borderWidth: 0}, show: {padding: 14, justifyContent: 'center', minWidth: 54},
-  link: {color: '#7C3AED', fontWeight: '700', fontSize: 13}, submit: {backgroundColor: '#7C3AED', borderRadius: 14, padding: 15, minHeight: 50, alignItems: 'center'}, submitText: {fontWeight: '700', fontSize: 14, color: '#FFFFFF'},
-  caption: {color: '#716B7A', fontSize: 11, lineHeight: 18, textAlign: 'center'}, error: {color: '#BE123C', fontSize: 13, lineHeight: 20}, success: {color: '#047857', fontSize: 13}, switch: {padding: 10, minHeight: 44}, recover: {alignItems: 'center', padding: 8, minHeight: 44},
+  brand: {alignItems: 'center', gap: 14}, logo: {width: 100, height: 88}, brandName: {fontSize: 22, fontWeight: '800', color: '#191918'},
+  card: {padding: 28, borderRadius: 32, gap: 18, backgroundColor: '#FFFFFF', boxShadow: '0px 12px 36px rgba(25,25,24,.04)'},
+  heading: {alignItems: 'center', gap: 6, marginBottom: 8}, title: {fontSize: 24, fontWeight: '700', color: '#191918'}, muted: {color: '#6B6B65', fontSize: 14, lineHeight: 21, textAlign: 'center'},
+  field: {gap: 7}, label: {fontSize: 14, color: '#6B6B65'}, input: {backgroundColor: '#F1F0EC', borderWidth: 1, borderColor: '#E2E1DC', borderRadius: 14, padding: 15, fontSize: 16, minHeight: 50, color: '#191918'},
+  password: {flexDirection: 'row', borderWidth: 1, borderColor: '#E2E1DC', borderRadius: 14, overflow: 'hidden', backgroundColor: '#F1F0EC'}, passwordInput: {flex: 1, minWidth: 0, borderWidth: 0}, show: {padding: 14, justifyContent: 'center', minWidth: 54},
+  link: {color: '#191918', fontWeight: '700', fontSize: 13}, submit: {backgroundColor: '#191918', borderRadius: 14, padding: 15, minHeight: 50, alignItems: 'center'}, submitText: {fontWeight: '700', fontSize: 14, color: '#FFFFFF'},
+  caption: {color: '#6B6B65', fontSize: 11, lineHeight: 18, textAlign: 'center'}, error: {color: '#BE123C', fontSize: 13, lineHeight: 20}, success: {color: '#047857', fontSize: 13}, switch: {padding: 10, minHeight: 44}, recover: {alignItems: 'center', padding: 8, minHeight: 44},
 });

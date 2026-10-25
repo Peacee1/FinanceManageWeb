@@ -1,13 +1,15 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import * as SecureStore from 'expo-secure-store';
+import {StatusBar} from 'expo-status-bar';
 import {ActivityIndicator, Linking, Pressable, StyleSheet, Text, View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {WebView} from 'react-native-webview';
 import {isInternalUrl, tasksUrl} from '../navigation';
 import AuthScreen from '../AuthScreen';
 import {apiUrl} from '../auth';
 import {createNativeSessionClient} from '../nativeSession';
 import type {Session} from '../types';
+import {parseThemeMessage, viewportScript} from '../webview';
 
 export default function TaskApp() {
   const sessions = useMemo(() => createNativeSessionClient(apiUrl, SecureStore), []);
@@ -32,29 +34,42 @@ export default function TaskApp() {
   }, []);
   const logout = async () => {await sessions.logout(); setSession(null);};
   if (boot || bootError) return <SafeAreaView style={[styles.page, {justifyContent: 'center', alignItems: 'center', gap: 18, padding: 24}]}>
-    {boot ? <ActivityIndicator color="#7C3AED"/> : <><Text>{bootError}</Text><Pressable onPress={() => void restore()} style={styles.retry}><Text style={{color: '#FFFFFF'}}>Thử lại</Text></Pressable></>}
+    {boot ? <ActivityIndicator color="#191918"/> : <><Text>{bootError}</Text><Pressable onPress={() => void restore()} style={styles.retry}><Text style={{color: '#FFFFFF'}}>Thử lại</Text></Pressable></>}
   </SafeAreaView>;
   if (!session) return <AuthScreen onLogin={async next => {await sessions.save(next); setSession(next);}}/>;
   return <TasksScreen key={session.token} session={session} onLogout={logout}/>;
 }
 
 function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Promise<void>}) {
+  const insets = useSafeAreaInsets();
   const browser = useRef<WebView>(null);
   const [failed, setFailed] = useState(false);
   const [canGoBack, setCanGoBack] = useState(false);
   const [url, setUrl] = useState(tasksUrl);
   const [bridging, setBridging] = useState(true);
+  const [theme, setTheme] = useState({background: '#F1F0EC', dark: false});
   const source = useMemo(() => ({uri: `${apiUrl}/auth/web-session`, method: 'POST', body: '{}', headers: {
     Authorization: `Bearer ${session.token}`, Origin: new URL(tasksUrl).origin, 'Content-Type': 'application/json',
   }}), [session.token]);
   const retry = () => {setFailed(false); browser.current?.reload();};
 
-  return <SafeAreaView style={styles.page} edges={['top', 'left', 'right', 'bottom']}>
-    {url !== tasksUrl && <View style={styles.toolbar}>
+  return <View style={[styles.page, {backgroundColor: theme.background}]}>
+    <StatusBar style={theme.dark ? 'light' : 'dark'}/>
+    {url !== tasksUrl && url !== `${apiUrl}/auth/web-session` && <View style={[styles.toolbar, {paddingTop: insets.top}]}>
       {canGoBack && <Pressable accessibilityRole="button" onPress={() => browser.current?.goBack()} style={styles.button}><Text>← Quay lại</Text></Pressable>}
       <Pressable accessibilityRole="button" onPress={() => {setFailed(false); browser.current?.injectJavaScript(`window.location.href=${JSON.stringify(tasksUrl)};true;`);}} style={styles.button}><Text>Về công việc</Text></Pressable>
     </View>}
-    <WebView ref={browser} source={source} style={styles.browser}
+    <WebView ref={browser} source={source} style={[styles.browser, {backgroundColor: theme.background}]}
+      automaticallyAdjustContentInsets={false} contentInsetAdjustmentBehavior="never"
+      contentInset={{top: 0, bottom: 0, left: 0, right: 0}}
+      injectedJavaScriptBeforeContentLoaded={viewportScript}
+      setBuiltInZoomControls={false} setDisplayZoomControls={false}
+      bounces={false}
+      onMessage={event => {
+        if (!event.nativeEvent.url.startsWith(tasksUrl)) return;
+        const next = parseThemeMessage(event.nativeEvent.data);
+        if (next) setTheme(next);
+      }}
       sharedCookiesEnabled thirdPartyCookiesEnabled startInLoadingState
       allowsBackForwardNavigationGestures setSupportMultipleWindows={false}
       originWhitelist={['https://*']} mixedContentMode="never"
@@ -78,19 +93,19 @@ function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Pro
         } else if (isInternalUrl(event.nativeEvent.url)) setBridging(false);
       }}
       onContentProcessDidTerminate={retry}
-      renderLoading={() => <View style={styles.overlay}><ActivityIndicator size="large" color="#7C3AED"/><Text>Đang mở Peacee1 Task…</Text></View>}
+      renderLoading={() => <View style={styles.overlay}><ActivityIndicator size="large" color="#191918"/><Text>Đang mở Peacee1 Task…</Text></View>}
     />
-    {bridging && !failed && <View style={styles.overlay}><ActivityIndicator color="#7C3AED"/><Text>Đang mở công việc của bạn…</Text></View>}
+    {bridging && !failed && <View style={styles.overlay}><ActivityIndicator color="#191918"/><Text>Đang mở công việc của bạn…</Text></View>}
     {failed && <View style={styles.overlay}><Text style={styles.title}>Chưa kết nối được Peacee1 Task</Text><Text>Kiểm tra kết nối mạng rồi thử lại.</Text><Pressable accessibilityRole="button" onPress={retry} style={styles.retry}><Text style={{color: '#FFFFFF'}}>Thử lại</Text></Pressable></View>}
-  </SafeAreaView>;
+  </View>;
 }
 
 const styles = StyleSheet.create({
-  page: {flex: 1, backgroundColor: '#FAF9FF'},
-  browser: {flex: 1, backgroundColor: '#FAF9FF'},
-  toolbar: {flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: '#E9E5F3'},
+  page: {flex: 1, backgroundColor: '#F1F0EC'},
+  browser: {flex: 1, backgroundColor: '#F1F0EC'},
+  toolbar: {flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: '#E2E1DC'},
   button: {padding: 14, minHeight: 48},
-  overlay: {position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: '#FAF9FF', alignItems: 'center', justifyContent: 'center', gap: 18, padding: 24},
-  title: {fontSize: 20, fontWeight: '700', color: '#181525', textAlign: 'center'},
-  retry: {backgroundColor: '#7C3AED', paddingVertical: 15, paddingHorizontal: 28, borderRadius: 14},
+  overlay: {position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: '#F1F0EC', alignItems: 'center', justifyContent: 'center', gap: 18, padding: 24},
+  title: {fontSize: 20, fontWeight: '700', color: '#191918', textAlign: 'center'},
+  retry: {backgroundColor: '#191918', paddingVertical: 15, paddingHorizontal: 28, borderRadius: 14},
 });
