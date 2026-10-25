@@ -10,7 +10,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.peacee1.task",
-      "buildNumber": "5",
+      "buildNumber": "6",
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false
@@ -19,7 +19,36 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "PORTRAIT_UP"
+        }
+      ],
+      "./plugins/withTaskNoteWidget",
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "com.peacee1.task.widgets",
+          "groupIdentifier": "group.com.peacee1.task",
+          "widgets": [
+            {
+              "name": "TaskNoteWidget",
+              "displayName": "Tờ note",
+              "description": "Những việc cần làm trên một tờ ghi chú.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge"
+                ],
+                "contentMarginsDisabled": true
+              }
+            }
+          ]
+        }
+      ]
     ],
     "extra": {
       "router": {},

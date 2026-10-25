@@ -1,8 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import * as SecureStore from 'expo-secure-store';
 import {StatusBar} from 'expo-status-bar';
-import {Stack} from 'expo-router';
-import {ActivityIndicator, Linking, Pressable, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, AppState, Linking, Pressable, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {WebView} from 'react-native-webview';
 import {isInternalUrl, tasksUrl} from '../navigation';
@@ -11,11 +10,16 @@ import {apiUrl} from '../auth';
 import {createNativeSessionClient} from '../nativeSession';
 import type {Session} from '../types';
 import {parseFocusMessage, parseThemeMessage, viewportScript} from '../webview';
+import {focusOrientation} from '../orientation.native';
+import {updateTaskNote} from '../TaskNoteWidget';
+import {emptyNote, noteSnapshot} from '../noteSnapshot';
 
 export default function TaskApp() {
+  useEffect(() => {void focusOrientation.setFocus(false).catch(console.warn);}, []);
   const sessions = useMemo(() => createNativeSessionClient(apiUrl, SecureStore), []);
   const [session, setSession] = useState<Session | null>(null);
   const [boot, setBoot] = useState(true), [bootError, setBootError] = useState('');
+  useEffect(() => {if (!boot && !session) updateTaskNote(emptyNote);}, [boot, session]);
   const restore = async () => {
     setBoot(true); setBootError('');
     try {
@@ -33,7 +37,7 @@ export default function TaskApp() {
     void restore();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const logout = async () => {await sessions.logout(); setSession(null);};
+  const logout = async () => {updateTaskNote(emptyNote); await sessions.logout(); setSession(null);};
   if (boot || bootError) return <SafeAreaView style={[styles.page, {justifyContent: 'center', alignItems: 'center', gap: 18, padding: 24}]}>
     {boot ? <ActivityIndicator color="#191918"/> : <><Text>{bootError}</Text><Pressable onPress={() => void restore()} style={styles.retry}><Text style={{color: '#FFFFFF'}}>Thử lại</Text></Pressable></>}
   </SafeAreaView>;
@@ -50,14 +54,42 @@ function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Pro
   const [bridging, setBridging] = useState(true);
   const [theme, setTheme] = useState({background: '#F1F0EC', dark: false});
   const [isFocus, setIsFocus] = useState(false);
+  const [rotationError, setRotationError] = useState(false);
+  const [widgetRevision, setWidgetRevision] = useState(0);
+  useEffect(() => {
+    let active = true, pending = false;
+    let controller: AbortController | null = null;
+    const sync = async () => {
+      if (pending || !active) return;
+      pending = true; controller = new AbortController();
+      const timeout = setTimeout(() => controller?.abort(), 15000);
+      try {
+        const response = await fetch(`${apiUrl}/tasks/items`, {headers: {Authorization: `Bearer ${session.token}`}, signal: controller.signal});
+        if (!active) return;
+        if (response.status === 401) {updateTaskNote(emptyNote); return;}
+        if (!response.ok) return;
+        const items: unknown = await response.json();
+        if (active) updateTaskNote(noteSnapshot(items));
+      } catch {/* Keep the last snapshot during a temporary network outage. */}
+      finally {clearTimeout(timeout); pending = false;}
+    };
+    void sync();
+    const timer = setInterval(() => {if (AppState.currentState === 'active') void sync();}, 60000);
+    const listener = AppState.addEventListener('change', state => {if (state === 'active') void sync();});
+    return () => {active = false; controller?.abort(); clearInterval(timer); listener.remove();};
+  }, [session.token, widgetRevision]);
+  useEffect(() => {
+    void focusOrientation.setFocus(isFocus).then(() => setRotationError(false)).catch(() => setRotationError(true));
+  }, [isFocus]);
+  useEffect(() => () => {void focusOrientation.setFocus(false).catch(console.warn);}, []);
   const source = useMemo(() => ({uri: `${apiUrl}/auth/web-session`, method: 'POST', body: '{}', headers: {
     Authorization: `Bearer ${session.token}`, Origin: new URL(tasksUrl).origin, 'Content-Type': 'application/json',
   }}), [session.token]);
   const retry = () => {setFailed(false); browser.current?.reload();};
 
   return <View style={[styles.page, {backgroundColor: theme.background}]}>
-    <Stack.Screen options={{orientation: isFocus ? 'default' : 'portrait'}}/>
     <StatusBar style={theme.dark ? 'light' : 'dark'}/>
+    {rotationError && <Pressable style={[styles.button, {paddingTop: insets.top + 8}]} onPress={() => {void focusOrientation.setFocus(isFocus).then(() => setRotationError(false)).catch(() => setRotationError(true));}}><Text>Chưa đổi được hướng màn hình. Nhấn để thử lại.</Text></Pressable>}
     {url !== tasksUrl && url !== `${apiUrl}/auth/web-session` && <View style={[styles.toolbar, {paddingTop: insets.top}]}>
       {canGoBack && <Pressable accessibilityRole="button" onPress={() => browser.current?.goBack()} style={styles.button}><Text>← Quay lại</Text></Pressable>}
       <Pressable accessibilityRole="button" onPress={() => {setFailed(false); browser.current?.injectJavaScript(`window.location.href=${JSON.stringify(tasksUrl)};true;`);}} style={styles.button}><Text>Về công việc</Text></Pressable>
@@ -74,6 +106,7 @@ function TasksScreen({session, onLogout}: {session: Session; onLogout: () => Pro
         if (next) setTheme(next);
         const focus = parseFocusMessage(event.nativeEvent.data);
         if (focus !== null) setIsFocus(focus);
+        try {if (JSON.parse(event.nativeEvent.data).type === 'task-data-changed') setWidgetRevision(value => value + 1);} catch {/* Non-JSON bridge messages are ignored. */}
       }}
       sharedCookiesEnabled thirdPartyCookiesEnabled startInLoadingState
       allowsBackForwardNavigationGestures setSupportMultipleWindows={false}
