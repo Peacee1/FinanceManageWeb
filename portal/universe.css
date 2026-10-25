@@ -7,3 +7,6 @@
 /* The near half of each orbit crosses in front; its far half stays behind. */
 .orbit{z-index:1}.orbit.orbit-front{z-index:3;clip-path:inset(50% 0 0 0)}.moon{isolation:isolate}
 
+
+/* Keep orbital motion on the compositor; never relayout left/top each frame. */
+.moon{left:50%;top:50%;will-change:transform;backface-visibility:hidden;transition:none}
