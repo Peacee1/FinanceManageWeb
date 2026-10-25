@@ -14,3 +14,7 @@
 .celestial,.immersive .celestial{transition:none!important}.intro>:not(#explore){transition:none!important}
 
 .immersive-caption{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-style:normal;font-weight:400;letter-spacing:0;line-height:1.5}h1{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:350;letter-spacing:-2px}h1 em{font-style:normal;font-weight:350}
+
+.immersive-caption{visibility:hidden;pointer-events:none;text-decoration:none;padding:12px 20px;transition:opacity 1.5s,transform 1.5s,color .2s}.immersive .immersive-caption{visibility:visible;pointer-events:auto}.immersive-caption:hover{color:#d2bce4}.immersive-caption span{display:inline-block;font-size:.7em;margin-left:8px;vertical-align:middle}
+
+.button-orbit{display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0}.button-orbit svg{display:block}
