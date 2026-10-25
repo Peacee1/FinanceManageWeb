@@ -83,6 +83,27 @@ class Character:
     power: int | None = None
 
 
+def roster_header(text, expected):
+    # Only used for the two roster section labels, never governor names.
+    threshold = .80 if expected == 'nhanvatngoisao' else .75
+    return SequenceMatcher(None, text, expected).ratio() >= threshold
+
+
+def roster_kingdom(text, known_stars):
+    match = re.search(r'#\s*([A-Za-z]?\d{3,6})(?!\d)', text)
+    if match:
+        return match.group(1).upper()
+    # Small white kingdom labels often lose their leading hash in OCR.
+    # Require a confirmed star section plus a kingdom label after the digits;
+    # bare numbers / power totals must never become governor identities.
+    match = re.match(r'^\s*(\d{4,6})\s*([^\d]+)', text) if known_stars else None
+    if match:
+        label = normalize(match.group(2))
+        if label.startswith('v') and SequenceMatcher(None, label[:9], 'vuongquoc').ratio() >= .65:
+            return match.group(1)
+    return None
+
+
 def extract_stars(rows, shape, in_stars=False):
     h, w = shape[:2]
     items = []
@@ -90,14 +111,14 @@ def extract_stars(rows, shape, in_stars=False):
         if confidence >= .75:
             center = np.mean(box, axis=0)
             items.append((box, text, normalize(text), center))
-    star_headers = [float(c[1]) for _, _, n, c in items if n == 'nhanvatngoisao']
-    normal_headers = [float(c[1]) for _, _, n, c in items if n == 'nhanvatthuong']
+    star_headers = [float(c[1]) for _, _, n, c in items if roster_header(n, 'nhanvatngoisao') and w*.28 < c[0] < w*.90]
+    normal_headers = [float(c[1]) for _, _, n, c in items if roster_header(n, 'nhanvatthuong') and w*.28 < c[0] < w*.90]
     top = min(star_headers) if star_headers else h*.22 if in_stars else h
     bottom = min(normal_headers) if normal_headers else h*.85
     result = []
     for box, text, _, center in items:
-        match = re.search(r'#\s*([A-Za-z]?\d{3,6})(?!\d)', text)
-        if not match or not top < center[1] < bottom or center[0] < w*.28:
+        kingdom = roster_kingdom(text, bool(star_headers) or in_stars)
+        if not kingdom or not top < center[1] < bottom or center[0] < w*.28:
             continue
         column = center[0] > w*.56
         realm_left = float(np.min(box, axis=0)[0])
@@ -109,7 +130,6 @@ def extract_stars(rows, shape, in_stars=False):
         if not names:
             continue
         name, point = min(names, key=lambda entry: center[1]-entry[1][1])
-        kingdom = match.group(1).upper()
         powers = []
         for _, power_text, power_norm, power_center in items:
             if (power_norm.startswith('sucmanh') and (power_center[0] > w*.56) == column
@@ -205,8 +225,9 @@ class CharacterNavigator:
             state = 'territory'
         elif any(n == 'lienminh' and c[0] > w*.35 and c[1] < h*.30 for n, c, _ in texts):
             state = 'no_alliance' if {'thamgia', 'taomoi'} <= norms else 'alliance'
-        elif any(n == 'nhanvatngoisao' or (t.lstrip().startswith('#') and 'vuong' in n)
-                 for n, _, t in texts):
+        elif any((roster_header(n, 'nhanvatngoisao') and w*.28 < c[0] < w*.90)
+                 or (t.lstrip().startswith('#') and 'vuong' in n)
+                 for n, c, t in texts):
             state = 'characters'
         elif any(n == 'caidat' and c[0] > w*.35 and c[1] < h*.35 for n, c, _ in texts):
             state = 'settings'
